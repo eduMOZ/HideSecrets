@@ -10,21 +10,21 @@ HideSecrets finds these values, replaces them with readable placeholders (`[SECR
 
 ## What it looks like
 
+The home page: choose what to mask and which categories of sensitive data, then drop files or an archive, paste text, or paste a screenshot.
+
+![The home page: masking level, categories of sensitive data and the drop zone](docs/screenshot-home.webp)
+
 A log file: each detected value is highlighted in the text and listed on the right, where you can uncheck it.
 
-![A log file under review: detected values highlighted in the text and listed on the right](docs/screenshot-text.jpg)
+![A log file under review: detected values highlighted in the text and listed on the right](docs/screenshot-text.webp)
 
-A batch of screenshots, zoomed in on one: secrets, logins and domains are blacked out, while the private IP, the key file path and the public registry stay readable.
+A screenshot of an invented support session: secrets, names, contact details, bank and card numbers, devices and paths are blacked out, and the detections are listed on the right.
 
-![A batch of screenshots: file list on the left, a zoomed configuration with masked values in the middle, detections on the right](docs/screenshot-batch.jpg)
+![A screenshot under review: masked values on the image, detections listed on the right](docs/screenshot-image.webp)
 
-Searching a file name in the batch: an identity provider page, where the portal domain and the signed-in person's name and ID are masked.
+A large batch being read: the file list with its search box, and the Reading speed panel (here paused).
 
-![The file search highlighting one screenshot of an identity provider portal, with its domain and the person's name masked](docs/screenshot-search.jpg)
-
-Leaving a category of sensitive data visible: a red reminder shows what is not masked.
-
-![The list of categories with "Other domains" unchecked and the "Not masked" reminder](docs/screenshot-categories.jpg)
+![A batch of 352 screenshots: the file list, the reading speed panel and an image being read](docs/screenshot-batch.webp)
 
 All the screenshots use invented data.
 
