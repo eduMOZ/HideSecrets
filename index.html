@@ -11,14 +11,35 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; worker-src 'self' blob:; connect-src 'self' blob:; img-src 'self' blob: data:; form-action 'none'; base-uri 'none'">
 <title>HideSecrets</title>
 <style>
-  :root { --bg:#f6f6f4; --card:#fff; --ink:#1d1d1b; --muted:#6b6b66; --line:#dcdcd6; --accent:#2b59c3; --hit:#ffd9d6; --hit-line:#d9433b; --off:#ececE8; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#161615; --card:#222221; --ink:#eeeeea; --muted:#9a9a94; --line:#3a3a37; --accent:#7ba3ff; --hit:#5a2420; --hit-line:#ff7b72; --off:#2e2e2b; } }
+  :root { --bg:#f6f6f4; --card:#fff; --ink:#1d1d1b; --muted:#6b6b66; --line:#dcdcd6; --accent:#2b59c3; --hit:#ffd9d6; --hit-line:#d9433b; --off:#ececE8; --on-accent:#fff; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#161615; --card:#222221; --ink:#eeeeea; --muted:#9a9a94; --line:#3a3a37; --accent:#7ba3ff; --hit:#5a2420; --hit-line:#ff7b72; --off:#2e2e2b; --on-accent:#0f1b33; } }
   * { box-sizing:border-box; }
   html { scrollbar-gutter:stable; }   /* the page does not shift when the scrollbar appears */
   body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui, sans-serif; }
-  header { padding:20px 16px 8px; max-width:1440px; margin:0 auto; }
-  h1 { margin:0 0 4px; font-size:22px; }
+  header { padding:28px 16px 12px; max-width:1440px; margin:0 auto; }
+  .brand { display:flex; align-items:center; gap:14px; }
+  .logo { width:52px; height:52px; flex:none; border-radius:14px; background:var(--accent); box-shadow:0 1px 2px rgb(0 0 0 / .15); }
+  h1 { margin:0; font-size:26px; line-height:1.15; letter-spacing:-.01em; }
   header p { margin:0; color:var(--muted); }
+  .tag { margin-top:3px !important; font-size:16px; max-width:70ch; }
+  .intro { margin-top:16px; }
+  .steps { list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:10px; counter-reset:step; }
+  .steps li { counter-increment:step; display:flex; gap:10px; align-items:center; padding:8px 14px 8px 10px; border:1px solid var(--line); border-radius:12px; background:var(--card); flex:1; min-width:230px; }
+  .steps li::before { content:counter(step); flex:none; width:26px; height:26px; border-radius:50%; background:var(--accent); color:var(--on-accent); font-weight:700; font-size:13px; display:grid; place-items:center; }
+  .steps b { display:block; font-size:14px; line-height:1.25; }
+  .steps span { display:block; font-size:12.5px; color:var(--muted); line-height:1.3; }
+  .privacy { margin-top:10px !important; display:flex; gap:7px; align-items:center; font-size:12.5px; }
+  .privacy svg { flex:none; width:14px; height:14px; }
+  @media (max-width: 600px) {
+    .brand { align-items:flex-start; gap:12px; }
+    .logo { width:44px; height:44px; border-radius:12px; }
+    h1 { font-size:23px; }
+    .tag { font-size:14.5px; }
+  }
+  body.working header { padding-top:14px; padding-bottom:4px; }
+  body.working .logo { width:30px; height:30px; border-radius:8px; }
+  body.working h1 { font-size:19px; }
+  body.working .tag, body.working .intro { display:none; }
   main { max-width:1440px; margin:0 auto; padding:12px 16px 40px; }
   body.working main { padding-bottom:16px; }
   #drop { border:2px dashed var(--line); border-radius:12px; padding:22px; text-align:center; background:var(--card); }
@@ -97,8 +118,27 @@
 </head>
 <body>
 <header>
-  <h1>HideSecrets</h1>
-  <p>Your files and screenshots stay in your browser: this page cannot send them to any site.</p>
+  <div class="brand">
+    <svg class="logo" viewBox="0 0 52 52" aria-hidden="true">
+      <rect x="13" y="9" width="26" height="34" rx="3.5" fill="#fff"/>
+      <rect x="18" y="16" width="16" height="3" rx="1.5" fill="#c4d1f2"/>
+      <rect x="18" y="23" width="16" height="5" rx="1" fill="#1d1d1b"/>
+      <rect x="18" y="32" width="10" height="3" rx="1.5" fill="#c4d1f2"/>
+    </svg>
+    <div>
+      <h1>HideSecrets</h1>
+      <p class="tag">Mask secrets and personal data before you share a log, a network capture, a screenshot or a support bundle.</p>
+    </div>
+  </div>
+  <div class="intro">
+    <ol class="steps">
+      <li><div><b>Drop or paste</b><span>logs, configuration, archives, screenshots</span></div></li>
+      <li><div><b>Review what was found</b><span>uncheck whatever can stay readable</span></div></li>
+      <li><div><b>Download the clean copy</b><span>the original is never changed</span></div></li>
+    </ol>
+    <p class="privacy"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>
+      Everything happens in your browser: a security rule stops this page from contacting any site.</p>
+  </div>
 </header>
 <main>
   <div id="level" class="bar" role="radiogroup" aria-label="Masking level">
