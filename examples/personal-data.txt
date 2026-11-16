@@ -9,7 +9,13 @@ Site coordinates: 47.123456, 7.654321
 Profile folder: /Users/jdoe/Documents and C:\Users\jane.doe\AppData\Local\Temp
 Build runs as /home/runner/work and /Users/Shared/cache
 License key: ABCDE-12345-FGHIJ-67890-KLMNO
+Card security: card_expiry="12/30" card_cvv="123"
+Identity: birth_date="1990-04-23", date of birth: 23/04/1990
+address="42 rue des Nuages, 75000 Ville-Test, France"
+device_serial="DEMO-SN-8F42-7319"
 
 Not personal data:
 Timestamp 2025-03-14 09:12:03, build 1.84, order 1234567890123456, checksum 4f3a:9b2c
+remote_address=10.0.0.5:8443 and email address: see profile
+mac_address=00:00:00:00:00:00, token expires=1700000000, exp=30/12
 Request id 0123456789 and hex 00:00:00:00:00:00

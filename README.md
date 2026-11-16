@@ -120,8 +120,9 @@ Doubling the workers made the batch 1.8 times faster. Reading the same folder wi
 | | logins shown as `account@machine` in shell prompts and terminal tabs (`jdoe@WS-0042`, `localadmin@WS-0042`); only a generic account on a generic machine (`admin@ubuntu-server`) stays visible | `[LOGIN_n]` |
 | | public IP addresses, IPv4 and IPv6 (loopback, link-local and private addresses stay visible) | `[PUBLIC_IP_n]` |
 | | phone numbers: international (`+44 7700 900123`), French (`01 99 00 12 34`, `0612345678`), North American (`(555) 010-0199`) | `[PHONE_n]` |
-| | IBANs (checksum verified) and bank card numbers (known card prefix and Luhn checksum) | `[BANK_n]` |
-| | devices and locations: MAC addresses, labeled serial numbers (`Serial number: …`, `S/N`, `service tag`, IMEI), GPS coordinates | `[DEVICE_n]` |
+| | IBANs (checksum verified), bank card numbers (known card prefix and Luhn checksum), and the security code and expiry date of a card when a label names them (`card_cvv=…`, `expiry: 12/30`) | `[BANK_n]` |
+| | devices and locations: MAC addresses, labeled serial numbers (`Serial number: …`, `device_serial=…`, `S/N`, `service tag`, IMEI), GPS coordinates | `[DEVICE_n]` |
+| | birth dates and postal addresses, only when a label names them (`birth_date=…`, `date of birth: …`, `address="42 rue …"`; `ip_address`, `email address` and the like are left alone) | `[PERSONAL_n]` |
 | | the user name in a path: `/Users/jdoe/…`, `/home/jdoe/…`, `C:\Users\jdoe\…` (`root`, `runner`, `Shared`… stay visible) | `[USERNAME_n]` |
 | | the customer part of a product's host names, once described in the [product settings](#product-settings-optional) (`<service>.<vendor>.<customer>.<tld>`) | `[CUSTOMER_n]` |
 | | any other domain that is not a well-known public service (identity provider, intranet…), as a whole host name | `[DOMAIN_n]` |
@@ -190,7 +191,7 @@ The tool helps you review; it does not guarantee that nothing is left. Always ch
 - **Decisions on single values** count for one file and are lost when the page is reloaded.
 - **Authentication parameters in URLs** (`state=`, `code=` in an SSO callback): not masked.
 - **A four-part version number** (`1.84.2.0`) can be mistaken for a public IP: uncheck it.
-- **Not detected**: postal addresses, national identity numbers, birth dates, personal names in file names, and any value with no clue around it. Phone-number patterns can match some long numbers: uncheck them, or turn the category off.
+- **Not detected**: national identity numbers, personal names in file names, postal addresses and birth dates that no label announces, and any value with no clue around it. Phone-number patterns can match some long numbers: uncheck them, or turn the category off.
 - **Documents** (PDF, Word, Excel, PowerPoint), video, network captures and password-manager exports are not read. Do not share them through this tool.
 - **Very large files** (HAR files of several tens of MB): the display can slow down.
 

@@ -243,7 +243,7 @@ function plausible(v) {
   return true;
 }
 function looksLikeWords(v) { return /^\p{L}+(?:[-_.\u2019']\p{L}+)*$/u.test(v); }   // "policy-description-X", "this.accessKey"
-var IGNORE = /^(true|false|null|undefined|nil|none|\*+|x+|\[?redacted\]?|\[(?:secret|email|public_ip|customer|domain|person|login|phone|bank|device|username)_\d+\])$/i;
+var IGNORE = /^(true|false|null|undefined|nil|none|\*+|x+|\[?redacted\]?|\[(?:secret|email|public_ip|customer|domain|person|login|phone|bank|device|username|personal)_\d+\])$/i;
 
 function regexPass(text, out) {
   for (var r of RULES) {
@@ -639,7 +639,13 @@ var CARD_RE = /(?<![\d-])\d(?:[ -]?\d){12,18}(?![\d-])/g;
 var CARD_IIN = /^(?:4|5[1-5]|2[2-7]|3[47]|35|6011|65)/;
 var MAC_RE = /(?<![\w:-])[0-9A-Fa-f]{2}(?:[:-][0-9A-Fa-f]{2}){5}(?![\w:-])/g;
 var IPV6_RE = /(?<![\w:.])(?:(?:[0-9a-f]{1,4}:){7}[0-9a-f]{1,4}|(?:[0-9a-f]{1,4}(?::[0-9a-f]{1,4}){0,6})?::(?:[0-9a-f]{1,4}(?::[0-9a-f]{1,4}){0,6})?)(?![\w:])/gi;
-var SERIAL_RE = /\b(?:serial(?:[ _-]?(?:number|no\.?))?|s\/n|num[ée]ro[ ]de[ ]s[ée]rie|service[ _-]?tag|asset[ _-]?tag|imei|udid|hardware[ _-]?uuid)\b[ \t]*[:=#]?[ \t]*([A-Za-z0-9][A-Za-z0-9-]{5,35})/gid;
+var SERIAL_RE = /(?<![A-Za-z0-9])(?:serial(?:[ _-]?(?:number|no\.?))?|s\/n|num[ée]ro[ ]de[ ]s[ée]rie|service[ _-]?tag|asset[ _-]?tag|imei|udid|hardware[ _-]?uuid)\b["']?[ \t]*[:=#]?[ \t]*["']?([A-Za-z0-9][A-Za-z0-9-]{5,35})/gid;
+// Card security code and expiry, birth date and postal address: only when a label names them
+var CVV_RE = /(?<![A-Za-z0-9])(?:cvv2?|cvc2?|security[ _-]?code|card[ _-]?(?:verification|security)[ _-]?(?:code|value))\b["']?[ \t]*[:=][ \t]*["']?(\d{3,4})(?!\d)/gid;
+var EXPIRY_RE = /(?<![A-Za-z0-9])(?:card[ _-]?)?(?:expiry|expiration|expires?|exp)(?:[ _-]?date)?\b["']?[ \t]*[:=][ \t]*["']?(\d{2}[ \t]*\/[ \t]*(?:\d{2}|\d{4}))(?!\d)/gid;
+var DOB_RE = /(?<![A-Za-z0-9])(?:birth[ _-]?date|date[ _-]?of[ _-]?birth|birthday|dob|date[ _-]?de[ _-]?naissance|naissance)\b["']?[ \t]*[:=][ \t]*["']?(\d{4}-\d{2}-\d{2}|\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})(?!\d)/gid;
+var ADDRESS_RE = /(?<![A-Za-z0-9])(?:(?:home|postal|billing|shipping|street|mailing|delivery|customer|contact)[ _-]?)?(?:address|adresse)\b["']?[ \t]*[:=][ \t]*(?:"([^"\n]{8,160})"|'([^'\n]{8,160})'|([^\n"']{8,160}))/gid;
+var NOT_POSTAL = /(?:ip|mac|e-?mail|mail|remote|client|server|host|bind|listen|url|web|wallet|public|private|memory|contract)[ _-]*$/i;   // ip_address, email address…
 var GPS_RE = /(?<![\d.])-?(?:[1-8]?\d|90)\.\d{4,}[ \t]*,[ \t]*-?(?:1[0-7]\d|[1-9]?\d|180)\.\d{4,}(?![\d.])/g;
 var PATH_USER_RE = /(?:\/Users\/|\/home\/|[A-Za-z]:(?:\\{1,2}|\/)Users(?:\\{1,2}|\/))([^\/\\\s"'<>:*?|$%{}`~]{1,40})/gid;
 var GENERIC_PATH_USERS = new Set(('shared public default all guest user users administrator admin root runner ubuntu ' +
@@ -671,6 +677,21 @@ function piiPass(text, out) {
     var sv = m[1];
     if (/\d/.test(sv) && !IGNORE.test(sv)) add(m.indices[1][0], m.indices[1][1], 'Device or location', 'DEVICE');
   }
+  var labeled = function (re, type, prefix, ok) {
+    re.lastIndex = 0;
+    while ((m = re.exec(text))) {
+      var ix = m.indices[1] || m.indices[2] || m.indices[3];
+      if (!ix) continue;
+      var v = text.slice(ix[0], ix[1]).replace(/[ \t,;]+$/, '');
+      if (v && (!ok || ok(v, m))) add(ix[0], ix[0] + v.length, type, prefix);
+    }
+  };
+  labeled(CVV_RE, 'Bank or card number', 'BANK');
+  labeled(EXPIRY_RE, 'Bank or card number', 'BANK', function (v) { return /^(?:0[1-9]|1[0-2])/.test(v); });   // MM/YY
+  labeled(DOB_RE, 'Personal detail', 'PERSONAL');
+  labeled(ADDRESS_RE, 'Personal detail', 'PERSONAL', function (v, mm) {
+    return /\d/.test(v) && /\p{L}/u.test(v) && /\s/.test(v) && !NOT_POSTAL.test(text.slice(Math.max(0, mm.index - 16), mm.index));
+  });
   GPS_RE.lastIndex = 0;
   while ((m = GPS_RE.exec(text))) add(m.index, m.index + m[0].length, 'Device or location', 'DEVICE');
   IPV6_RE.lastIndex = 0;
@@ -1037,6 +1058,7 @@ function makeSampleHar() {
     { type: 'User login', label: 'Logins (name@machine)', group: 'People' },
     { type: 'Phone number', label: 'Phone numbers', group: 'People' },
     { type: 'Username in a path', label: 'User names in paths', group: 'People' },
+    { type: 'Personal detail', label: 'Birth dates and postal addresses (labeled)', group: 'People' },
     { type: 'Public IP', label: 'Public IP addresses (IPv4, IPv6)', group: 'Network and company' },
     { type: 'Customer domain', label: 'Customer domain', group: 'Network and company' },
     { type: 'Other domain', label: 'Other domains', group: 'Network and company' },
