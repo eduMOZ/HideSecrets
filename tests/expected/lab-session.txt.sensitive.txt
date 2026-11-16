@@ -1,0 +1,62 @@
+# SYNTHETIC LAB - all credentials and identities are fictional
+
+[LOGIN_1]:~/platform$ ./deploy.sh --namespace identity-lab
+[INFO] runner=ci-deploy uid=1001 build=20261116.42
+[INFO] SSH target: root@[PUBLIC_IP_1]:2222
+[WARN] /home/[USERNAME_1]/.ssh/id_ed25519 permissions are 0644
+[INFO] SSH_AUTH_SOCK=/run/user/1001/keyring/ssh
+[INFO] Using proxy http://svc-build:[SECRET_1]@proxy.example.net:3128
+
+[LOGIN_1]:~/platform$ kubectl config view --minify --raw
+apiVersion: v1
+clusters:
+- cluster:
+    server: https://[[PUBLIC_IP_2]]:6443
+  name: lab-cluster
+contexts:
+- context:
+    cluster: lab-cluster
+    user: [EMAIL_1]
+  name: lab-admin
+users:
+- name: [EMAIL_1]
+  user:
+    token: [SECRET_2]
+
+[LOGIN_1]:~/platform$ helm upgrade --install idp ./charts/idp -n identity-lab
+Release "idp" has been upgraded. Revision: 7
+[INFO] image=registry.example.net/identity/idp:26.0.1
+[INFO] imagePullSecret registry-user=robot$identity+deployer
+[DEBUG] registry-password=[SECRET_3]
+[DEBUG] DATABASE_URL=postgresql://idp_owner:[SECRET_4]@db.example.net:5432/identity
+[DEBUG] REDIS_URL=rediss://:[SECRET_5]@cache.example.net:6380/0
+
+[LOGIN_1]:~/platform$ kubectl get secret idp-bootstrap -o yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: idp-bootstrap
+  namespace: identity-lab
+type: Opaque
+data:
+  username: [SECRET_6]
+  password: [SECRET_7]
+stringData:
+  recovery_codes: "[SECRET_8]"
+
+[LOGIN_1]:~/platform$ kubectl logs deploy/idp --tail=12
+INFO  Discovery: https://login.example.org/realms/lab/.well-known/openid-configuration
+DEBUG client_id=portal-lab client_secret=[SECRET_9]
+DEBUG redirect_uri=https://portal.example.org/oidc/callback
+DEBUG GET /authorize?scope=openid+email+profile&state=[SECRET_10]&nonce=[SECRET_11]
+DEBUG Callback /oidc/callback?code=[SECRET_12]&state=[SECRET_10]
+TRACE claims={"sub":"test-user-0042","email":"[EMAIL_1]",
+              "name":"[PERSON_1]","groups":["platform-admins"]}
+TRACE refresh_token=[SECRET_13]
+TRACE Set-Cookie: idp_session=[SECRET_14]; Secure; HttpOnly
+WARN  Forwarded: for=[PUBLIC_IP_3];proto=https
+ERROR login failed user=[EMAIL_1] reason="claim mail missing; expected email"
+
+[LOGIN_1]:~/platform$ curl -H 'X-API-Key: [SECRET_15]' https://hooks.example.net/deploy
+HTTP/2 200
+{"deployment":"ready","replicas":3,"port":8443,"duration_ms":4242}

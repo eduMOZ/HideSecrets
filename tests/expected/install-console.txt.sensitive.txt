@@ -15,5 +15,5 @@ Digest: sha256:3f1a9c0e5b7d2f4a6c8e0b1d3f5a7c9e1b3d5f7a9c1e3b5d7f9a1c3e5b7d9f1a
 [..] Public egress address seen by the registry: [PUBLIC_IP_1]
 $ sudo nimbusctl logs console | tail -3
 2026-11-13T10:12:04Z INFO  sso: issuer https://sso.[CUSTOMER_1]/realms/nimbus
-2026-11-13T10:12:05Z WARN  sso: callback rejected for [EMAIL_1] (state=Fake-State-8f2k1)
-2026-11-13T10:12:05Z ERROR sync: SYNC_MASTER_SECRET=[SECRET_3] is invalid
+2026-11-13T10:12:05Z WARN  sso: callback rejected for [EMAIL_1] (state=[SECRET_3])
+2026-11-13T10:12:05Z ERROR sync: SYNC_MASTER_SECRET=[SECRET_4] is invalid
