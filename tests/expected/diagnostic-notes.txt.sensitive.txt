@@ -1,0 +1,21 @@
+INCIDENT-0042 - Internal diagnostic notes (invented data)
+
+Alias: [PERSON_1]
+Email secondaire : [EMAIL_1]
+Naissance : [PERSONAL_1]
+Born on [PERSONAL_2]
+Share: "\\files.example.org\homes\[USERNAME_1]\report.pdf"
+Position: "[DEVICE_1]"
+
+PIN de test : [SECRET_1]
+Question de récupération : premier animal ?
+Réponse : [SECRET_2]
+password = [SECRET_3]
+{"client_secret":"[SECRET_4]","refresh_token":"[SECRET_5]"}
+
+Not personal data:
+alias: production
+alias ll='ls -la'
+pin: 17
+Réponse : 200 OK
+Share: "\\files.example.org\shared\public\readme.txt"

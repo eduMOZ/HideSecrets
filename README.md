@@ -114,16 +114,16 @@ Doubling the workers made the batch 1.8 times faster. Reading the same folder wi
 
 | Level | What is masked | Placeholder |
 |---|---|---|
-| **Secrets only** | Passwords (including the French "mot de passe: …"), tokens, OAuth/OIDC client secrets, `Authorization` headers, session cookies, JWTs, PEM private keys, well-known API keys (AWS, GitHub, Slack, Google…), variables named `*_SECRET`, `*_PASSWORD`, `*_TOKEN`, named keys (`*_BASE_KEY`, `*_COOKIE_KEY`, `kek`…), passwords embedded in a URL (`postgres://user:PASSWORD@host`). Also: every value of a Kubernetes `Secret`, private key data in a kubeconfig, `.netrc` passwords, passwords on a command line (`curl -u user:PASSWORD`, `--password`, `mysql -pPASSWORD`, `sshpass -p`), SQL (`IDENTIFIED BY '…'`, the sensitive columns of an `INSERT`), the `password` column of a CSV, password hashes (bcrypt, argon2, crypt), license keys, PGP private keys. On images, also long random strings with no name in front. | `[SECRET_n]` |
-| **Secrets and sensitive data** | All of the above, plus email addresses | `[EMAIL_n]` |
-| | person names, with the user ID shown next to them (`Jane DOE`, `JANE DOE 1234567`, `Author: Jane Doe`, `Jane's screen` in a video call) | `[PERSON_n]` |
+| **Secrets only** | Passwords (including the French "mot de passe: …"), tokens, OAuth/OIDC client secrets, `Authorization` headers, session cookies, JWTs, PEM private keys, well-known API keys (AWS, GitHub, Slack, Google…), variables named `*_SECRET`, `*_PASSWORD`, `*_TOKEN`, named keys (`*_BASE_KEY`, `*_COOKIE_KEY`, `kek`…), passwords embedded in a URL (`postgres://user:PASSWORD@host`). Also: every value of a Kubernetes `Secret`, private key data in a kubeconfig, `.netrc` passwords, passwords on a command line (`curl -u user:PASSWORD`, `--password`, `mysql -pPASSWORD`, `sshpass -p`), SQL (`IDENTIFIED BY '…'`, the sensitive columns of an `INSERT`), the `password` column of a CSV, password hashes (bcrypt, argon2, crypt), license keys, PGP private keys, PIN codes, the answer to a security question, a password written as several strings (`"Demo" + "Only"`). A value with JSON escapes (`\u0021`) is masked whole. On images, also long random strings with no name in front. | `[SECRET_n]` |
+| **Secrets and sensitive data** | All of the above, plus email addresses, also when written to dodge robots (`name [at] example [dot] org`) | `[EMAIL_n]` |
+| | person names, with the user ID shown next to them (`Jane DOE`, `JANE DOE 1234567`, `Author: Jane Doe`, `Jane's screen` in a video call; the value of `Alias:` or `Nickname:` in any script) | `[PERSON_n]` |
 | | logins shown as `account@machine` in shell prompts and terminal tabs (`jdoe@WS-0042`, `localadmin@WS-0042`); only a generic account on a generic machine (`admin@ubuntu-server`) stays visible | `[LOGIN_n]` |
 | | public IP addresses, IPv4 and IPv6 (loopback, link-local and private addresses stay visible) | `[PUBLIC_IP_n]` |
 | | phone numbers: international (`+44 7700 900123`), French (`01 99 00 12 34`, `0612345678`), North American (`(555) 010-0199`) | `[PHONE_n]` |
 | | IBANs (checksum verified), bank card numbers (known card prefix and Luhn checksum), and the security code and expiry date of a card when a label names them (`card_cvv=…`, `expiry: 12/30`) | `[BANK_n]` |
-| | devices and locations: MAC addresses, labeled serial numbers (`Serial number: …`, `device_serial=…`, `S/N`, `service tag`, IMEI), GPS coordinates | `[DEVICE_n]` |
-| | birth dates and postal addresses, only when a label names them (`birth_date=…`, `date of birth: …`, `address="42 rue …"`; `ip_address`, `email address` and the like are left alone) | `[PERSONAL_n]` |
-| | the user name in a path: `/Users/jdoe/…`, `/home/jdoe/…`, `C:\Users\jdoe\…` (`root`, `runner`, `Shared`… stay visible) | `[USERNAME_n]` |
+| | devices and locations: MAC addresses, labeled serial numbers (`Serial number: …`, `device_serial=…`, `S/N`, `service tag`, IMEI), GPS coordinates, decimal or degrees-minutes-seconds | `[DEVICE_n]` |
+| | birth dates and postal addresses, only when a label names them (`birth_date=…`, `date of birth: …`, `Naissance : 07 décembre 1988`, `born on March 3rd, 1990`, `address="42 rue …"`; `ip_address`, `email address` and the like are left alone) | `[PERSONAL_n]` |
+| | the user name in a path: `/Users/jdoe/…`, `/home/jdoe/…`, `C:\Users\jdoe\…`, `\\server\homes\jdoe\…` (`root`, `runner`, `Shared`… stay visible) | `[USERNAME_n]` |
 | | the customer part of a product's host names, once described in the [product settings](#product-settings-optional) (`<service>.<vendor>.<customer>.<tld>`) | `[CUSTOMER_n]` |
 | | any other domain that is not a well-known public service (identity provider, intranet…), as a whole host name | `[DOMAIN_n]` |
 
@@ -169,6 +169,7 @@ The [`examples/`](examples/) folder holds realistic files in which **every value
 | [`netrc.conf`](examples/netrc.conf) | A `.netrc` file, in its two layouts |
 | [`users.csv`](examples/users.csv) | A CSV export: the password column, e-mail addresses, phone numbers |
 | [`dump.sql`](examples/dump.sql) | A SQL dump: `IDENTIFIED BY`, `WITH PASSWORD`, password hashes and tokens in an `INSERT` |
+| [`diagnostic-notes.txt`](examples/diagnostic-notes.txt) | Hard cases: a name with no capital letters, an address written with `[at]`, a birth date with the month in letters, a PIN, a security answer, a password split in two strings, JSON escapes, coordinates in degrees, a network share; and look-alikes that stay visible |
 | [`personal-data.txt`](examples/personal-data.txt) | Phone numbers, IBAN, cards, serial number, MAC, IPv6, GPS, paths with a user name, a license key, and values that must stay visible |
 
 For each example, [`tests/expected/`](tests/expected/) holds the expected result at both levels. To check that the engine still produces them:

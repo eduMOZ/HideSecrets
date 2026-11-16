@@ -1,0 +1,21 @@
+INCIDENT-0042 - Internal diagnostic notes (invented data)
+
+Alias: 李小明 / O'Connor
+Email secondaire : camille [at] example [dot] org
+Naissance : 07 décembre 1988
+Born on March 3rd, 1990
+Share: "\\files.example.org\homes\camille.martin\report.pdf"
+Position: "48°51'24.1"N 2°21'08.0"E"
+
+PIN de test : 0427
+Question de récupération : premier animal ?
+Réponse : Capucine
+password = "Demo" + "Only!729"
+{"client_secret":"demo_A9f3\u0021p7","refresh_token":"demo_refresh_0001"}
+
+Not personal data:
+alias: production
+alias ll='ls -la'
+pin: 17
+Réponse : 200 OK
+Share: "\\files.example.org\shared\public\readme.txt"

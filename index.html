@@ -235,9 +235,14 @@ var RULES = [
   { type: 'Known API key', g: 0, re: /(?<![\w-])(?:AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{30,}|sk-[A-Za-z0-9_-]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|AIza[0-9A-Za-z_-]{35})\b/gd },
   { type: 'Authorization header', g: 1, re: /authorization(?:\\?["'])?[ \t]*[:=][ \t]*(?:\\?["'])?(?:(?:Bearer|Basic|Token|Digest|Negotiate)\s+)?([^\s"'\\,;]{4,})/gid },
   { type: 'Cookie header', g: 1, needsEq: true, cookie: true, re: /\b(?:set-)?cookie(?:\\?["'])?[ \t]*[:=][ \t]*(?:\\?["'])?([^\r\n"\\]{4,})/gid },
-  { type: 'client_secret', g: 1, re: /client_secret(?:\\?["'])?[ \t]*[:=][ \t]*(?:\\?["'])?([^\s"'&,;}\\<>]{4,})/gid },
+  { type: 'client_secret', g: 1, re: /client_secret(?:\\?["'])?[ \t]*[:=][ \t]*(?:\\?["'])?((?:[^\s"'&,;}\\<>]|\\u[0-9a-fA-F]{4}|\\[\\\/bfnrt])+)/gid },
   // Password embedded in a URL: postgres://user:PASSWORD@host, redis://:PASSWORD@host
   { type: 'Password in a URL', g: 1, re: /\b[a-z][a-z0-9+.-]*:\/\/[^\s:\/@"']*:([^\s@\/"']+)@/gid },
+  // A secret written as two or three strings: password = "Demo" + "Only!729"
+  { type: 'Password (split in strings)', g: 1, re: /\b(?:password|passwd|pwd|secret|token|api[_-]?key)(?:\\?["'])?[ \t]*[:=][ \t]*(["'][^"'\n]{1,60}["'](?:[ \t]*\+[ \t]*["'][^"'\n]{1,60}["'])+)/gid },
+  { type: 'PIN code', g: 1, re: /(?<![A-Za-z0-9])(?:code[ ]+)?pin(?:[ _-]?code)?(?:[ ]+(?:de|du|of|for|test|carte|card))*[ \t]*[:=][ \t]*["']?(\d{4,8})(?!\d)/gid },
+  // The answer to a security question, on the line after the question
+  { type: 'Security answer', g: 1, re: /(?:(?:security|secret|recovery)[ ]question|question[ ](?:de[ ])?(?:s[ée]curit[ée]|r[ée]cup[ée]ration|secr[èe]te))[^\n]*\n[ \t]*(?:r[ée]ponse|answer)[ \t]*[:=][ \t]*([^\n]{2,80})/gid },
   { type: 'Private key (PGP)', g: 0, re: /-----BEGIN PGP PRIVATE KEY BLOCK-----[\s\S]*?-----END PGP PRIVATE KEY BLOCK-----/gd },
   // Hashes of passwords: /etc/shadow, database dumps (bcrypt, argon2, crypt)
   { type: 'Password hash', g: 0, re: /\$2[aby]\$\d\d\$[.\/A-Za-z0-9]{53}|\$argon2(?:id|i|d)\$[^\s'"]{20,}|\$[156y]\$[.\/A-Za-z0-9$,=-]{20,}/gd },
@@ -256,7 +261,7 @@ var RULES = [
   { type: 'Password (netrc)', g: 1, words: true, re: /\bmachine[ \t]+\S+[ \t\r\n]+login[ \t]+\S+[ \t\r\n]+password[ \t]+([^\s"']{4,})/gid },
   // SQL: IDENTIFIED BY 'x', WITH PASSWORD 'x', PASSWORD('x')
   { type: 'SQL password', g: 1, re: /\b(?:IDENTIFIED[ \t]+BY|WITH[ \t]+(?:ENCRYPTED[ \t]+)?PASSWORD|PASSWORD)[ \t]*\(?[ \t]*(?:PASSWORD[ \t]+)?'([^'\r\n]{3,})'/gid },
-  { type: 'Password / token / key', g: 2, words: true, re: new RegExp('([A-Za-z0-9_.-]*' + NAME + '[0-9_-]*(?![A-Za-z]))(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*(?:\\\\?["\'])?([^\\s"\'&,;}\\\\<>]{4,})', 'gid') }
+  { type: 'Password / token / key', g: 2, words: true, re: new RegExp('([A-Za-z0-9_.-]*' + NAME + '[0-9_-]*(?![A-Za-z]))(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*(?:\\\\?["\'])?((?:[^\\s"\'&,;}\\\\<>]|\\\\u[0-9a-fA-F]{4}|\\\\[\\\\\\/bfnrt])+)', 'gid') }
 ];
 // A cookie is secret if its name says so, or if its value is long and is not a word (theme=dark is not)
 var COOKIE_NAME = /(sess|auth|token|sid|jwt|key|secret|login|csrf|xsrf)/i;
@@ -511,6 +516,8 @@ function customerRule() {
 }
 var SENS_RULES = [
   { type: 'Email address', prefix: 'EMAIL', g: 0, re: /(?<![\w.%+\/-])[A-Za-z0-9][A-Za-z0-9._%+-]*@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}\b/gd },
+  // An address written to dodge robots: anais [at] example [dot] org
+  { type: 'Email address', prefix: 'EMAIL', g: 0, re: /(?<![\w.%+\/-])[A-Za-z0-9][A-Za-z0-9._%+-]*[ \t]*[\[({](?:at|arobase)[\])}][ \t]*[A-Za-z0-9-]+(?:[ \t]*[\[({]dot[\])}][ \t]*[A-Za-z0-9-]+)+\b/gid },
   { type: 'Public IP', prefix: 'PUBLIC_IP', g: 0, ip: true, re: /(?<![\w.])(?:\d{1,3}\.){3}\d{1,3}(?![\w]|\.\d)/gd }
 ].concat(customerRule() || []);
 // Private, local and reserved addresses stay visible: they help diagnosis
@@ -596,8 +603,18 @@ var CAPS_STOP = new Set(('GET POST PUT DELETE PATCH HEAD OPTIONS HTTP HTTPS INFO
   'SELECT FROM WHERE INSERT UPDATE INTO VALUES AND OR NOT NULL TRUE FALSE THE TOTAL SIZE TYPE DATE TIME USER').split(' '));
 // A first name alone, in a screen-sharing label of a video call: "Jane's screen", "Jane is presenting"
 var PERSON_SHARE_RE = /(?<![\p{L}\d_])(\p{Lu}\p{Ll}+)(?=['\u2019]s (?:screen|desktop|window)\b| is (?:presenting|sharing)\b| (?:partage|présente) (?:son |l['\u2019])?écran)/gu;
+// "Alias: …", "Nickname: …": the value may be in any script (no capital letters to rely on)
+var ALIAS_RE = /(?<![\p{L}\d_])(?:alias|pseudonym|pseudo|aka|also known as|surnom|nickname)[ \t]*[:=][ \t]*([^\n]{2,60})/giu;
 function personPass(text, out) {
   var m;
+  ALIAS_RE.lastIndex = 0;
+  while ((m = ALIAS_RE.exec(text))) {
+    var av = m[1].replace(/[ \t]+$/, '');
+    if (/[\p{Lu}]|[^\x00-\x7f]/u.test(av) && !/[=<>{}()]/.test(av)) {   // "alias: production" is a setting, not a person
+      var as = m.index + m[0].length - m[1].length;
+      out.push({ start: as, end: as + av.length, type: 'Person name', prefix: 'PERSON', sens: true });
+    }
+  }
   PERSON_SHARE_RE.lastIndex = 0;
   while ((m = PERSON_SHARE_RE.exec(text))) {
     if (FN_SET.has(plain(m[1]))) out.push({ start: m.index, end: m.index + m[1].length, type: 'Person name', prefix: 'PERSON', sens: true });
@@ -683,9 +700,13 @@ var SERIAL_RE = /(?<![A-Za-z0-9])(?:serial(?:[ _-]?(?:number|no\.?))?|s\/n|num[�
 // Card security code and expiry, birth date and postal address: only when a label names them
 var CVV_RE = /(?<![A-Za-z0-9])(?:cvv2?|cvc2?|security[ _-]?code|card[ _-]?(?:verification|security)[ _-]?(?:code|value))\b["']?[ \t]*[:=][ \t]*["']?(\d{3,4})(?!\d)/gid;
 var EXPIRY_RE = /(?<![A-Za-z0-9])(?:card[ _-]?)?(?:expiry|expiration|expires?|exp)(?:[ _-]?date)?\b["']?[ \t]*[:=][ \t]*["']?(\d{2}[ \t]*\/[ \t]*(?:\d{2}|\d{4}))(?!\d)/gid;
-var DOB_RE = /(?<![A-Za-z0-9])(?:birth[ _-]?date|date[ _-]?of[ _-]?birth|birthday|dob|date[ _-]?de[ _-]?naissance|naissance)\b["']?[ \t]*[:=][ \t]*["']?(\d{4}-\d{2}-\d{2}|\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})(?!\d)/gid;
+var MONTHS = 'janvier|f[ée]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[ée]cembre|january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sept?|oct|nov|dec';
+var DOB_RE = new RegExp('(?<![A-Za-z0-9])(?:birth[ _-]?date|date[ _-]?of[ _-]?birth|birthday|dob|date[ _-]?de[ _-]?naissance|naissance|born(?:[ ]+on)?|n[ée]e? le)\\b["\']?[ \\t]*[:=]?[ \\t]*["\']?' +
+  '(\\d{4}-\\d{2}-\\d{2}|\\d{1,2}[\\/.-]\\d{1,2}[\\/.-]\\d{2,4}|\\d{1,2}(?:st|nd|rd|th|er)?[ ]+(?:' + MONTHS + ')[ ]+\\d{4}|(?:' + MONTHS + ')[ ]+\\d{1,2}(?:st|nd|rd|th)?,?[ ]+\\d{4})(?!\\d)', 'gid');
 var ADDRESS_RE = /(?<![A-Za-z0-9])(?:(?:home|postal|billing|shipping|street|mailing|delivery|customer|contact)[ _-]?)?(?:address|adresse)\b["']?[ \t]*[:=][ \t]*(?:"([^"\n]{8,160})"|'([^'\n]{8,160})'|([^\n"']{8,160}))/gid;
 var NOT_POSTAL = /(?:ip|mac|e-?mail|mail|remote|client|server|host|bind|listen|url|web|wallet|public|private|memory|contract)[ _-]*$/i;   // ip_address, email address…
+var DMS_RE = /(?<![\d.])\d{1,3}°[ \t]*\d{1,2}['′][ \t]*\d{1,2}(?:\.\d+)?(?:\\?"|″|'')?[ \t]*[NS][ \t,;\/]*\d{1,3}°[ \t]*\d{1,2}['′][ \t]*\d{1,2}(?:\.\d+)?(?:\\?"|″|'')?[ \t]*[EW]\b/g;
+var UNC_USER_RE = /\\{2,4}[A-Za-z0-9._-]+\\{1,2}(?:homes?|users|profiles?|personal)\\{1,2}([^\\\/\s"'<>:*?|]{1,40})/gid;
 var GPS_RE = /(?<![\d.])-?(?:[1-8]?\d|90)\.\d{4,}[ \t]*,[ \t]*-?(?:1[0-7]\d|[1-9]?\d|180)\.\d{4,}(?![\d.])/g;
 var PATH_USER_RE = /(?:\/Users\/|\/home\/|[A-Za-z]:(?:\\{1,2}|\/)Users(?:\\{1,2}|\/))([^\/\\\s"'<>:*?|$%{}`~]{1,40})/gid;
 var GENERIC_PATH_USERS = new Set(('shared public default all guest user users administrator admin root runner ubuntu ' +
@@ -734,6 +755,10 @@ function piiPass(text, out) {
   });
   GPS_RE.lastIndex = 0;
   while ((m = GPS_RE.exec(text))) add(m.index, m.index + m[0].length, 'Device or location', 'DEVICE');
+  DMS_RE.lastIndex = 0;
+  while ((m = DMS_RE.exec(text))) add(m.index, m.index + m[0].length, 'Device or location', 'DEVICE');
+  UNC_USER_RE.lastIndex = 0;
+  while ((m = UNC_USER_RE.exec(text))) if (!GENERIC_PATH_USERS.has(m[1].toLowerCase())) add(m.indices[1][0], m.indices[1][1], 'Username in a path', 'USERNAME');
   IPV6_RE.lastIndex = 0;
   while ((m = IPV6_RE.exec(text))) if (isPublicIpv6(m[0].toLowerCase())) add(m.index, m.index + m[0].length, 'Public IP', 'PUBLIC_IP');
   PATH_USER_RE.lastIndex = 0;
