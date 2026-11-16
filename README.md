@@ -57,7 +57,7 @@ The "a fake .log", "a fake .har" and "a fake screenshot" buttons let you try it 
 
 At the second level, a list lets you leave a whole category visible, for example the public IPs when you debug a proxy, or the domains for a certificate problem:
 
-- every category is checked by default;
+- the categories are grouped (people, network and company, devices and money), every one is checked by default, and **All** / **None** change them all at once;
 - a change applies to every file of the batch, including those already reviewed, and replaces the boxes you clicked earlier for that category. A box you click afterwards stays as an exception;
 - while a category is unchecked, a red "Not masked: …" reminder stays on screen, and its values stay listed, unchecked, so you can still mask a single one.
 

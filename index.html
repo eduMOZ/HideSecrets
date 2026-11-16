@@ -81,8 +81,15 @@
   .lv input { margin-top:3px; }
   #paste { width:100%; margin-top:12px; padding:8px; font:12.5px ui-monospace, Menlo, monospace; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); resize:vertical; }
   .row.prio { background:color-mix(in srgb, var(--accent) 12%, transparent); }
-  #cats { margin:-4px 0 14px; padding:10px 14px; border:1px solid var(--line); border-radius:10px; background:var(--card); }
-  #cats label { display:inline-flex; gap:6px; align-items:center; cursor:pointer; font-size:13.5px; }
+  #level { align-items:stretch; }
+  #cats { margin:-4px 0 14px; padding:12px 14px; border:1px solid var(--line); border-radius:10px; background:var(--card); }
+  #cats .chead { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  #cats .chead b { font-size:13.5px; }
+  #cats .cbtns { margin-left:auto; display:flex; gap:6px; }
+  #cats .cgrid { display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:12px 24px; }
+  #cats .cgroup h4 { margin:0 0 4px; font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
+  #cats label { display:flex; gap:8px; align-items:center; cursor:pointer; font-size:13.5px; padding:3px 0; }
+  #cats .catwarn { margin-top:10px; }
   .catwarn { color:var(--hit-line); font-size:13px; font-weight:600; }
   .catwarn:empty { display:none; }
   #catwarn2 { padding:8px 14px; border-bottom:1px solid var(--line); background:color-mix(in srgb, var(--hit) 45%, transparent); }
@@ -98,11 +105,13 @@
     <label class="lv"><input type="radio" name="lv" value="secret" checked>
       <span><b>Secrets only</b><br><span class="small">passwords, tokens, keys, session cookies…</span></span></label>
     <label class="lv"><input type="radio" name="lv" value="sensitive">
-      <span><b>Secrets and sensitive data</b><br><span class="small">also: email addresses, person names, logins, public IPs, phone numbers, bank and card numbers, devices, customer and other domains</span></span></label>
+      <span><b>Secrets and sensitive data</b><br><span class="small">also personal data: e-mails, names, logins, IPs, phone numbers, bank cards, devices, domains</span></span></label>
   </div>
-  <div id="cats" class="bar" style="display:none" aria-label="Sensitive data to mask">
-    <span class="small">Sensitive data to mask:</span>
-    <span class="catwarn" id="catwarn"></span>
+  <div id="cats" style="display:none" aria-label="Sensitive data to mask">
+    <div class="chead"><b>Sensitive data to mask</b><span class="small" id="catcount"></span>
+      <span class="cbtns"><button id="catall" class="del">All</button><button id="catnone" class="del">None</button></span></div>
+    <div class="cgrid" id="cgrid"></div>
+    <div class="catwarn" id="catwarn"></div>
   </div>
   <div id="drop">
     <p style="margin:0 0 10px">Drop logs, <b>.har</b>, configuration and other text files, archives (<b>.zip</b>, <b>.tar.gz</b>), screenshots, or a screenshot folder, here</p>
@@ -1023,16 +1032,16 @@ function makeSampleHar() {
   // All checked by default; an unchecked category is not masked in any file of the batch.
   // Its values stay listed, unchecked, so a single one can still be masked.
   var CATS = [
-    { type: 'Email address', label: 'Email addresses' },
-    { type: 'Person name', label: 'Person names' },
-    { type: 'User login', label: 'Logins (name@machine)' },
-    { type: 'Public IP', label: 'Public IP addresses (IPv4, IPv6)' },
-    { type: 'Phone number', label: 'Phone numbers' },
-    { type: 'Bank or card number', label: 'IBAN and card numbers' },
-    { type: 'Device or location', label: 'Devices and locations (MAC, serial, GPS)' },
-    { type: 'Username in a path', label: 'User names in paths' },
-    { type: 'Customer domain', label: 'Customer domain' },
-    { type: 'Other domain', label: 'Other domains' }
+    { type: 'Email address', label: 'Email addresses', group: 'People' },
+    { type: 'Person name', label: 'Person names', group: 'People' },
+    { type: 'User login', label: 'Logins (name@machine)', group: 'People' },
+    { type: 'Phone number', label: 'Phone numbers', group: 'People' },
+    { type: 'Username in a path', label: 'User names in paths', group: 'People' },
+    { type: 'Public IP', label: 'Public IP addresses (IPv4, IPv6)', group: 'Network and company' },
+    { type: 'Customer domain', label: 'Customer domain', group: 'Network and company' },
+    { type: 'Other domain', label: 'Other domains', group: 'Network and company' },
+    { type: 'Bank or card number', label: 'IBAN and card numbers', group: 'Devices and money' },
+    { type: 'Device or location', label: 'Devices and locations (MAC, serial, GPS)', group: 'Devices and money' }
   ];
   var CAT_KEY = 'hidesecrets.categoriesOff', catOff = new Set();
   try {
@@ -1054,31 +1063,44 @@ function makeSampleHar() {
     var names = CATS.filter(function (c) { return catOff.has(c.type); }).map(function (c) { return c.label; });
     return '⚠ Not masked: ' + names.join(', ');
   }
+  // Turning a category on or off replaces the earlier clicks on its values, in every file
+  function setCat(type, on) {
+    if (on) catOff.delete(type); else catOff.add(type);
+    files.forEach(function (f) {
+      Object.keys(f.ovr || {}).forEach(function (k) { if (k.indexOf(type + '|') === 0) delete f.ovr[k]; });
+      applyChoices(f);
+    });
+  }
+  function catsChanged() {
+    try { localStorage.setItem(CAT_KEY, JSON.stringify(Array.from(catOff))); } catch (e) { /* storage unavailable */ }
+    renderCats();
+    if (F) render();
+  }
+  $('catall').onclick = function () { CATS.forEach(function (c) { setCat(c.type, true); }); catsChanged(); };
+  $('catnone').onclick = function () { CATS.forEach(function (c) { setCat(c.type, false); }); catsChanged(); };
   function renderCats() {
-    var bar = $('cats'), warn = $('catwarn');
+    var bar = $('cats'), grid = $('cgrid');
     bar.style.display = LEVEL === 'sensitive' ? '' : 'none';
     if (!bar.dataset.built) {
       bar.dataset.built = '1';
+      var groups = {};
       CATS.forEach(function (c) {
+        var g = groups[c.group];
+        if (!g) {
+          g = groups[c.group] = document.createElement('div'); g.className = 'cgroup';
+          var h = document.createElement('h4'); h.textContent = c.group; g.appendChild(h);
+          grid.appendChild(g);
+        }
         var lab = document.createElement('label'), cb = document.createElement('input');
         cb.type = 'checkbox'; cb.dataset.type = c.type;
-        cb.onchange = function () {
-          if (cb.checked) catOff.delete(c.type); else catOff.add(c.type);
-          try { localStorage.setItem(CAT_KEY, JSON.stringify(Array.from(catOff))); } catch (e) { /* storage unavailable */ }
-          // The most recent decision wins: the category replaces earlier clicks on its values, in every file
-          files.forEach(function (f) {
-            Object.keys(f.ovr || {}).forEach(function (k) { if (k.indexOf(c.type + '|') === 0) delete f.ovr[k]; });
-            applyChoices(f);
-          });
-          renderCats();
-          if (F) render();
-        };
+        cb.onchange = function () { setCat(c.type, cb.checked); catsChanged(); };
         lab.appendChild(cb); lab.appendChild(document.createTextNode(c.label));
-        bar.insertBefore(lab, warn);
+        g.appendChild(lab);
       });
     }
     bar.querySelectorAll('input').forEach(function (cb) { cb.checked = !catOff.has(cb.dataset.type); });
-    warn.textContent = $('catwarn2').textContent = catWarning();
+    $('catcount').textContent = (CATS.length - catOff.size) + ' of ' + CATS.length + ' masked';
+    $('catwarn').textContent = $('catwarn2').textContent = catWarning();
   }
   function refresh(f) { if (f === F) render(); else renderFiles(); }
 
