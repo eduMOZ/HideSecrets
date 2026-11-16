@@ -202,6 +202,7 @@ The tool helps you review; it does not guarantee that nothing is left. Always ch
 ```text
 index.html          the page: interface, detection engine and archive reader (inside <script id="engine">)
 config.example.js   example product settings (copy to config.local.js, which is not published)
+assets/logo.svg     the logo shown in the header and used as the page icon
 ocr/                Tesseract.js OCR engine and language data (English, French), with their licenses
 examples/           invented test data
 tests/verify.js     checks the engine against the test data
@@ -213,6 +214,10 @@ LICENSE             Mozilla Public License 2.0
 ## Third-party components
 
 The `ocr/` folder contains [Tesseract.js](https://github.com/naptha/tesseract.js) and [tesseract.js-core](https://github.com/naptha/tesseract.js-core) 7.0.0, plus the English and French language data from [tessdata](https://github.com/tesseract-ocr/tessdata). They are redistributed unchanged under the [Apache License 2.0](ocr/LICENSE). See [`ocr/NOTICE.md`](ocr/NOTICE.md) for the details and the notices of the small libraries they bundle.
+
+## The logo
+
+`assets/logo.svg` is an original drawing made for this project: a fox hiding its eyes behind a black bar. It has the same license as the code. It is shown in the header and used as the page icon; replace the file to change it.
 
 ## License
 

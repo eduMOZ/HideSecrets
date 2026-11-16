@@ -10,18 +10,20 @@
      Only its own address is allowed, to load the image text reader (ocr/ folder). -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; worker-src 'self' blob:; connect-src 'self' blob:; img-src 'self' blob: data:; form-action 'none'; base-uri 'none'">
 <title>HideSecrets</title>
+<link rel="icon" type="image/svg+xml" href="assets/logo.svg">
 <style>
-  /* Palette: lavender page, white cards, one violet accent for actions and selection, a brand gradient for the header */
-  :root { --bg:#f6f5fb; --card:#fff; --ink:#1c1a2e; --muted:#6a6682; --line:#dedbea; --accent:#5b43d6; --on-accent:#fff; --hit:#ffd9d6; --hit-line:#d9433b; --off:#ecebf5; --brand1:#3b2d94; --brand2:#6a47e0; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#13121b; --card:#1e1c2a; --ink:#ecebf5; --muted:#a19eb8; --line:#37344f; --accent:#9b8cff; --on-accent:#14102e; --hit:#5a2420; --hit-line:#ff7b72; --off:#2b2940; --brand1:#231c55; --brand2:#3f2f9a; } }
+  /* Palette: cream page, white cards, violet for actions and selection, a dark purple gradient for the header,
+     and a violet-to-coral line under it */
+  :root { --bg:#fcf5f0; --card:#fff; --ink:#15141a; --muted:#625c6e; --line:#e8dfe3; --accent:#7543e3; --on-accent:#fff; --hit:#ffd9d6; --hit-line:#d9433b; --off:#f1e7f8; --brand1:#8b37c1; --brand2:#210340; --flame:linear-gradient(90deg,#7543e3,#c13fd6 55%,#ff7a59); }
+  @media (prefers-color-scheme: dark) { :root { --bg:#15141a; --card:#201e29; --ink:#f4eef6; --muted:#a8a1b4; --line:#38354a; --accent:#a98bff; --on-accent:#210340; --hit:#5a2420; --hit-line:#ff7b72; --off:#2b2838; --brand1:#3a0f6e; --brand2:#210340; } }
   * { box-sizing:border-box; }
   html { scrollbar-gutter:stable; }   /* the page does not shift when the scrollbar appears */
   body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui, sans-serif; }
-  header { background:linear-gradient(120deg, var(--brand1), var(--brand2)); color:#fff; }
-  .hwrap { max-width:1440px; margin:0 auto; padding:26px 16px 20px; }
+  header { background:linear-gradient(135deg, var(--brand1), var(--brand2)); color:#fff; }
+  header::after { content:''; display:block; height:4px; background:var(--flame); }
+  .hwrap { max-width:1440px; margin:0 auto; padding:22px 16px 18px; }
   .brand { display:flex; align-items:center; gap:14px; }
-  .logo { width:52px; height:52px; flex:none; border-radius:14px; background:#fff; box-shadow:0 2px 8px rgb(0 0 0 / .25); }
-  .logo .doc { fill:#ece8ff; } .logo .ln { fill:#bdb3ee; } .logo .bar { fill:#1c1a2e; }
+  .logo { width:96px; height:auto; flex:none; filter:drop-shadow(0 4px 10px rgb(0 0 0 / .35)); }
   h1 { margin:0; font-size:26px; line-height:1.15; letter-spacing:-.01em; }
   header p { margin:0; color:rgb(255 255 255 / .85); }
   .tag { margin-top:3px !important; font-size:16px; }
@@ -38,17 +40,18 @@
   .privacy svg { flex:none; width:14px; height:14px; }
   @media (max-width: 600px) {
     .brand { align-items:flex-start; gap:12px; }
-    .logo { width:44px; height:44px; border-radius:12px; }
+    .logo { width:58px; }
     h1 { font-size:23px; }
     .tag { font-size:14.5px; }
   }
   /* Once files are loaded: a compact bar that stays on screen */
-  body.working header { position:sticky; top:0; z-index:20; box-shadow:0 1px 6px rgb(0 0 0 / .2); }
+  body.working header { position:sticky; top:0; z-index:20; box-shadow:0 1px 6px rgb(0 0 0 / .25); }
+  body.working header::after { height:3px; }
   body.working .hwrap { height:56px; padding-top:0; padding-bottom:0; display:flex; align-items:center; }
-  body.working .logo { width:30px; height:30px; border-radius:8px; box-shadow:none; }
+  body.working .logo { width:38px; filter:none; }
   body.working h1 { font-size:19px; }
   body.working .tag, body.working .intro { display:none; }
-  body.working #work { height:calc(100vh - 84px); scroll-margin-top:56px; }
+  body.working #work { height:calc(100vh - 88px); scroll-margin-top:60px; }
   @media (max-width:800px) { body.working #work { height:auto; } }
   main { max-width:1440px; margin:0 auto; padding:12px 16px 40px; }
   body.working main { padding-bottom:16px; }
@@ -121,7 +124,7 @@
   #cats .cbtns { margin-left:auto; display:flex; gap:6px; }
   #cats .cgrid { display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:12px 24px; }
   #cats .cgroup h4::before { content:''; display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:7px; background:var(--dot, var(--accent)); }
-  #cats .cgroup:nth-child(1) { --dot:#7c5cf0; } #cats .cgroup:nth-child(2) { --dot:#14a39a; } #cats .cgroup:nth-child(3) { --dot:#e0902b; }
+  #cats .cgroup:nth-child(1) { --dot:#7543e3; } #cats .cgroup:nth-child(2) { --dot:#271aff; } #cats .cgroup:nth-child(3) { --dot:#ff6600; }
   #cats .cgroup h4 { margin:0 0 4px; font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
   #cats label { display:flex; gap:8px; align-items:center; cursor:pointer; font-size:13.5px; padding:3px 0; }
   #cats .catwarn { margin-top:10px; }
@@ -134,12 +137,7 @@
 <header>
  <div class="hwrap">
   <div class="brand">
-    <svg class="logo" viewBox="0 0 52 52" aria-hidden="true">
-      <rect class="doc" x="13" y="9" width="26" height="34" rx="3.5"/>
-      <rect class="ln" x="18" y="16" width="16" height="3" rx="1.5"/>
-      <rect class="bar" x="18" y="23" width="16" height="5" rx="1"/>
-      <rect class="ln" x="18" y="32" width="10" height="3" rx="1.5"/>
-    </svg>
+<img class="logo" src="assets/logo.svg" alt="" width="96" height="96">
     <div>
       <h1>HideSecrets</h1>
       <p class="tag">Mask secrets and personal data before you share a log, a network capture, a screenshot or a support bundle.</p>
@@ -1630,11 +1628,11 @@ function makeSampleHar() {
       var q = pixelRect(r, F.w, F.h);
       if (r.checked) { ctx.fillStyle = '#000'; ctx.fillRect(q.x, q.y, q.w, q.h); }
       else { ctx.setLineDash([lw * 3, lw * 2]); ctx.lineWidth = lw; ctx.strokeStyle = '#d9433b'; ctx.strokeRect(q.x, q.y, q.w, q.h); ctx.setLineDash([]); }
-      if (hover !== null && r.key === hover) { ctx.lineWidth = lw * 2; ctx.strokeStyle = '#6a47e0'; ctx.strokeRect(q.x - lw * 2, q.y - lw * 2, q.w + lw * 4, q.h + lw * 4); }
+      if (hover !== null && r.key === hover) { ctx.lineWidth = lw * 2; ctx.strokeStyle = '#7543e3'; ctx.strokeRect(q.x - lw * 2, q.y - lw * 2, q.w + lw * 4, q.h + lw * 4); }
     });
     if (drag && drag.moved) {
       var d = normRect(drag);
-      ctx.setLineDash([lw * 2, lw * 2]); ctx.lineWidth = lw; ctx.strokeStyle = '#6a47e0'; ctx.strokeRect(d.x, d.y, d.w, d.h); ctx.setLineDash([]);
+      ctx.setLineDash([lw * 2, lw * 2]); ctx.lineWidth = lw; ctx.strokeStyle = '#7543e3'; ctx.strokeRect(d.x, d.y, d.w, d.h); ctx.setLineDash([]);
     }
   }
   function pt(e) {
