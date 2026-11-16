@@ -1,0 +1,1520 @@
+<!doctype html>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at https://mozilla.org/MPL/2.0/. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- No-send rule, enforced by the browser: the page cannot reach any other site.
+     Only its own address is allowed, to load the image text reader (ocr/ folder). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; worker-src 'self' blob:; connect-src 'self' blob:; img-src 'self' blob: data:; form-action 'none'; base-uri 'none'">
+<title>HideSecrets</title>
+<style>
+  :root { --bg:#f6f6f4; --card:#fff; --ink:#1d1d1b; --muted:#6b6b66; --line:#dcdcd6; --accent:#2b59c3; --hit:#ffd9d6; --hit-line:#d9433b; --off:#ececE8; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#161615; --card:#222221; --ink:#eeeeea; --muted:#9a9a94; --line:#3a3a37; --accent:#7ba3ff; --hit:#5a2420; --hit-line:#ff7b72; --off:#2e2e2b; } }
+  * { box-sizing:border-box; }
+  html { scrollbar-gutter:stable; }   /* the page does not shift when the scrollbar appears */
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui, sans-serif; }
+  header { padding:20px 16px 8px; max-width:1440px; margin:0 auto; }
+  h1 { margin:0 0 4px; font-size:22px; }
+  header p { margin:0; color:var(--muted); }
+  main { max-width:1440px; margin:0 auto; padding:12px 16px 40px; }
+  body.working main { padding-bottom:16px; }
+  #drop { border:2px dashed var(--line); border-radius:12px; padding:22px; text-align:center; background:var(--card); }
+  #drop.over { border-color:var(--accent); }
+  button { font:inherit; padding:7px 14px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--ink); cursor:pointer; }
+  button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  button:disabled { opacity:.4; cursor:default; }
+  /* Work area: fits the screen; the file list, the content and the detections each scroll on their own */
+  #work { display:none; margin-top:16px; grid-template-columns:minmax(0,1fr) minmax(260px,320px); gap:16px; height:calc(100vh - 32px); }
+  #work.many { grid-template-columns:minmax(200px,260px) minmax(0,1fr) minmax(240px,300px); }
+  #work > .card { display:flex; flex-direction:column; min-height:0; }
+  #work #text, #work #imgwrap, #work #list, #flist { flex:1; min-height:0; max-height:none; overflow:auto; }
+  #work:not(.many) > #side { display:none; }   /* one file: no file list */
+  @media (max-width:800px) { #work, #work.many { grid-template-columns:1fr; height:auto; } #work #text, #work #imgwrap, #work #list, #flist { max-height:60vh; } }
+  .frow { display:flex; gap:6px; align-items:center; width:100%; text-align:left; border:0; border-bottom:1px solid var(--line); border-radius:0; padding:6px 12px; font-size:12.5px; }
+  /* Long names are cut at the start: the end (date, number) is what tells files apart */
+  .frow .fn { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction:rtl; text-align:left; }
+  .frow .st { font-size:11.5px; color:var(--muted); white-space:nowrap; }
+  .frow .st.hit { color:var(--hit-line); font-weight:600; }
+  .frow::before { content:''; width:1em; flex:none; color:var(--muted); }
+  .frow.seen::before { content:'✓'; }
+  .frow.cur { background:var(--accent); color:#fff; }
+  .frow.cur .st { color:#fff; }
+  #ocrbar { padding:10px 12px; border-bottom:1px solid var(--line); background:color-mix(in srgb, var(--accent) 6%, var(--card)); }
+  #ocrbar .orow { display:flex; gap:8px; align-items:center; }
+  #ocrbar label { display:block; margin-bottom:5px; font-size:12.5px; font-weight:600; }
+  #ocrbar select { flex:1; min-width:0; font:inherit; font-size:13px; padding:5px 8px; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--ink); }
+  #ocrbar button { padding:5px 12px; font-size:13px; white-space:nowrap; }
+  #ocrbar .small { margin-top:6px; line-height:1.4; }
+  #fsearch { display:flex; gap:8px; align-items:center; padding:8px 12px; border-bottom:1px solid var(--line); }
+  #fq { flex:1; min-width:0; padding:5px 8px; font:inherit; font-size:13px; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--ink); }
+  #fqn { white-space:nowrap; }
+  .frow.match { background:color-mix(in srgb, #f5c400 30%, transparent); }
+  .frow.match.cur { background:var(--accent); box-shadow:inset 4px 0 0 #f5c400; }
+  .frow.nomatch { opacity:.45; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  .card h2 { margin:0; padding:10px 14px; font-size:14px; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
+  #imgwrap { padding:14px; max-height:70vh; overflow:auto; }
+  #cv { display:block; width:100%; height:auto; cursor:crosshair; touch-action:none; }
+  #imgstatus:empty { display:none; }
+  #zoombar { position:sticky; top:-14px; left:-14px; z-index:1; margin:-14px -14px 10px; padding:8px 14px; background:var(--card); border-bottom:1px solid var(--line); }
+  #cv { max-width:none; margin:0 auto; }
+  #imgstatus { margin-bottom:10px; }
+  .del { padding:0 8px; line-height:1.4; }
+  #text { margin:0; padding:14px; white-space:pre-wrap; word-break:break-all; font:12.5px/1.6 ui-monospace, Menlo, monospace; max-height:70vh; overflow:auto; }
+  mark { cursor:pointer; border-radius:3px; padding:0 1px; background:var(--hit); outline:1px solid var(--hit-line); color:inherit; }
+  mark.off { background:var(--off); outline:1px dashed var(--muted); }
+  mark.flash { outline-width:3px; }
+  #list { max-height:70vh; overflow:auto; }
+  .row { display:flex; gap:10px; padding:9px 14px; border-bottom:1px solid var(--line); align-items:flex-start; }
+  .row:last-child { border-bottom:0; }
+  .row label { flex:1; min-width:0; cursor:pointer; }
+  .type { font-weight:600; font-size:13px; }
+  .val { font:12px ui-monospace, Menlo, monospace; color:var(--muted); word-break:break-all; }
+  .small { font-size:12px; color:var(--muted); }
+  .bar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  #level { margin:0 0 14px; }
+  .lv { display:flex; gap:8px; align-items:flex-start; padding:10px 14px; border:1px solid var(--line); border-radius:10px; background:var(--card); cursor:pointer; flex:1; min-width:240px; }
+  .lv:has(input:checked) { border-color:var(--accent); outline:1px solid var(--accent); }
+  .lv input { margin-top:3px; }
+  #paste { width:100%; margin-top:12px; padding:8px; font:12.5px ui-monospace, Menlo, monospace; border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--ink); resize:vertical; }
+  .row.prio { background:color-mix(in srgb, var(--accent) 12%, transparent); }
+  #cats { margin:-4px 0 14px; padding:10px 14px; border:1px solid var(--line); border-radius:10px; background:var(--card); }
+  #cats label { display:inline-flex; gap:6px; align-items:center; cursor:pointer; font-size:13.5px; }
+  .catwarn { color:var(--hit-line); font-size:13px; font-weight:600; }
+  .catwarn:empty { display:none; }
+  #catwarn2 { padding:8px 14px; border-bottom:1px solid var(--line); background:color-mix(in srgb, var(--hit) 45%, transparent); }
+</style>
+</head>
+<body>
+<header>
+  <h1>HideSecrets</h1>
+  <p>Your files and screenshots stay in your browser: this page cannot send them to any site.</p>
+</header>
+<main>
+  <div id="level" class="bar" role="radiogroup" aria-label="Masking level">
+    <label class="lv"><input type="radio" name="lv" value="secret" checked>
+      <span><b>Secrets only</b><br><span class="small">passwords, tokens, keys, session cookies…</span></span></label>
+    <label class="lv"><input type="radio" name="lv" value="sensitive">
+      <span><b>Secrets and sensitive data</b><br><span class="small">also: email addresses, person names, logins, public IPs, customer and other domains</span></span></label>
+  </div>
+  <div id="cats" class="bar" style="display:none" aria-label="Sensitive data to mask">
+    <span class="small">Sensitive data to mask:</span>
+    <span class="catwarn" id="catwarn"></span>
+  </div>
+  <div id="drop">
+    <p style="margin:0 0 10px">Drop <b>.log</b>, <b>.txt</b> or <b>.har</b> files, screenshots, or a screenshot folder, here</p>
+    <div class="bar" style="justify-content:center">
+      <button class="primary" id="pick">Choose files…</button>
+      <button class="primary" id="pickdir">Choose a screenshot folder…</button>
+    </div>
+    <div class="bar small" style="justify-content:center;margin-top:10px">Try with:
+      <button id="s-log">a fake .log</button><button id="s-har">a fake .har</button><button id="s-img">a fake screenshot</button>
+    </div>
+    <textarea id="paste" rows="3" placeholder="…or paste text here (log, console output, email): it is analyzed right away" aria-label="Paste text"></textarea>
+    <div class="bar" style="justify-content:flex-end;margin-top:6px"><button id="gopaste">Analyze typed text</button></div>
+    <p class="small" id="msg" style="margin:8px 0 0"></p>
+    <input type="file" id="file" accept=".log,.txt,.har,.json,.png,.jpg,.jpeg,.webp,.gif,.bmp" multiple hidden>
+    <input type="file" id="dir" webkitdirectory multiple hidden>
+  </div>
+
+  <div id="work">
+    <div class="card" id="side">
+      <h2><span id="fcount"></span><button id="clear" class="del">Clear all</button></h2>
+      <div id="ocrbar" style="display:none">
+        <label for="speed">Reading speed</label>
+        <div class="orow">
+          <select id="speed">
+            <option value="auto">Automatic</option>
+            <option value="quiet">Quiet</option>
+            <option value="max">Maximum</option>
+          </select>
+          <button id="pause">Pause</button>
+        </div>
+        <div class="small" id="speedhint"></div>
+      </div>
+      <div id="fsearch"><input type="search" id="fq" placeholder="Search a file name…" aria-label="Search a file name">
+        <span class="small" id="fqn"></span></div>
+      <div id="flist"></div>
+    </div>
+    <div class="card">
+      <h2><span><span id="kind">Text</span> <span class="small" id="fname"></span></span>
+        <span class="bar" id="nav"><button id="prev" class="del" title="Previous file (←)">←</button><span class="small" id="pos"></span><button id="next" class="del" title="Next file (→)">→</button></span>
+        <span class="small" id="hint" style="flex-basis:100%"></span></h2>
+      <pre id="text"></pre>
+      <div id="imgwrap" style="display:none">
+        <div class="bar" id="zoombar"><button id="zout" class="del" title="Zoom out (−)">−</button><span class="small" id="zlabel"></span><button id="zin" class="del" title="Zoom in (+)">+</button>
+          <button id="zfit" class="del" title="Fit to the width (0)">Fit</button><button id="z1" class="del" title="Size it had on screen (1)">Actual size</button>
+          <span class="small">pinch or ⌘ + scroll to zoom · hold space and drag to move</span></div>
+        <div class="small" id="imgstatus"></div><canvas id="cv" width="0" height="0"></canvas></div>
+    </div>
+    <div class="card">
+      <h2><span id="count"></span>
+        <span class="bar"><button id="all">Check all</button><button id="none">Uncheck all</button></span></h2>
+      <div class="catwarn" id="catwarn2"></div>
+      <div id="list"></div>
+      <div style="padding:12px 14px;border-top:1px solid var(--line)">
+        <button class="primary" id="dl" style="width:100%">Download clean version</button>
+        <button id="dlzip" style="width:100%;margin-top:8px;display:none">Download all (ZIP)</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Optional product settings, kept out of the repository (see config.example.js) -->
+<script src="config.local.js"></script>
+<script id="engine">
+// ---------- Product settings (optional) ----------
+// config.local.js, which is never published, can describe the product being installed: see config.example.js.
+var CFG = (typeof HIDESECRETS_CONFIG === 'object' && HIDESECRETS_CONFIG) || {};
+function cfgList(k) { return Array.isArray(CFG[k]) ? CFG[k].filter(function (v) { return typeof v === 'string' && v; }) : []; }
+function reEscape(v) { return v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+// ---------- Detection ----------
+// Sensitive field names. Generic keys ("key" alone) do not count: too many false positives (sort_key, primary_key…).
+// "mot de passe" and "mdp" are French for "password": they catch French input.
+// The separator inside a name may be a space: OCR sometimes loses the "_" ("cookie key:").
+// "kek" is a key encryption key.
+var NAME = '(?:password|passwd|pwd|mot[ _-]?de[ _-]?passe|mdp|secret|api[ _-]?key|apikey|token|access[ _-]?key(?:[ _-]?id)?|credential|kek|(?:crypto|auth|cookie|base|signing|private|encryption|master|session|vapid)[ _-]?keys?)';
+// Separators are matched with [ \t]* rather than \s*: a value never starts on the next line
+// ("Password:" alone at the end of a line, then "WARNING!" below it).
+var RULES = [
+  { type: 'Private key (PEM)', g: 0, re: /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/gd },
+  { type: 'JWT', g: 0, re: /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/gd },
+  { type: 'Known API key', g: 0, re: /(?<![\w-])(?:AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{30,}|sk-[A-Za-z0-9_-]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|AIza[0-9A-Za-z_-]{35})\b/gd },
+  { type: 'Authorization header', g: 1, re: /authorization(?:\\?["'])?[ \t]*[:=][ \t]*(?:\\?["'])?(?:(?:Bearer|Basic|Token|Digest|Negotiate)\s+)?([^\s"'\\,;]{4,})/gid },
+  { type: 'Cookie header', g: 1, needsEq: true, cookie: true, re: /\b(?:set-)?cookie(?:\\?["'])?[ \t]*[:=][ \t]*(?:\\?["'])?([^\r\n"\\]{4,})/gid },
+  { type: 'client_secret', g: 1, re: /client_secret(?:\\?["'])?[ \t]*[:=][ \t]*(?:\\?["'])?([^\s"'&,;}\\<>]{4,})/gid },
+  // Password embedded in a URL: postgres://user:PASSWORD@host, redis://:PASSWORD@host
+  { type: 'Password in a URL', g: 1, re: /\b[a-z][a-z0-9+.-]*:\/\/[^\s:\/@"']*:([^\s@\/"']+)@/gid },
+  { type: 'Password / token / key', g: 2, words: true, re: new RegExp('([A-Za-z0-9_.-]*' + NAME + '[0-9_-]*(?![A-Za-z]))(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*(?:\\\\?["\'])?([^\\s"\'&,;}\\\\<>]{4,})', 'gid') }
+];
+// A cookie is secret if its name says so, or if its value is long and is not a word (theme=dark is not)
+var COOKIE_NAME = /(sess|auth|token|sid|jwt|key|secret|login|csrf|xsrf)/i;
+function cookieIsSecret(name, val) { return COOKIE_NAME.test(name) || (val.length >= 16 && !looksLikeWords(val)); }
+// A value that looks like code or plain text is not a secret
+function strictOk(v) { return plausible(v) && !/\s/.test(v) && !looksLikeWords(v); }
+// A path to a key file is not the key: /app/secrets/hub-private-key, ./keys/signing.pem
+// (a base64 value can start with "/", but its parts are not words)
+function isFilePath(v) {
+  var m = /^(?:~|\.{1,2})?\/(.+?)\/?$/.exec(v);
+  if (!m) return false;
+  var parts = m[1].split('/');
+  return parts.length >= 2 && parts.every(function (p) { return /^[A-Za-z0-9._-]+$/.test(p); }) &&
+    parts.some(function (p) { return /^[A-Za-z]+(?:[-_.][A-Za-z]+)*$/.test(p) && p.length >= 3; });
+}
+function plausible(v) {
+  if (v.length < 4) return false;
+  if (isFilePath(v)) return false;
+  if (/^0x[0-9a-f]+$/i.test(v)) return false;            // hex constants
+  if (/^[$`{(\[<@#]/.test(v)) return false;               // ${...}, `...`, {..}, (..)
+  if (/[()${}`]/.test(v)) return false;
+  if (/\|\||&&|===?|=>|!==?/.test(v.replace(/=+$/, ''))) return false;   // code operators (n||null, a===b); a trailing base64 "==" is not one
+  if (/^(this|self|window|document|data|value|req|res|args?|opts?|config|params?)\b/i.test(v)) return false;
+  return true;
+}
+function looksLikeWords(v) { return /^\p{L}+(?:[-_.\u2019']\p{L}+)*$/u.test(v); }   // "policy-description-X", "this.accessKey"
+var IGNORE = /^(true|false|null|undefined|nil|none|\*+|x+|\[?redacted\]?|\[(?:secret|email|public_ip|customer|domain|person|login)_\d+\])$/i;
+
+function regexPass(text, out) {
+  for (var r of RULES) {
+    r.re.lastIndex = 0;
+    var m;
+    while ((m = r.re.exec(text))) {
+      var ix = m.indices[r.g];
+      if (!ix) continue;
+      var v = text.slice(ix[0], ix[1]);
+      if (IGNORE.test(v)) continue;
+      if (r.g > 0 && !plausible(v)) continue;
+      if (r.words && looksLikeWords(v)) continue;
+      if (r.needsEq && v.indexOf('=') < 0) continue;
+      if (r.cookie) {   // one secret per cookie, not the whole header
+        var isSet = /^set-/i.test(m[0]), off = 0;
+        var parts = v.split(';');
+        for (var pi = 0; pi < parts.length; pi++) {
+          var part = parts[pi], eq = part.indexOf('=');
+          if (eq > 0 && !(isSet && pi > 0)) {
+            var val = part.slice(eq + 1), lead = val.length - val.trimStart().length;
+            val = val.trim();
+            if (val.length >= 6 && !IGNORE.test(val) && cookieIsSecret(part.slice(0, eq).trim(), val))
+              out.push({ start: ix[0] + off + eq + 1 + lead, end: ix[0] + off + eq + 1 + lead + val.length, type: 'Cookie "' + part.slice(0, eq).trim() + '"' });
+          }
+          off += part.length + 1;
+        }
+        continue;
+      }
+      out.push({ start: ix[0], end: ix[1], type: r.type });
+    }
+  }
+}
+
+function harPass(text, out) {
+  var j;
+  try { j = JSON.parse(text); } catch (e) { return false; }
+  if (!j || !j.log || !Array.isArray(j.log.entries)) return false;
+  var SENS_NAME = new RegExp(NAME, 'i');
+  var SENS_HEADER = /^(authorization|proxy-authorization|cookie|set-cookie|x-api-key|x-auth-token|x-access-token)$/i;
+  function push(v, type, depth, strict) {
+    if (typeof v !== 'string' || v.length < 6 || IGNORE.test(v)) return;
+    if (strict && !strictOk(v)) return;   // a sentence or a word is not a secret
+    var esc = v;
+    for (var d = 0; d <= depth; d++) esc = JSON.stringify(esc).slice(1, -1);
+    var i = -1;
+    while ((i = text.indexOf(esc, i + 1)) !== -1) out.push({ start: i, end: i + esc.length, type: type });
+  }
+  function walkJson(o, type, depth) {
+    if (Array.isArray(o)) o.forEach(function (x) { walkJson(x, type, depth); });
+    else if (o && typeof o === 'object') Object.keys(o).forEach(function (k) {
+      if (typeof o[k] === 'string' && SENS_NAME.test(k)) push(o[k], type, depth, true);
+      else walkJson(o[k], type, depth);
+    });
+  }
+  function body(str, mime, depth) {
+    if (!str) return;
+    try { walkJson(JSON.parse(str), 'Request/response body', depth); } catch (e) { /* non-JSON body: covered by text detection */ }
+  }
+  function side(m) {
+    if (!m) return;
+    (m.headers || []).forEach(function (h) {
+      if (!SENS_HEADER.test(h.name)) return;
+      var t = /cookie/i.test(h.name) ? 'Cookie header' : h.name + ' header';
+      if (/cookie/i.test(h.name)) {
+        String(h.value).split(';').forEach(function (part, pi) {
+          var eq = part.indexOf('=');
+          var cn = part.slice(0, eq).trim(), cv = part.slice(eq + 1).trim();
+          if (eq > 0 && !(/^set-/i.test(h.name) && pi > 0) && cookieIsSecret(cn, cv)) push(cv, 'Cookie "' + cn + '"', 0);
+        });
+        return;
+      }
+      push(/^authorization|proxy-authorization/i.test(h.name) ? String(h.value).replace(/^(Bearer|Basic|Token|Digest|Negotiate)\s+/i, '') : h.value, t, 0);
+    });
+    (m.cookies || []).forEach(function (c) {
+      if (cookieIsSecret(String(c.name), String(c.value))) push(c.value, 'Cookie "' + c.name + '"', 0);
+    });
+    (m.queryString || []).forEach(function (q) { if (SENS_NAME.test(q.name)) push(q.value, 'URL parameter "' + q.name + '"', 0, true); });
+    if (m.postData) {
+      (m.postData.params || []).forEach(function (p) { if (SENS_NAME.test(p.name)) push(p.value, 'Body: "' + p.name + '"', 0, true); });
+      body(m.postData.text, m.postData.mimeType, 1);
+    }
+    if (m.content && m.content.text && m.content.encoding !== 'base64') body(m.content.text, m.content.mimeType, 1);
+  }
+  j.log.entries.forEach(function (e) { side(e.request); side(e.response); });
+  return true;
+}
+
+function normKey(v) {
+  var k = v.replace(/\\(["\\\/])/g, '$1');
+  try { k = decodeURIComponent(k); } catch (e) { /* not encoded */ }
+  return k;
+}
+
+// Cookie holding JSON: keep the field names, mask only the secret values
+function expandJsonCookie(text, d) {
+  if (!/^Cookie "/.test(d.type)) return [d];
+  var span = text.slice(d.start, d.end), k = normKey(span), j, leaves = [], res = [], names = {};
+  if (k.charAt(0) !== '{' && k.charAt(0) !== '[') return [d];
+  try { j = JSON.parse(k); } catch (e) { return [d]; }
+  (function collect(o) {   // field names: never secrets
+    if (Array.isArray(o)) o.forEach(collect);
+    else if (o && typeof o === 'object') Object.keys(o).forEach(function (kk) { names[kk] = 1; collect(o[kk]); });
+  })(j);
+  (function walk(o, key) {
+    if (typeof o === 'string') { if (o.length >= 8 && strictOk(o) && !names[o]) leaves.push({ key: key, v: o }); }
+    else if (Array.isArray(o)) o.forEach(function (x) { walk(x, key); });
+    else if (o && typeof o === 'object') Object.keys(o).forEach(function (kk) { walk(o[kk], kk); });
+  })(j, '');
+  leaves.forEach(function (l) {
+    var found = false;
+    [l.v, encodeURIComponent(l.v), JSON.stringify(l.v).slice(1, -1)].some(function (f) {   // plain, URL-encoded, escaped
+      var i = -1;
+      while ((i = span.indexOf(f, i + 1)) !== -1) { res.push({ start: d.start + i, end: d.start + i + f.length, type: d.type + ' › ' + l.key }); found = true; }
+      return found;
+    });
+  });
+  // JSON with no secret value (e.g. already cleaned): nothing to mask
+  return res.length ? res : (leaves.length ? [d] : []);
+}
+
+// ---------- Sensitive data (second level) ----------
+// The customer domain: when the product's host names follow <service>.<vendor>.<customer domain>
+// (set in the product settings), only the customer part is masked, with one checkbox for all its occurrences
+function customerRule() {
+  var vendor = typeof CFG.vendor === 'string' ? CFG.vendor : '', alts = [];
+  if (!vendor) return null;
+  if (cfgList('services').length) alts.push('\\b(?:' + cfgList('services').map(reEscape).join('|') + ')\\.');
+  if (cfgList('domainVariables').length) alts.push('\\b(?:' + cfgList('domainVariables').map(reEscape).join('|') + ')\\s*=\\s*["\']?');
+  if (!alts.length) return null;
+  return { type: 'Customer domain', prefix: 'CUSTOMER', g: 1,
+    re: new RegExp('(?:' + alts.join('|') + ')' + reEscape(vendor) + '\\.((?:[A-Za-z0-9-]+\\.)+[A-Za-z]{2,})\\b', 'gid') };
+}
+var SENS_RULES = [
+  { type: 'Email address', prefix: 'EMAIL', g: 0, re: /(?<![\w.%+\/-])[A-Za-z0-9][A-Za-z0-9._%+-]*@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}\b/gd },
+  { type: 'Public IP', prefix: 'PUBLIC_IP', g: 0, ip: true, re: /(?<![\w.])(?:\d{1,3}\.){3}\d{1,3}(?![\w]|\.\d)/gd }
+].concat(customerRule() || []);
+// Private, local and reserved addresses stay visible: they help diagnosis
+function isPublicIp(s) {
+  var o = s.split('.').map(Number);
+  if (o.some(function (n) { return n > 255; })) return false;
+  var a = o[0], b = o[1];
+  if (a === 0 || a === 10 || a === 127 || a >= 224) return false;
+  if (a === 169 && b === 254) return false;
+  if (a === 172 && b >= 16 && b <= 31) return false;
+  if (a === 192 && b === 168) return false;
+  if (a === 100 && b >= 64 && b <= 127) return false;
+  return true;
+}
+// ---------- Other domains ----------
+// Any domain that is not a known public service may belong to the customer (identity provider,
+// intranet…): it is masked by default and shown first so the user can uncheck it quickly.
+// Nothing here depends on the customer's sector.
+var TLDS = new Set(('com net org info biz io ai app dev cloud tech online site xyz top gov edu mil int eu asia pro mobi ' +
+  'shop store blog news live digital agency group company services solutions systems network email ' +
+  'center zone world today global bank insurance health care law legal media studio design paris berlin ' +
+  'london nyc tokyo swiss bzh alsace corsica test').split(' '));
+// Two-letter endings that are also file extensions or are too often code
+var TLD_NOT = new Set(['md', 'sh', 'py', 'rs', 'ts', 'so', 'js', 'cc', 'mk', 'pm', 'ps', 'rb', 'gz', 'xz', 'db', 'id', 'in', 'is', 'it', 'me', 'at', 'to', 'do', 'go', 'no', 'on', 'or', 'as', 'be', 'by']);
+// …except when the domain is clearly one (several labels, or a known second level: example.co.uk)
+var SLD = new Set(['co', 'com', 'org', 'net', 'gov', 'gouv', 'gv', 'govt', 'ac', 'edu', 'or', 'ne', 'go', 'mil', 'nic', 'admin', 'public']);
+// Well-known public services: they stay visible (they help diagnosis and identify nobody)
+var PUBLIC_DOMAINS = new Set(('github.com githubusercontent.com github.io docker.com docker.io quay.io gcr.io ghcr.io k8s.io ' +
+  'kubernetes.io helm.sh google.com googleapis.com gstatic.com googleusercontent.com microsoft.com microsoftonline.com ' +
+  'windows.net azure.com live.com office.com apple.com icloud.com amazon.com amazonaws.com cloudfront.net ' +
+  'cloudflare.com letsencrypt.org digicert.com ubuntu.com canonical.com debian.org redhat.com fedoraproject.org ' +
+  'centos.org alpinelinux.org python.org pypi.org npmjs.org npmjs.com nodejs.org yarnpkg.com golang.org go.dev ' +
+  'rust-lang.org crates.io maven.org apache.org postgresql.org redis.io nginx.org nginx.com openssl.org ' +
+  'w3.org ietf.org openid.net oauth.net schema.org json-schema.org wikipedia.org ' +
+  'slack.com zoom.us okta.com auth0.com ' +
+  'example.com example.org example.net example.test').split(' ')   // reserved example domains (test data)
+  .concat(cfgList('publicDomains').map(function (d) { return d.toLowerCase(); })));   // the product's own public domains
+var HOST_RE = /(?<![\w.@%+-])((?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+([A-Za-z]{2,24}))(?![\w-]|\.[A-Za-z0-9])/g;
+var CODE_START = /^(this|self|window|document|data|value|req|res|args?|opts?|config|params?|console|math|json|object|array|string|date|process|module|exports|e|el|evt|err|ctx|obj|item|node)\./i;
+function registrable(labels) {
+  var n = labels.length, tld = labels[n - 1];
+  if (n >= 3 && tld.length === 2 && SLD.has(labels[n - 2])) return labels.slice(-3).join('.');
+  return labels.slice(-2).join('.');
+}
+function isOtherDomain(host, tld) {
+  if (host !== host.toLowerCase() && host !== host.toUpperCase()) return false;   // code: res.Status, this.accessKey
+  var h = host.toLowerCase(), t = tld.toLowerCase(), labels = h.split('.');
+  if (CODE_START.test(h)) return false;
+  if (t.length === 2) { if (TLD_NOT.has(t) && !(labels.length >= 3 && SLD.has(labels[labels.length - 2]))) return false; }
+  else if (!TLDS.has(t)) return false;   // file names (config.json) and internal names (.local, .svc) stay visible
+  if (labels.slice(0, -1).every(function (l) { return /^\d+$/.test(l); })) return false;
+  return !PUBLIC_DOMAINS.has(registrable(labels));
+}
+
+// ---------- Person names ----------
+// Three clues, each imperfect (missing a name is accepted; the user masks the rest by hand):
+// 1. a common first name followed by a capitalized name: "John Smith", "Marie DUPONT";
+// 2. two or more words in capitals followed by an identifier: "JANE DOE 1234567" (account menus);
+// 3. a label that announces a person: "Author: Jane Doe", "Connecté en tant que Jean Martin".
+var FIRST_NAMES = ('adam adrien agnes alain alex alexandre alexandra alexis alice alicia aline amandine amelie anais andre andrea ' +
+  'andrew angela angelique anna anne annie antoine anthony arnaud arthur aurelie aurelien axel baptiste barbara benjamin ' +
+  'benoit bernard bertrand brigitte bruno camille carine carla carlos caroline catherine cecile celine charles charlotte ' +
+  'chloe christian christine christophe claire clara claudine clement corinne cyril damien daniel david delphine denis ' +
+  'didier dominique edouard elena elise elodie emilie emma emmanuel emmanuelle eric estelle etienne eva fabien fabienne ' +
+  'fabrice florence florian francois francoise frederic gabriel gael gerard gilles guillaume helene henri hugo isabelle ' +
+  'jacques james jane jason jean jeanne jennifer jerome jessica joel johan john jonathan jordan joseph julia julie julien ' +
+  'justine karim karine kevin laetitia laura laure laurence laurent lea leo louis louise luc lucas lucie ludovic manon ' +
+  'marc marcel margaux marguerite maria marie marine martin mathieu mathilde matthew matthieu maxime melanie michael ' +
+  'michel michele mickael monique morgane muriel myriam nadia natacha nathalie nicolas nina noemie olivier pascal ' +
+  'pascale patricia patrick paul pauline philippe pierre quentin raphael remi remy renaud richard robert romain sabine ' +
+  'sandrine sarah sebastien serge simon sophie stephane stephanie steve sylvain sylvie thierry thomas tristan valentin ' +
+  'valerie vanessa veronique victor vincent virginie william xavier yann yannick yves zoe ' +
+  'ahmed ali fatima mohamed karima samir sofia yasmine leila omar hans peter klaus anna maria juan jose luis ana carmen ' +
+  'giovanni marco luca giulia paolo pedro joao kenji yuki wei li mei').split(' ');
+var FN_SET = new Set(FIRST_NAMES);
+function plain(w) { return w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }   // Hélène -> helene
+var NAME_WORD = "\\p{Lu}(?:\\p{Ll}+|\\p{Lu}+)(?:[-'’]\\p{Lu}?\\p{L}+)*";
+var PERSON_FIRST_RE = new RegExp('(?<![\\p{L}\\d_.@-])(' + NAME_WORD + ')((?:[ \\t]+' + NAME_WORD + '){1,2})(?:[ \\t]+(\\d{4,}))?(?![\\p{L}\\d_@-])', 'gu');
+var PERSON_CAPS_RE = /(?<![\p{L}\d_])(\p{Lu}{2,}(?:[-'\u2019]\p{Lu}+)*(?:[ \t]+\p{Lu}{2,}(?:[-'\u2019]\p{Lu}+)*){1,2})[ \t]*(\d{4,})(?![\p{L}\d])/gu;   // the ID may be stuck to the name (OCR)
+var PERSON_LABEL_RE = /\b(?:name|full[ _-]?name|display[ _-]?name|nom|pr[ée]nom|author|auteur|owner|assignee|reporter|contact|signed in as|logged in as|connect[ée](?:e)? en tant que|user|utilisateur)\b[ \t]*[:=]?[ \t]*["']?(\p{Lu}\p{Ll}+(?:[- ]\p{Lu}[\p{L}'’-]+){1,2})/giu;
+var CAPS_STOP = new Set(('GET POST PUT DELETE PATCH HEAD OPTIONS HTTP HTTPS INFO WARN WARNING ERROR DEBUG TRACE FATAL NOTICE CRIT ' +
+  'UTC GMT CET CEST PID UID GID TCP UDP DNS TLS SSL API URL URI ID IDS OK KO NAME READY STATUS AGE PORT PORTS IP CPU MEM ' +
+  'SELECT FROM WHERE INSERT UPDATE INTO VALUES AND OR NOT NULL TRUE FALSE THE TOTAL SIZE TYPE DATE TIME USER').split(' '));
+// A first name alone, in a screen-sharing label of a video call: "Jane's screen", "Jane is presenting"
+var PERSON_SHARE_RE = /(?<![\p{L}\d_])(\p{Lu}\p{Ll}+)(?=['\u2019]s (?:screen|desktop|window)\b| is (?:presenting|sharing)\b| (?:partage|présente) (?:son |l['\u2019])?écran)/gu;
+function personPass(text, out) {
+  var m;
+  PERSON_SHARE_RE.lastIndex = 0;
+  while ((m = PERSON_SHARE_RE.exec(text))) {
+    if (FN_SET.has(plain(m[1]))) out.push({ start: m.index, end: m.index + m[1].length, type: 'Person name', prefix: 'PERSON', sens: true });
+  }
+  PERSON_FIRST_RE.lastIndex = 0;
+  while ((m = PERSON_FIRST_RE.exec(text))) {
+    if (!FN_SET.has(plain(m[1]))) { PERSON_FIRST_RE.lastIndex = m.index + m[1].length; continue; }
+    var last = m[2].trim().split(/[ \t]+/);
+    if (last.some(function (w) { return CAPS_STOP.has(w.toUpperCase()); })) continue;
+    out.push({ start: m.index, end: m.index + m[0].length, type: 'Person name', prefix: 'PERSON', sens: true });
+  }
+  PERSON_CAPS_RE.lastIndex = 0;
+  while ((m = PERSON_CAPS_RE.exec(text))) {
+    if (m[1].split(/[ \t]+/).some(function (w) { return CAPS_STOP.has(w); })) continue;
+    out.push({ start: m.index, end: m.index + m[0].length, type: 'Person name', prefix: 'PERSON', sens: true });
+  }
+  PERSON_LABEL_RE.lastIndex = 0;
+  while ((m = PERSON_LABEL_RE.exec(text))) {
+    // The label ignores case, the name does not: "NAME READY STATUS" (a table header) is no name
+    if (!/^\p{Lu}\p{Ll}+(?:[- ]\p{Lu}\p{Ll}[\p{L}'\u2019-]*){1,2}$/u.test(m[1])) continue;
+    var ix = m.index + m[0].length - m[1].length;
+    out.push({ start: ix, end: ix + m[1].length, type: 'Person name', prefix: 'PERSON', sens: true });
+  }
+}
+
+// ---------- Logins: name@machine (shell prompts, terminal tabs) ----------
+// A personal login identifies someone, and so does a personal machine name (localadmin@WS-0042).
+// Only a generic account on a generic machine (admin@ubuntu-server) stays visible.
+// The product settings can add the generic names its installer uses (genericNames).
+var LOGIN_RE = /(?<![\w.%+@-])([A-Za-z_][A-Za-z0-9_.-]{1,31})@([A-Za-z0-9][A-Za-z0-9-]{0,62})(?![\w@-]|\.[A-Za-z0-9])/g;
+var GENERIC_USERS = new Set(('root admin administrator localadmin sysadmin ubuntu debian centos fedora rocky alma ' +
+  'ec2-user azureuser opc core vagrant pi user users guest docker git postgres redis www-data nginx nobody daemon ' +
+  'deploy ops devops jenkins runner gitlab-runner ansible service svc test demo install installer').split(' ')
+  .concat(cfgList('genericNames').map(function (n) { return n.toLowerCase(); })));
+var GENERIC_HOSTS = new Set(('localhost ubuntu ubuntu-server debian centos fedora rocky alma server host vm ' +
+  'vagrant raspberrypi docker container kali node master worker').split(' ')
+  .concat(cfgList('genericNames').map(function (n) { return n.toLowerCase(); })));
+function loginPass(text, out) {
+  LOGIN_RE.lastIndex = 0;
+  var m;
+  while ((m = LOGIN_RE.exec(text))) {
+    if (GENERIC_USERS.has(m[1].toLowerCase()) && GENERIC_HOSTS.has(m[2].toLowerCase())) continue;
+    if (/^(?:sha\d+|md5|latest|stable|main|master|v?\d+)$/i.test(m[2])) continue;   // image@sha256, package@1, branch@main
+    out.push({ start: m.index, end: m.index + m[0].length, type: 'User login', prefix: 'LOGIN', sens: true });
+  }
+}
+
+// customers: customer domains already known (from this text or from other files of the session)
+function sensitivePass(text, out, customers) {
+  personPass(text, out);
+  loginPass(text, out);
+  for (var r of SENS_RULES) {
+    r.re.lastIndex = 0;
+    var m;
+    while ((m = r.re.exec(text))) {
+      var ix = m.indices[r.g];
+      if (!ix) continue;
+      var v = text.slice(ix[0], ix[1]);
+      if (IGNORE.test(v)) continue;
+      if (r.ip && !isPublicIp(v)) continue;
+      out.push({ start: ix[0], end: ix[1], type: r.type, prefix: r.prefix, sens: true });
+    }
+  }
+  // The customer part is masked wherever it appears, not only in <service>.<vendor>.<customer>:
+  // NO_PROXY=<vendor>.<customer>, auth.<customer>, someone@<customer>…
+  var known = {};
+  (customers || []).forEach(function (c) { known[c.toLowerCase()] = 1; });
+  out.forEach(function (d) { if (d.prefix === 'CUSTOMER') known[text.slice(d.start, d.end).toLowerCase()] = 1; });
+  Object.keys(known).forEach(function (c) {
+    var re = new RegExp('(?<![A-Za-z0-9-])' + c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![A-Za-z0-9-])', 'gi'), m;
+    while ((m = re.exec(text))) out.push({ start: m.index, end: m.index + m[0].length, type: 'Customer domain', prefix: 'CUSTOMER', sens: true });
+  });
+  // Other domains: the whole host name is masked (its first labels can name the customer too)
+  var kn = Object.keys(known);
+  HOST_RE.lastIndex = 0;
+  var hm;
+  while ((hm = HOST_RE.exec(text))) {
+    var host = hm[1], lh = host.toLowerCase();
+    if (!isOtherDomain(host, hm[2])) continue;
+    if (kn.some(function (c) { return lh === c || lh.slice(-c.length - 1) === '.' + c; })) continue;   // already the customer domain
+    out.push({ start: hm.index, end: hm.index + host.length, type: 'Other domain', prefix: 'DOMAIN', sens: true });
+  }
+}
+
+// Overlaps: keep the longest
+function keepLongest(raw) {
+  raw.sort(function (a, b) { return a.start - b.start || (b.end - b.start) - (a.end - a.start); });
+  var res = [], end = -1;
+  raw.forEach(function (d) { if (d.start >= end) { res.push(d); end = d.end; } });
+  return res;
+}
+
+// opts.sensitive: also detect sensitive data (email addresses, public IPs, customer domain)
+// opts.customers: customer domains found in other files, masked here too
+function detect(text, filename, opts) {
+  var raw = [];
+  regexPass(text, raw);
+  if (/\.har$/i.test(filename) || /^\s*\{/.test(text)) harPass(text, raw);
+  raw = raw.reduce(function (acc, d) { return acc.concat(expandJsonCookie(text, d)); }, []);
+  var res = keepLongest(raw);
+  if (opts && opts.sensitive) {   // a secret always wins over sensitive data that overlaps it
+    var sens = [];
+    sensitivePass(text, sens, opts.customers);
+    sens = keepLongest(sens.filter(function (s) { return !res.some(function (d) { return d.start < s.end && s.start < d.end; }); }));
+    res = res.concat(sens).sort(function (a, b) { return a.start - b.start; });
+  }
+  res.forEach(function (d, i) {
+    d.id = i; d.value = text.slice(d.start, d.end);
+    d.key = d.sens ? normKey(d.value).toLowerCase() : normKey(d.value);
+    d.checked = true;
+  });
+  return res;
+}
+
+// A given value always gets the same placeholder; different values stay distinguishable
+function sanitize(text, dets) {
+  var nums = {}, counts = {}, out = '', pos = 0;
+  dets.forEach(function (d) {
+    if (!d.checked) return;
+    var p = d.prefix || 'SECRET', k = p + '|' + d.key;
+    if (!(k in nums)) nums[k] = counts[p] = (counts[p] || 0) + 1;
+    out += text.slice(pos, d.start) + '[' + p + '_' + nums[k] + ']';
+    pos = d.end;
+  });
+  return out + text.slice(pos);
+}
+
+// ---------- Images: from OCR text to rectangles to mask ----------
+// Long random token with no field name (common in screenshots: dev tools, address bars)
+function looksRandom(v) {
+  if (v.length < 24 || !/^[A-Za-z0-9_\-+\/=.]+$/.test(v)) return false;
+  // Kubernetes pod and replica set names: words, then one or two short generated parts
+  if (/^[a-z][a-z0-9]*(?:-[a-z][a-z0-9]*)*(?:-[a-z0-9]{5,10}){1,2}$/.test(v)) return false;   // also "tt1" for "ttl" (OCR)
+  if (/^[a-z]+(?:-[a-z]+)+-\d+$/.test(v)) return false;   // StatefulSet pods: web-postgres-1
+  // UUIDs are identifiers (task, request, object IDs). One that is a secret follows a field name
+  // (token=…, client_secret=…) and is caught by the secret rules.
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)) return false;
+  // Container image names: owner/image[:tag], all in lowercase (007backups/webpanel-postgresql).
+  // A secret with a "/" (base64) mixes upper and lower case.
+  if (/^[a-z0-9][a-z0-9._-]*\/[a-z0-9][a-z0-9._-]*(?::[a-z0-9._-]+)?$/.test(v)) return false;
+  if (!/[0-9]/.test(v) || !/[A-Za-z]/.test(v)) return false;
+  if ((v.match(/[\/.]/g) || []).length > 3) return false;   // paths, domain names
+  var u = {}; for (var i = 0; i < v.length; i++) u[v[i]] = 1;
+  return Object.keys(u).length >= 12;
+}
+
+// Are two words read by OCR actually a single word?
+// - the gap in the image is much smaller than a space (under a third of a character): the OCR split it;
+// - or the split is on "." or "@" (address, domain) with a gap of at most one and a half spaces,
+//   because OCR sometimes sees a space that is not there ("jane.doe@example. com").
+function ocrGlued(p, w) {
+  var cw = (p.bbox.x1 - p.bbox.x0) / Math.max(1, p.text.length), gap = w.bbox.x0 - p.bbox.x1;
+  if (gap < cw * 0.3) return true;   // a space in a proportional font can be as narrow as half a character
+  var cut = /[.@]$/.test(p.text) && /^[a-z0-9]/.test(w.text) || /[A-Za-z0-9]$/.test(p.text) && /^[.@][A-Za-z0-9]/.test(w.text);
+  return cut && gap < cw * 1.5;
+}
+
+// lines: [[{ text, bbox: {x0, y0, x1, y1} }]] (one list of words per line)
+function regionsFromOcr(lines, opts) {
+  var text = '', spans = [];
+  lines.forEach(function (ws, li) {
+    ws.forEach(function (w, i) {
+      // OCR sometimes splits a word in two ("example. com"): glue the pieces back together
+      // so that the address or token stays recognizable
+      if (i && !ocrGlued(ws[i - 1], w)) text += ' ';
+      spans.push({ s: text.length, e: text.length + w.text.length, b: w.bbox, line: li });
+      text += w.text;
+    });
+    text += '\n';
+  });
+  var dets = detect(text, 'capture.txt', opts);
+  spans.forEach(function (sp) {
+    var raw = text.slice(sp.s, sp.e), lead = raw.match(/^[^A-Za-z0-9]*/)[0].length;
+    var tok = raw.slice(lead).replace(/[^A-Za-z0-9=]+$/, '');
+    // NAME=value: only the value can be random (APP_MAX_OPEN_FILES=65536 is not)
+    var asg = /^[A-Za-z_][A-Za-z0-9_.-]*=/.exec(tok);
+    if (asg) { lead += asg[0].length; tok = tok.slice(asg[0].length); }
+    if (!looksRandom(tok)) return;
+    // A hash given as such (commit, digest, checksum) is not a secret
+    if (/^[0-9a-f]{40}$|^[0-9a-f]{64}$/.test(tok) && /(commit|sha\d*|digest|revision|rev|hash|checksum)\W{0,3}$/i.test(text.slice(Math.max(0, sp.s - 24), sp.s + lead))) return;
+    var s = sp.s + lead, e = s + tok.length;
+    if (dets.some(function (d) { return d.start < e && d.end > s; })) return;
+    dets.push({ start: s, end: e, type: 'Long random string', value: tok, key: normKey(tok), checked: true });
+  });
+  var out = [];
+  dets.forEach(function (d) {
+    var byLine = {};
+    spans.forEach(function (sp) {
+      var a = Math.max(d.start, sp.s), z = Math.min(d.end, sp.e);
+      if (a >= z) return;
+      var len = sp.e - sp.s, bw = sp.b.x1 - sp.b.x0, cw = bw / len;
+      // Estimated position inside the word; overflow by half a character so nothing sticks out
+      var x0 = sp.b.x0 + cw * (a - sp.s) - (a > sp.s ? cw * 0.6 : 0);
+      var x1 = sp.b.x0 + cw * (z - sp.s) + (z < sp.e ? cw * 0.6 : 0);
+      var L = byLine[sp.line];
+      if (!L) byLine[sp.line] = { x0: x0, x1: x1, y0: sp.b.y0, y1: sp.b.y1 };
+      else { L.x0 = Math.min(L.x0, x0); L.x1 = Math.max(L.x1, x1); L.y0 = Math.min(L.y0, sp.b.y0); L.y1 = Math.max(L.y1, sp.b.y1); }
+    });
+    Object.keys(byLine).forEach(function (k) {
+      var L = byLine[k], pad = Math.max(2, (L.y1 - L.y0) * 0.15);
+      out.push({ x: L.x0 - pad, y: L.y0 - pad, w: L.x1 - L.x0 + 2 * pad, h: L.y1 - L.y0 + 2 * pad, type: d.type, value: d.value, key: d.key, checked: true });
+    });
+  });
+  out.forEach(function (r, i) { r.id = i; });
+  return out;
+}
+
+// Rectangle rounded outwards: no half-covered pixel on the edges
+function pixelRect(r, w, h) {
+  var x0 = Math.max(0, Math.floor(r.x)), y0 = Math.max(0, Math.floor(r.y));
+  var x1 = Math.min(w, Math.ceil(r.x + r.w)), y1 = Math.min(h, Math.ceil(r.y + r.h));
+  return { x: x0, y: y0, w: Math.max(0, x1 - x0), h: Math.max(0, y1 - y0) };
+}
+
+function drawSampleCapture(c) {
+  c.width = 1000; c.height = 300;
+  var x = c.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, 1000, 300); x.fillStyle = '#111'; x.font = '26px Menlo, Consolas, monospace';
+  ['POST /login  user=jane.doe@example.com', 'password=Tr0ub4dor-fake-1   remember=1',
+   'Authorization: Bearer fake_access_9f8e7d6c5b4a39281706', 'session 8fK2pQ9xLm4Rt7Vw1Zy3Nb6Hc5Jd0',
+   'Login from 192.168.1.45 (srv-payment-01)'].forEach(function (l, i) { x.fillText(l, 20, 50 + i * 52); });
+}
+
+// ---------- Fake test files (invented secrets) ----------
+var SAMPLE_LOG = [
+  '2025-03-14 09:12:01 INFO  Starting api-gateway service on 10.0.0.12',
+  '2025-03-14 09:12:03 INFO  Login by jane.doe@example.com from 192.168.1.45 (jane-laptop.corp.local)',
+  '2025-03-14 09:12:03 DEBUG POST /login body: username=jane.doe&password=Tr0ub4dor-fake-1&remember=1',
+  '2025-03-14 09:12:04 DEBUG Authorization: Bearer fake_access_9f8e7d6c5b4a39281706',
+  '2025-03-14 09:12:04 DEBUG Cookie: theme=dark; session_id=a1b2c3d4e5f60718293a4b5c6d7e8f90',
+  '2025-03-14 09:12:05 INFO  GET https://api.example.com/v1/users?api_key=fakekey_1234567890abcdef&page=2',
+  '2025-03-14 09:12:06 DEBUG OAuth: client_id=app-42 client_secret=fake-cs-Zm9vYmFyYmF6cXV4',
+  '2025-03-14 09:12:07 DEBUG id_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IlRlc3QifQ.c2lnbmF0dXJlLWJpZGlkb3VpbGxl',
+  '2025-03-14 09:12:08 WARN  Config AWS: AKIAIOSFODNN7EXAMPLE',
+  '2025-03-14 09:12:09 DEBUG Key loaded:',
+  '-----BEGIN RSA PRIVATE KEY-----',
+  'MIIBOgIBAAJBAKfakefakefakefakefakefakefakefakefakefakefakefakefake',
+  'ZmFrZWZha2VmYWtlZmFrZWZha2VmYWtlZmFrZWZha2VmYWtlZmFrZQ==',
+  '-----END RSA PRIVATE KEY-----',
+  '2025-03-14 09:12:10 INFO  John Smith approved the order on 172.16.4.8 (srv-payment-01)',
+  '2025-03-14 09:12:11 INFO  Access from 203.0.113.10 to https://hub.nimbus.example-customer.test/sso/callback',
+  '2025-03-14 09:12:12 DEBUG NIMBUS_BROWSER_BASE_KEY=Zq8Lw3Vn7Rt2Yb5Hc9Jd4Kf6Mg1Pa0Xe',
+  '2025-03-14 09:12:13 DEBUG NIMBUS_DB_CONSOLE_URL=postgres://console:Fake-Db-Pass-123456@db.internal:5432/console',
+  ''
+].join('\n');
+
+function makeSampleHar() {
+  var jwt = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IlRlc3QifQ.c2lnbmF0dXJlLWJpZGlkb3VpbGxl';
+  return JSON.stringify({ log: { version: '1.2', creator: { name: 'fake-test', version: '1' }, entries: [
+    { startedDateTime: '2025-03-14T09:12:03.000Z', time: 120,
+      request: { method: 'POST', url: 'https://app.example.com/api/login?next=/home&api_key=fakekey_1234567890abcdef', httpVersion: 'HTTP/2',
+        headers: [ { name: 'Host', value: 'app.example.com' }, { name: 'Content-Type', value: 'application/json' },
+                   { name: 'Authorization', value: 'Bearer ' + jwt },
+                   { name: 'Cookie', value: 'theme=dark; session_id=a1b2c3d4e5f60718293a4b5c6d7e8f90' } ],
+        cookies: [ { name: 'theme', value: 'dark' }, { name: 'session_id', value: 'a1b2c3d4e5f60718293a4b5c6d7e8f90' } ],
+        queryString: [ { name: 'next', value: '/home' }, { name: 'api_key', value: 'fakekey_1234567890abcdef' } ],
+        postData: { mimeType: 'application/json', text: JSON.stringify({ email: 'jane.doe@example.com', password: 'Tr0ub4dor-fake-1', client_secret: 'fake-cs-Zm9vYmFyYmF6cXV4' }) },
+        headersSize: -1, bodySize: -1 },
+      response: { status: 200, statusText: 'OK', httpVersion: 'HTTP/2',
+        headers: [ { name: 'Set-Cookie', value: 'refresh=fakerefresh_0987654321zyxwvu; HttpOnly; Secure' }, { name: 'Content-Type', value: 'application/json' } ],
+        cookies: [ { name: 'refresh', value: 'fakerefresh_0987654321zyxwvu' } ],
+        content: { size: 90, mimeType: 'application/json', text: JSON.stringify({ user: 'John Smith', ip: '172.16.4.8', access_token: 'fake_access_9f8e7d6c5b4a39281706' }) },
+        headersSize: -1, bodySize: -1 },
+      cache: {}, timings: { send: 1, wait: 100, receive: 19 } }
+  ] } }, null, 2);
+}
+</script>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var IMG_RE = /\.(png|jpe?g|webp|gif|bmp)$/i, TXT_RE = /\.(log|txt|har|json)$/i;
+  var files = [], cur = -1, F = null;   // F: the file being shown
+  var manualSeq = 0, pastedSeq = 0, LEVEL = 'secret';
+  // Customer domains found so far in any file: they are masked in every file of the session
+  var customers = {}, relearn = null;
+  function opts() { return { sensitive: LEVEL === 'sensitive', customers: Object.keys(customers) }; }
+  function learnCustomers(f) {
+    var its = f.kind === 'image' ? f.regions : f.dets, fresh = false;
+    its.forEach(function (d) {
+      if (d.type === 'Customer domain' && !customers[d.key.toLowerCase()]) { customers[d.key.toLowerCase()] = 1; fresh = true; }
+    });
+    // A new customer domain: look for it again in the files already read
+    if (fresh && !relearn) relearn = setTimeout(function () { relearn = null; applyLevel(); }, 0);
+  }
+  function dlLabel() { return F && F.pasted ? 'Copy clean text' : 'Download clean version'; }
+
+  function items() { return F ? (F.kind === 'image' ? F.regions : F.dets) : []; }
+  function renumber(f) { (f.kind === 'image' ? f.regions : f.dets).forEach(function (d, i) { d.id = i; }); }
+
+  // ---------- Categories of sensitive data ----------
+  // All checked by default; an unchecked category is not masked in any file of the batch.
+  // Its values stay listed, unchecked, so a single one can still be masked.
+  var CATS = [
+    { type: 'Email address', label: 'Email addresses' },
+    { type: 'Person name', label: 'Person names' },
+    { type: 'User login', label: 'Logins (name@machine)' },
+    { type: 'Public IP', label: 'Public IP addresses' },
+    { type: 'Customer domain', label: 'Customer domain' },
+    { type: 'Other domain', label: 'Other domains' }
+  ];
+  var CAT_KEY = 'hidesecrets.categoriesOff', catOff = new Set();
+  try {
+    var savedOff = JSON.parse(localStorage.getItem(CAT_KEY) || '[]');
+    if (Array.isArray(savedOff)) savedOff.forEach(function (t) { if (CATS.some(function (c) { return c.type === t; })) catOff.add(t); });
+  } catch (e) { /* storage unavailable or unreadable: everything is masked */ }
+  // A value's box: the user's own decision for that value in this file if there is one, else its category.
+  // A click made after the category was changed is an exception; changing the category again replaces it.
+  function applyChoices(f) {
+    var ovr = f.ovr || (f.ovr = {});
+    (f.kind === 'image' ? f.regions : f.dets).forEach(function (d) {
+      if (d.manual) return;
+      var k = d.type + '|' + d.key;
+      d.checked = k in ovr ? ovr[k] : !catOff.has(d.type);
+    });
+  }
+  function catWarning() {
+    if (LEVEL !== 'sensitive' || !catOff.size) return '';
+    var names = CATS.filter(function (c) { return catOff.has(c.type); }).map(function (c) { return c.label; });
+    return '⚠ Not masked: ' + names.join(', ');
+  }
+  function renderCats() {
+    var bar = $('cats'), warn = $('catwarn');
+    bar.style.display = LEVEL === 'sensitive' ? '' : 'none';
+    if (!bar.dataset.built) {
+      bar.dataset.built = '1';
+      CATS.forEach(function (c) {
+        var lab = document.createElement('label'), cb = document.createElement('input');
+        cb.type = 'checkbox'; cb.dataset.type = c.type;
+        cb.onchange = function () {
+          if (cb.checked) catOff.delete(c.type); else catOff.add(c.type);
+          try { localStorage.setItem(CAT_KEY, JSON.stringify(Array.from(catOff))); } catch (e) { /* storage unavailable */ }
+          // The most recent decision wins: the category replaces earlier clicks on its values, in every file
+          files.forEach(function (f) {
+            Object.keys(f.ovr || {}).forEach(function (k) { if (k.indexOf(c.type + '|') === 0) delete f.ovr[k]; });
+            applyChoices(f);
+          });
+          renderCats();
+          if (F) render();
+        };
+        lab.appendChild(cb); lab.appendChild(document.createTextNode(c.label));
+        bar.insertBefore(lab, warn);
+      });
+    }
+    bar.querySelectorAll('input').forEach(function (cb) { cb.checked = !catOff.has(cb.dataset.type); });
+    warn.textContent = $('catwarn2').textContent = catWarning();
+  }
+  function refresh(f) { if (f === F) render(); else renderFiles(); }
+
+  // ---------- Adding files ----------
+  function addText(t, name, path) {
+    var f = { kind: 'text', name: name, path: path || name, text: t, dets: detect(t, name, opts()), status: 'ok' };
+    files.push(f); applyChoices(f); learnCustomers(f); return f;
+  }
+  function addTextFile(file, path) {
+    var f = { kind: 'text', name: file.name, path: path, text: '', dets: [], status: 'loading' };
+    files.push(f);
+    var r = new FileReader();
+    r.onload = function () { f.text = String(r.result); f.dets = detect(f.text, f.name, opts()); f.status = 'ok'; applyChoices(f); learnCustomers(f); refresh(f); };
+    r.readAsText(file);
+    return f;
+  }
+  function addImage(blob, name, path) {
+    var f = { kind: 'image', name: name, path: path || name, blob: blob, url: URL.createObjectURL(blob), regions: [], status: 'loading' };
+    files.push(f);
+    var img = new Image();
+    img.onload = function () { f.img = img; f.w = img.naturalWidth; f.h = img.naturalHeight; f.status = 'reading'; refresh(f); queueOcr(f); };
+    img.onerror = function () { f.status = 'unreadable'; refresh(f); };
+    img.src = f.url;
+    return f;
+  }
+
+  // list: File objects, or { file, path } pairs from a dropped folder.
+  // From a folder, only images are taken: it is a screenshot folder (notes and other files are left out).
+  function readFiles(list, fromFolder) {
+    var all = Array.prototype.slice.call(list).map(function (x) {
+      return x.file ? x : { file: x, path: x.webkitRelativePath || x.name };
+    });
+    fromFolder = fromFolder || all.some(function (x) { return x.path.indexOf('/') >= 0; });
+    var hidden = function (x) { return /(^|\/)\./.test(x.path); };
+    var ok = all.filter(function (x) {
+      return !hidden(x) && (IMG_RE.test(x.file.name) || !fromFolder && TXT_RE.test(x.file.name));
+    });
+    ok.sort(function (a, b) { return a.path.localeCompare(b.path); });
+    var skipped = all.filter(function (x) { return !hidden(x); }).length - ok.length;
+    $('msg').textContent = !ok.length && fromFolder ? 'No image found in this folder.'
+      : skipped ? skipped + ' file' + (skipped > 1 ? 's' : '') + ' skipped (' + (fromFolder ? 'not an image' : 'unsupported format') + ').' : '';
+    if (!ok.length) return;
+    var first = files.length;
+    ok.forEach(function (x) {
+      if (IMG_RE.test(x.file.name)) addImage(x.file, x.file.name, x.path); else addTextFile(x.file, x.path);
+    });
+    select(first);
+  }
+
+  // ---------- Reading text in images (loaded on demand, once) ----------
+  // A small pool of workers reads several images at once (measured: near-linear speed-up up to 8 workers).
+  // Each worker does both readings of an image itself, since the threshold setting belongs to the worker.
+  var ocr = null, queue = [], pool = [];
+  // Timing of a batch: from the first image queued to the last one read (shown next to the file count)
+  var ocrT0 = null, ocrN = 0, ocrStat = '';
+  // How many images are read at once: automatic = cores - 1, at most 8; quiet = 2; maximum = cores - 1, at most 12
+  var CORES = Math.max(1, (navigator.hardwareConcurrency || 2) - 1), SPEED_KEY = 'hidesecrets.speed';
+  var speed = 'auto', paused = false, pausedAt = 0, growing = 0, makeWorker = null;
+  try { var sv = localStorage.getItem(SPEED_KEY); if (sv === 'quiet' || sv === 'max') speed = sv; } catch (e) { /* storage unavailable */ }
+  function targetWorkers() { return speed === 'quiet' ? Math.min(2, CORES) : Math.min(speed === 'max' ? 12 : 8, CORES); }
+  function loadOcr() {
+    if (ocr) return ocr;
+    ocr = new Promise(function (ok, ko) {
+      var s = document.createElement('script');
+      s.src = 'ocr/tesseract.min.js';
+      s.onload = ok;
+      s.onerror = function () { ko(new Error('text reader not found')); };
+      document.head.appendChild(s);
+    }).then(function () {
+      var base = new URL('ocr/', location.href).href;
+      var make = makeWorker = function () { return Tesseract.createWorker('eng+fra', 1, { workerPath: base + 'worker.min.js', corePath: base, langPath: base, gzip: true }); };
+      // The first worker must start; the others are a bonus (a failure just means a smaller pool)
+      return make().then(function (first) {
+        var rest = [];
+        for (var i = 1; i < targetWorkers(); i++) rest.push(make().catch(function () { return null; }));
+        return Promise.all(rest).then(function (more) { return [first].concat(more.filter(Boolean)); });
+      });
+    }).then(function (ws) { pool = ws.map(function (w) { return { w: w, busy: false }; }); });
+    return ocr;
+  }
+  function queueOcr(f) {
+    if (ocrT0 === null) { ocrT0 = performance.now(); ocrN = 0; ocrStat = ''; }
+    queue.push(f);
+    loadOcr().then(pump, function (e) {
+      // No text reader: every waiting image falls back to manual masking
+      queue.splice(0).forEach(function (g) { ocrFailed(g, e); refresh(g); });
+    });
+  }
+  // Each idle worker takes the next image; the one on screen goes first, so nobody waits for the rest of the batch
+  function pump() {
+    if (paused || !pool.length) return;   // no pool yet: loadOcr() calls pump() once it is ready
+    var n = targetWorkers();
+    // A smaller pool after a change of speed: idle workers beyond the target leave (a busy one leaves when it is done)
+    for (var j = pool.length - 1; j >= n; j--) if (!pool[j].busy) { pool[j].w.terminate(); pool.splice(j, 1); }
+    // A larger pool after a change of speed: the new workers join as soon as they are ready
+    for (var g = pool.length + growing; g < n && makeWorker; g++) {
+      growing++;
+      makeWorker().then(function (w) { pool.push({ w: w, busy: false }); }, function () { /* smaller pool */ })
+        .then(function () { growing--; pump(); });
+    }
+    pool.slice(0, n).forEach(function (slot) {
+      if (slot.busy || !queue.length) return;
+      var i = queue.indexOf(F);
+      var f = queue.splice(i < 0 ? 0 : i, 1)[0];
+      slot.busy = true;
+      readImage(slot.w, f).then(function () {
+        slot.busy = false; ocrN++; renumber(f);
+        // A busy worker beyond the target leaves as soon as it is done
+        var k = pool.indexOf(slot);
+        if (k >= targetWorkers()) { pool.splice(k, 1); slot.w.terminate(); }
+        if (!queue.length && !pool.some(function (g) { return g.busy; }) && ocrT0 !== null) {
+          var ms = performance.now() - ocrT0, sec = ms / 1000;
+          ocrStat = ocrN + ' read in ' + (sec < 60 ? sec.toFixed(1) + ' s' : Math.floor(sec / 60) + ' min ' + Math.round(sec % 60) + ' s') +
+            ' (' + (ms / ocrN / 1000).toFixed(2) + ' s per image, ' + pool.length + ' worker' + (pool.length > 1 ? 's' : '') + ')';
+          ocrT0 = null;
+          console.info('HideSecrets OCR: ' + ocrStat);
+        }
+        refresh(f); pump();
+      });
+    });
+    renderFiles();
+  }
+  // Speed and pause controls: shown while images are waiting to be read
+  $('speed').value = speed;
+  $('speed').onchange = function () {
+    speed = $('speed').value;
+    try { localStorage.setItem(SPEED_KEY, speed); } catch (e) { /* storage unavailable */ }
+    if (pool.length) pump();
+  };
+  $('pause').onclick = function () {
+    paused = !paused;
+    if (paused) pausedAt = performance.now();
+    else { if (ocrT0 !== null) ocrT0 += performance.now() - pausedAt; pump(); }   // the pause does not count in the timing
+    renderFiles();
+  };
+  function ocrFailed(f, e) {
+    f.status = 'error';
+    f.error = location.protocol === 'file:' ? 'open the page through its web address instead of double-clicking the file' : String(e && e.message || e);
+  }
+  // Never rejects: a failure is recorded on the file
+  function readImage(w, f) {
+    // Two readings: the usual one, then one with an adaptive threshold that adds only the words the first missed.
+    // The second reads light text on a colored panel (account menus, dark themes), which a single global
+    // threshold turns into one blob; alone, it reads some other text worse, hence the merge.
+    return w.setParameters({ thresholding_method: '0' }).then(function () {
+      return w.recognize(f.img, {}, { blocks: true });
+    }).then(function (r1) {
+      return w.setParameters({ thresholding_method: '1' })
+        .then(function () { return w.recognize(f.img, {}, { blocks: true }); })
+        .then(function (r2) { return [r1, r2]; }, function () { return [r1, null]; });
+    }).then(function (rs) {
+      var toLines = function (r) {
+        var out = [];
+        if (r) (r.data.blocks || []).forEach(function (b) { b.paragraphs.forEach(function (p) { p.lines.forEach(function (l) {
+          out.push(l.words.map(function (w) { return { text: w.text, bbox: w.bbox }; }));
+        }); }); });
+        return out;
+      };
+      var lines = toLines(rs[0]), seen = [].concat.apply([], lines);
+      var overlaps = function (a, b) {
+        var w = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0), h = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
+        return w > 0 && h > 0 && w * h > 0.3 * Math.min((a.x1 - a.x0) * (a.y1 - a.y0), (b.x1 - b.x0) * (b.y1 - b.y0));
+      };
+      toLines(rs[1]).forEach(function (l) {
+        var extra = l.filter(function (w) { return w.text.trim() && !seen.some(function (s) { return overlaps(s.bbox, w.bbox); }); });
+        if (extra.length) lines.push(extra);
+      });
+      f.lines = lines;   // kept to recompute when the level changes
+      f.regions = regionsFromOcr(lines, opts()).concat(f.regions.filter(function (r) { return r.manual; }));
+      f.status = 'ok';
+      applyChoices(f);
+      learnCustomers(f);
+    }).catch(function (e) { ocrFailed(f, e); });
+  }
+
+  // ---------- Display ----------
+  function select(i) {
+    if (files[i] !== F) { zoom = 1; var wr = $('imgwrap'); wr.scrollLeft = wr.scrollTop = 0; }   // each image opens fitted
+    cur = i; F = files[i];
+    var first = $('work').style.display !== 'grid';
+    $('work').style.display = 'grid';
+    document.body.classList.add('working');
+    F.seen = true;
+    $('fname').textContent = '— ' + F.path;
+    renderFiles(); render();
+    if (first) $('work').scrollIntoView({ block: 'start' });
+    if (F.row) F.row.scrollIntoView({ block: 'nearest' });
+  }
+  function step(d) { if (files.length > 1) select((cur + d + files.length) % files.length); }
+  $('prev').onclick = function () { step(-1); };
+  $('next').onclick = function () { step(1); };
+  // Arrow keys move between files, except while typing
+  document.addEventListener('keydown', function (e) {
+    if (!F || e.altKey || e.ctrlKey || e.metaKey || /^(TEXTAREA|INPUT|SELECT)$/.test(document.activeElement.tagName)) return;
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); step(-1); }
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); step(1); }
+  });
+  $('clear').onclick = function () {
+    files.forEach(function (f) { if (f.url) URL.revokeObjectURL(f.url); });
+    files = []; cur = -1; F = null; queue.length = 0; customers = {}; ocrStat = ''; ocrT0 = null; paused = false;
+    $('flist').textContent = ''; $('fq').value = ''; query = ''; $('fqn').textContent = '';
+    $('work').style.display = 'none'; $('msg').textContent = '';
+    document.body.classList.remove('working');
+  };
+
+  // ---------- Searching a file name ----------
+  // Matching files are highlighted (the others are dimmed); Enter opens the next match, Shift+Enter the previous one
+  var query = '';
+  function matches() { return query ? files.filter(function (f) { return f.path.toLowerCase().indexOf(query) >= 0; }) : []; }
+  function updateSearch() {
+    var n = matches().length;
+    $('fqn').textContent = query ? (n ? n + ' match' + (n > 1 ? 'es' : '') : 'no match') : '';
+    renderFiles();
+    var first = matches()[0];
+    if (first && first.row) first.row.scrollIntoView({ block: 'nearest' });
+  }
+  $('fq').addEventListener('input', function () { query = $('fq').value.trim().toLowerCase(); updateSearch(); });
+  $('fq').addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { $('fq').value = ''; query = ''; updateSearch(); return; }
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    var m = matches();
+    if (!m.length) return;
+    var k = m.indexOf(F);
+    var next = k < 0 ? m[0] : m[(k + (e.shiftKey ? m.length - 1 : 1)) % m.length];
+    select(files.indexOf(next));
+  });
+
+  // One row per file, updated in place so that the list keeps its scroll position
+  function renderFiles() {
+    var many = files.length > 1, list = $('flist'), hits = 0, seen = 0;
+    $('work').classList.toggle('many', many);
+    $('nav').style.display = many ? '' : 'none';
+    $('dlzip').style.display = files.filter(function (f) { return !f.pasted; }).length > 1 ? 'block' : 'none';
+    files.forEach(function (f, i) {
+      if (!f.row) {
+        f.row = document.createElement('button');
+        f.row.className = 'frow'; f.row.title = f.path;
+        f.row.innerHTML = '<span class="fn"></span><span class="st"></span>';
+        f.row.firstChild.textContent = f.name.replace(/\.[^.]+$/, "");   // full path in the tooltip
+        f.row.onclick = function () { select(files.indexOf(f)); };
+        list.appendChild(f.row);
+      }
+      var its = f.kind === 'image' ? f.regions : f.dets, keys = {};
+      its.forEach(function (d) { if (d.checked) keys[d.key] = 1; });
+      var n = Object.keys(keys).length;
+      var st = f.status === 'loading' || f.status === 'reading' ? 'reading…' : f.status === 'error' ? 'manual' : f.status === 'unreadable' ? 'unreadable' : n;
+      if (n) hits++;
+      if (f.seen) seen++;
+      var hit = query && f.path.toLowerCase().indexOf(query) >= 0;
+      f.row.className = 'frow' + (i === cur ? ' cur' : '') + (f.seen ? ' seen' : '') + (query ? (hit ? ' match' : ' nomatch') : '');
+      f.row.lastChild.textContent = st;
+      f.row.lastChild.className = 'st' + (n ? ' hit' : '');
+    });
+    var waiting = files.some(function (f) { return f.kind === 'image' && (f.status === 'loading' || f.status === 'reading'); });
+    $('ocrbar').style.display = waiting ? '' : 'none';
+    $('pause').textContent = paused ? 'Resume' : 'Pause';
+    var n = targetWorkers();
+    $('speedhint').textContent = paused ? 'Paused: the images already being read will finish first.'
+      : speed === 'quiet' ? 'Reads ' + n + ' image' + (n > 1 ? 's' : '') + ' at a time: slower, but the computer stays calm.'
+      : speed === 'max' ? 'Reads ' + n + ' image' + (n > 1 ? 's' : '') + ' at a time: fastest, but the computer will get warm.'
+      : 'Reads ' + n + ' image' + (n > 1 ? 's' : '') + ' at a time. Choose Quiet if the computer gets hot or slow.';
+    $('fcount').textContent = files.length + ' files · ' + hits + ' with items · ' + seen + ' viewed' + (ocrStat ? ' · ' + ocrStat : '');
+    $('pos').textContent = (cur + 1) + ' / ' + files.length;
+    updateButtons();
+  }
+
+  function updateButtons() {
+    var pending = function (f) { return f.status === 'loading' || f.status === 'reading'; };
+    $('dl').disabled = !F || pending(F);
+    $('dlzip').disabled = files.some(function (f) { return !f.pasted && pending(f); });
+    var imgs = files.filter(function (f) { return f.kind === 'image'; });
+    var left = imgs.filter(pending).length;
+    $('dlzip').textContent = left ? 'Download all (ZIP): reading images, ' + (imgs.length - left) + ' of ' + imgs.length + ' done'
+      : 'Download all (ZIP)';
+  }
+
+  function render() {
+    if (!F) return;
+    var isImg = F.kind === 'image';
+    $('kind').textContent = isImg ? 'Image' : 'Text';
+    $('dl').textContent = dlLabel();
+    $('hint').textContent = isImg ? 'Draw a rectangle to mask an area · click an area to turn it on or off'
+                                  : 'Click a highlight to turn it on or off';
+    $('text').style.display = isImg ? 'none' : '';
+    $('imgwrap').style.display = isImg ? '' : 'none';
+    if (isImg) drawCanvas(); else renderText();
+    renderList(); renderFiles();
+  }
+
+  function renderText() {
+    var pre = $('text'); pre.textContent = '';
+    var pos = 0, text = F.text;
+    F.dets.forEach(function (d) {
+      pre.appendChild(document.createTextNode(text.slice(pos, d.start)));
+      var m = document.createElement('mark');
+      m.id = 'm' + d.id; m.textContent = d.value;
+      m.className = d.checked ? '' : 'off';
+      m.title = d.type;
+      m.onclick = function () { toggle(d.id); };
+      pre.appendChild(m);
+      pos = d.end;
+    });
+    pre.appendChild(document.createTextNode(text.slice(pos)));
+  }
+
+  // ---------- Image: preview and rectangles ----------
+  var cv = $('cv'), ctx = cv.getContext('2d'), hover = null, drag = null;
+  function statusText(f) {
+    if (f.status === 'loading') return 'Loading image…';
+    if (f.status === 'reading') return 'Reading the text in the image… You can already draw rectangles.';
+    if (f.status === 'error') return 'Automatic reading failed (' + f.error + '). Mask areas by hand.';
+    if (f.status === 'unreadable') return 'This image could not be opened.';
+    return '';
+  }
+  // Zoom, as a multiple of the width that fits the column (1 = fit). Each image opens fitted.
+  var zoom = 1;
+  function setZoom(z, anchor) {
+    var wrap = $('imgwrap'), old = zoom;
+    zoom = Math.max(0.25, Math.min(8, z));
+    // Keep the point under the pointer (or the center) in place
+    var ax = anchor ? anchor.x : wrap.clientWidth / 2, ay = anchor ? anchor.y : wrap.clientHeight / 2;
+    var px = (wrap.scrollLeft + ax) / old, py = (wrap.scrollTop + ay) / old;
+    applyZoom();
+    wrap.scrollLeft = px * zoom - ax; wrap.scrollTop = py * zoom - ay;
+  }
+  function applyZoom() {
+    var b = baseWidth();
+    cv.style.width = b ? (b * zoom) + 'px' : '100%';
+    $('zlabel').textContent = Math.abs(zoom - 1) < 0.01 ? 'fit' : '×' + (Math.round(zoom * 100) / 100);
+    $('zout').disabled = zoom <= 0.25;
+  }
+  // Width at zoom 1 ("Fit"): the whole image is visible, in width and in height;
+  // a small image is never enlarged beyond the size it had on screen
+  function baseWidth() {
+    var wrap = $('imgwrap'), w = wrap.clientWidth - 28;
+    if (!F || !F.w || w <= 0) return 0;
+    var h = wrap.clientHeight - 28 - $('zoombar').offsetHeight - 10 - ($('imgstatus').offsetHeight ? $('imgstatus').offsetHeight + 10 : 0);
+    var byHeight = h > 100 ? h * F.w / F.h : w;
+    return Math.min(w, byHeight, F.w / (window.devicePixelRatio || 1));
+  }
+  function actualZoom() {
+    var b = baseWidth();
+    return b ? (F.w / (window.devicePixelRatio || 1)) / b : 1;
+  }
+  window.addEventListener('resize', function () { if (F && F.kind === 'image') applyZoom(); });
+  $('zin').onclick = function () { setZoom(zoom * 1.5); };
+  $('zout').onclick = function () { setZoom(zoom / 1.5); };
+  $('zfit').onclick = function () { setZoom(1); };
+  $('z1').onclick = function () { setZoom(actualZoom()); };
+  $('imgwrap').addEventListener('wheel', function (e) {
+    if (!e.ctrlKey && !e.metaKey) return;   // trackpad pinch arrives as ctrl + wheel
+    e.preventDefault();
+    var b = $('imgwrap').getBoundingClientRect();
+    setZoom(zoom * Math.exp(-e.deltaY / 200), { x: e.clientX - b.left, y: e.clientY - b.top });
+  }, { passive: false });
+  document.addEventListener('keydown', function (e) {
+    if (!F || F.kind !== 'image' || e.ctrlKey || e.metaKey || e.altKey || /^(TEXTAREA|INPUT|SELECT)$/.test(document.activeElement.tagName)) return;
+    if (e.key === '+' || e.key === '=') setZoom(zoom * 1.5);
+    else if (e.key === '-') setZoom(zoom / 1.5);
+    else if (e.key === '0') setZoom(1);
+    else if (e.key === '1') setZoom(actualZoom());
+  });
+
+  function drawCanvas() {
+    $('imgstatus').textContent = statusText(F);
+    applyZoom();   // after the status line: its height counts in "Fit"
+    if (!F.img) { cv.width = cv.height = 0; return; }
+    if (cv.width !== F.w || cv.height !== F.h) { cv.width = F.w; cv.height = F.h; }
+    ctx.drawImage(F.img, 0, 0);
+    var lw = Math.max(2, F.w / 500);
+    F.regions.forEach(function (r) {
+      var q = pixelRect(r, F.w, F.h);
+      if (r.checked) { ctx.fillStyle = '#000'; ctx.fillRect(q.x, q.y, q.w, q.h); }
+      else { ctx.setLineDash([lw * 3, lw * 2]); ctx.lineWidth = lw; ctx.strokeStyle = '#d9433b'; ctx.strokeRect(q.x, q.y, q.w, q.h); ctx.setLineDash([]); }
+      if (hover !== null && r.key === hover) { ctx.lineWidth = lw * 2; ctx.strokeStyle = '#2b59c3'; ctx.strokeRect(q.x - lw * 2, q.y - lw * 2, q.w + lw * 4, q.h + lw * 4); }
+    });
+    if (drag && drag.moved) {
+      var d = normRect(drag);
+      ctx.setLineDash([lw * 2, lw * 2]); ctx.lineWidth = lw; ctx.strokeStyle = '#2b59c3'; ctx.strokeRect(d.x, d.y, d.w, d.h); ctx.setLineDash([]);
+    }
+  }
+  function pt(e) {
+    var b = cv.getBoundingClientRect();
+    return { x: Math.max(0, Math.min(cv.width, (e.clientX - b.left) * cv.width / b.width)),
+             y: Math.max(0, Math.min(cv.height, (e.clientY - b.top) * cv.height / b.height)) };
+  }
+  function normRect(d) { return { x: Math.min(d.x0, d.x1), y: Math.min(d.y0, d.y1), w: Math.abs(d.x1 - d.x0), h: Math.abs(d.y1 - d.y0) }; }
+  // Hold space to move the zoomed image with the mouse (the hand), as in image editors;
+  // without space, a drag draws a rectangle
+  var spaceDown = false, pan = null;
+  function setHand() {
+    var wrap = $('imgwrap');
+    wrap.style.cursor = pan ? 'grabbing' : spaceDown ? 'grab' : '';
+    cv.style.cursor = pan ? 'grabbing' : spaceDown ? 'grab' : 'crosshair';
+  }
+  document.addEventListener('keydown', function (e) {
+    var a = document.activeElement;
+    if (e.code !== 'Space' || !F || F.kind !== 'image' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' ||
+        (a.tagName === 'INPUT' && a.type !== 'checkbox' && a.type !== 'radio')) return;
+    e.preventDefault();   // no page scroll
+    if (a.tagName === 'BUTTON' || a.tagName === 'INPUT') a.blur();   // space must not press the last clicked button or box
+    if (!spaceDown) { spaceDown = true; setHand(); }
+  });
+  document.addEventListener('keyup', function (e) {
+    if (e.code !== 'Space' || !spaceDown) return;
+    e.preventDefault();
+    spaceDown = false; pan = null; setHand();
+  });
+  window.addEventListener('blur', function () { spaceDown = false; pan = null; setHand(); });
+  $('imgwrap').addEventListener('pointerdown', function (e) {
+    if (!spaceDown) return;
+    var wrap = $('imgwrap');
+    pan = { x: e.clientX, y: e.clientY, l: wrap.scrollLeft, t: wrap.scrollTop };
+    setHand(); e.preventDefault(); e.stopPropagation();
+  }, true);
+  window.addEventListener('pointermove', function (e) {
+    if (!pan) return;
+    var wrap = $('imgwrap');
+    wrap.scrollLeft = pan.l - (e.clientX - pan.x); wrap.scrollTop = pan.t - (e.clientY - pan.y);
+  });
+  window.addEventListener('pointerup', function () { if (pan) { pan = null; setHand(); } });
+
+  cv.addEventListener('pointerdown', function (e) {
+    if (!F || F.kind !== 'image' || !F.img || spaceDown) return;
+    var p = pt(e); drag = { x0: p.x, y0: p.y, x1: p.x, y1: p.y, moved: false };
+    e.preventDefault();
+  });
+  window.addEventListener('pointermove', function (e) {
+    if (!drag) return;
+    var p = pt(e); drag.x1 = p.x; drag.y1 = p.y;
+    var b = cv.getBoundingClientRect(), scale = cv.width / b.width, d = normRect(drag);
+    if (d.w > 4 * scale || d.h > 4 * scale) drag.moved = true;
+    drawCanvas();
+  });
+  window.addEventListener('pointerup', function () {
+    if (!drag) return;
+    var d = drag; drag = null;
+    if (d.moved) {
+      var q = normRect(d);
+      F.regions.push({ x: q.x, y: q.y, w: q.w, h: q.h, type: 'Area added by hand', value: '', key: 'manual-' + (++manualSeq), checked: true, manual: true });
+      renumber(F); render();
+    } else {
+      for (var i = F.regions.length - 1; i >= 0; i--) {
+        var r = F.regions[i];
+        if (d.x0 >= r.x && d.x0 <= r.x + r.w && d.y0 >= r.y && d.y0 <= r.y + r.h) { toggle(r.id); return; }
+      }
+      drawCanvas();
+    }
+  });
+
+  // ---------- Detection list ----------
+  function renderList() {
+    var list = $('list'), its = items(), isImg = F.kind === 'image';
+    list.textContent = '';
+    updateCount();
+    if (!its.length) {
+      var msg = isImg && (F.status === 'reading' || F.status === 'loading') ? 'Reading…' : isImg ? 'Nothing found. Draw a rectangle on the image to mask an area.' : 'Nothing found.';
+      list.innerHTML = '<div class="row small"></div>'; list.firstChild.textContent = msg; return;
+    }
+    var seen = {};
+    // Domains come first (the customer domain, then other domains): they are the quick decisions
+    var rank = function (d) { return d.type === 'Customer domain' ? 0 : d.type === 'Other domain' ? 1 : 2; };
+    var ordered = its.slice().sort(function (a, b) { return rank(a) - rank(b); });
+    ordered.forEach(function (d) {
+      if (seen[d.key]) return; seen[d.key] = true;
+      var n = its.filter(function (x) { return x.key === d.key; }).length;
+      var row = document.createElement('div'); row.className = 'row' + (rank(d) < 2 ? ' prio' : '');
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'c' + d.id; cb.checked = d.checked;
+      cb.onchange = function () { toggle(d.id, cb.checked); };
+      var lab = document.createElement('label'); lab.htmlFor = cb.id;
+      var t = document.createElement('div'); t.className = 'type';
+      t.textContent = d.type + (n > 1 ? (isImg ? '  (' + n + ' areas)' : '  (×' + n + ')') : '');
+      var v = document.createElement('div'); v.className = 'val';
+      v.textContent = d.value ? (d.value.length > 70 ? d.value.slice(0, 70) + '…' : d.value) : Math.round(d.w) + ' × ' + Math.round(d.h) + ' px';
+      lab.appendChild(t); lab.appendChild(v);
+      if (d.type === 'Customer domain') {
+        var hint = document.createElement('div'); hint.className = 'small';
+        hint.textContent = 'One decision for every occurrence. Uncheck to keep the domain readable.';
+        lab.appendChild(hint);
+      } else if (d.type === 'Other domain') {
+        var hint2 = document.createElement('div'); hint2.className = 'small';
+        hint2.textContent = 'Not a known public service: masked by default. Uncheck it if it identifies nobody.';
+        lab.appendChild(hint2);
+      }
+      row.appendChild(cb); row.appendChild(lab);
+      if (d.manual) {
+        var del = document.createElement('button'); del.className = 'del'; del.textContent = '×'; del.title = 'Remove this area';
+        del.onclick = function () { F.regions = F.regions.filter(function (r) { return r.key !== d.key; }); renumber(F); hover = null; render(); };
+        row.appendChild(del);
+      }
+      row.onmouseenter = function () {
+        if (isImg) { hover = d.key; drawCanvas(); return; }
+        var m = $('m' + d.id); if (m) { m.classList.add('flash'); m.scrollIntoView({ block: 'nearest' }); }
+      };
+      row.onmouseleave = function () {
+        if (isImg) { hover = null; drawCanvas(); return; }
+        document.querySelectorAll('mark.flash').forEach(function (m) { m.classList.remove('flash'); });
+      };
+      list.appendChild(row);
+    });
+  }
+
+  function updateCount() {
+    var keys = {}, on = {};
+    items().forEach(function (d) { keys[d.key] = 1; if (d.checked) on[d.key] = 1; });
+    var n = Object.keys(keys).length, c = Object.keys(on).length;
+    var word = F && F.kind === 'image' ? 'area' : 'item';
+    $('count').textContent = n + ' ' + word + (n > 1 ? 's' : '') + ' · ' + c + ' checked';
+  }
+
+  // Checking or unchecking a value applies to all its occurrences
+  function toggle(id, val) {
+    var its = items(), v = (val === undefined) ? !its[id].checked : val, key = its[id].key;
+    var ovr = F.ovr || (F.ovr = {});
+    its.forEach(function (d) {
+      if (d.key !== key) return;
+      d.checked = v;
+      if (!d.manual) ovr[d.type + '|' + d.key] = v;
+      if (F.kind === 'text') { var m = $('m' + d.id); if (m) m.className = v ? '' : 'off'; }
+    });
+    document.querySelectorAll('#list input').forEach(function (cb) { if (its[+cb.id.slice(1)].key === key) cb.checked = v; });
+    if (F.kind === 'image') drawCanvas();
+    updateCount(); renderFiles();
+  }
+
+  function setAll(v) {
+    var ovr = F.ovr || (F.ovr = {});
+    items().forEach(function (d) { d.checked = v; if (!d.manual) ovr[d.type + '|' + d.key] = v; });
+    render();
+  }
+  $('all').onclick = function () { setAll(true); };
+  $('none').onclick = function () { setAll(false); };
+
+  // ---------- Export ----------
+  function cleanName(name) {
+    var dot = name.lastIndexOf('.');
+    return dot > 0 ? name.slice(0, dot) + '-clean' + name.slice(dot) : name + '-clean';
+  }
+  function saveBlob(blob, name) {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 10000);
+  }
+  // New image: the original is never changed. Re-encoding also strips metadata (EXIF).
+  function maskedImage(f) {
+    return new Promise(function (ok) {
+      var c = document.createElement('canvas'); c.width = f.w; c.height = f.h;
+      var x = c.getContext('2d');
+      x.drawImage(f.img, 0, 0); x.fillStyle = '#000';
+      f.regions.forEach(function (r) { if (r.checked) { var q = pixelRect(r, f.w, f.h); x.fillRect(q.x, q.y, q.w, q.h); } });
+      var mime = /\.jpe?g$/i.test(f.name) ? 'image/jpeg' : /\.webp$/i.test(f.name) ? 'image/webp' : 'image/png';
+      c.toBlob(function (b) { c.width = c.height = 0; ok(b); }, mime, 0.95);   // frees the bitmap at once
+    });
+  }
+  function withExt(name, mime) {
+    var ext = { 'image/png': '.png', 'image/jpeg': '.jpg', 'image/webp': '.webp' }[mime] || '.png';
+    if (mime === 'image/jpeg' && /\.jpe?g$/i.test(name)) return name;
+    return name.replace(/\.[^./]*$/, '') + ext;
+  }
+  // { blob, single: name for a single download, zip: path inside the archive }
+  function output(f) {
+    if (f.kind === 'text') {
+      var blob = new Blob([sanitize(f.text, f.dets)], { type: 'text/plain;charset=utf-8' });
+      return Promise.resolve({ blob: blob, single: cleanName(f.name), zip: cleanName(f.path) });
+    }
+    if (!f.img) return Promise.resolve(null);
+    return maskedImage(f).then(function (b) {
+      var p = withExt(f.path, b.type), cut = p.indexOf('/');
+      // From a folder: same names in "<folder>-clean/", so each image can replace its original by hand
+      return { blob: b, single: cleanName(withExt(f.name, b.type)), zip: cut > 0 ? p.slice(0, cut) + '-clean' + p.slice(cut) : 'masked-screenshots/' + p };
+    });
+  }
+  // Pasted text: copy the result. Dropped files: download them.
+  function copyText(t, btn) {
+    function done(ok) {
+      btn.textContent = ok ? 'Copied ✓' : 'Copy failed: select the text by hand';
+      setTimeout(function () { btn.textContent = dlLabel(); }, 2000);
+    }
+    function fallback() {
+      var ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      var ok = false; try { ok = document.execCommand('copy'); } catch (e) { /* refused by the browser */ }
+      ta.remove(); done(ok);
+    }
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).then(function () { done(true); }, fallback);
+    else fallback();
+  }
+  $('dl').onclick = function () {
+    if (F.pasted) { copyText(sanitize(F.text, F.dets), $('dl')); return; }
+    output(F).then(function (o) { if (o) saveBlob(o.blob, o.single); });
+  };
+
+  // Minimal ZIP (no compression), to download everything at once
+  var CRC = (function () { var t = [], c, n, k; for (n = 0; n < 256; n++) { c = n; for (k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  function crc32(b) { var c = 0xFFFFFFFF; for (var i = 0; i < b.length; i++) c = CRC[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+  function makeZip(entries) {
+    var enc = new TextEncoder(), parts = [], central = [], offset = 0;
+    // entries: [{name, blob, size, crc}]: the data stays in the Blob (the browser may keep it off the heap)
+    function u16(v) { return [v & 255, (v >> 8) & 255]; }
+    function u32(v) { return [v & 255, (v >> 8) & 255, (v >> 16) & 255, (v >>> 24) & 255]; }
+    entries.forEach(function (e) {
+      var nm = enc.encode(e.name), crc = e.crc, sz = e.size;
+      var head = [].concat(u32(0x04034b50), u16(20), u16(0x0800), u16(0), u16(0), u16(0x21), u32(crc), u32(sz), u32(sz), u16(nm.length), u16(0));
+      parts.push(new Uint8Array(head), nm, e.blob);
+      central.push(new Uint8Array([].concat(u32(0x02014b50), u16(20), u16(20), u16(0x0800), u16(0), u16(0), u16(0x21), u32(crc), u32(sz), u32(sz), u16(nm.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(offset))), nm);
+      offset += head.length + nm.length + sz;
+    });
+    var csize = 0; central.forEach(function (c) { csize += c.length; });
+    var end = new Uint8Array([].concat(u32(0x06054b50), u16(0), u16(0), u16(entries.length), u16(entries.length), u32(csize), u32(offset), u16(0)));
+    return new Blob(parts.concat(central, [end]), { type: 'application/zip' });
+  }
+  // At most n tasks at a time, results in order: 300 full-size canvases at once would exhaust the memory
+  function mapLimit(items, n, fn) {
+    var res = new Array(items.length), next = 0;
+    function run() {
+      if (next >= items.length) return Promise.resolve();
+      var i = next++;
+      return fn(items[i]).then(function (v) { res[i] = v; return run(); });
+    }
+    var ps = [];
+    for (var k = 0; k < Math.min(n, items.length); k++) ps.push(run());
+    return Promise.all(ps).then(function () { return res; });
+  }
+  $('dlzip').onclick = function () {
+    mapLimit(files.filter(function (f) { return !f.pasted; }), 3, function (f) {
+      return output(f).then(function (o) {
+        if (!o) return null;
+        return o.blob.arrayBuffer().then(function (buf) { return { zip: o.zip, blob: o.blob, size: buf.byteLength, crc: crc32(new Uint8Array(buf)) }; });
+      });
+    }).then(function (outs) {
+      var used = {};
+      return outs.filter(Boolean).map(function (o) {
+        var nm = o.zip, k = 1;
+        while (used[nm]) nm = o.zip.replace(/(\.[^./]*)?$/, '-' + (++k) + '$1');
+        used[nm] = 1;
+        return { name: nm, blob: o.blob, size: o.size, crc: o.crc };
+      });
+    }).then(function (entries) {
+      // One source folder: the archive is named after it
+      var tops = {};
+      entries.forEach(function (e) { var m = /^(.+)-clean\//.exec(e.name); tops[m ? m[1] : ''] = 1; });
+      var t = Object.keys(tops);
+      saveBlob(makeZip(entries), t.length === 1 && t[0] ? t[0] + '-clean.zip' : 'hidesecrets.zip');
+    });
+  };
+
+  // ---------- Buttons and drop zone ----------
+  $('pick').onclick = function () { $('file').click(); };
+  $('pickdir').onclick = function () { $('dir').click(); };
+  $('file').onchange = function (e) { readFiles(e.target.files); e.target.value = ''; };
+  $('dir').onchange = function (e) { readFiles(e.target.files); e.target.value = ''; };
+  $('s-log').onclick = function () { addText(SAMPLE_LOG, 'example.log'); select(files.length - 1); };
+  $('s-har').onclick = function () { addText(makeSampleHar(), 'example.har'); select(files.length - 1); };
+  $('s-img').onclick = function () {
+    var c = document.createElement('canvas'); drawSampleCapture(c);
+    c.toBlob(function (b) { addImage(b, 'fake-screenshot.png'); select(files.length - 1); }, 'image/png');
+  };
+  // ---------- Pasted text ----------
+  function addPasted(t) {
+    if (!t || !t.trim()) return;
+    var f = addText(t, 'Pasted text ' + (++pastedSeq)); f.pasted = true;
+    select(files.length - 1);
+  }
+  $('paste').addEventListener('paste', function (e) {
+    var t = e.clipboardData && e.clipboardData.getData('text');
+    if (t) { e.preventDefault(); addPasted(t); }
+  });
+  $('gopaste').onclick = function () { addPasted($('paste').value); $('paste').value = ''; };
+
+  // ---------- Masking level: recompute detections, keeping the user's decisions ----------
+  function applyLevel() {
+    renderCats();
+    files.forEach(function (f) {
+      // Decisions on single values (f.ovr) are kept per file, even for items hidden at the current level
+      if (f.kind === 'text') f.dets = detect(f.text, f.name, opts());
+      else if (f.lines) f.regions = regionsFromOcr(f.lines, opts()).concat(f.regions.filter(function (r) { return r.manual; }));
+      applyChoices(f);
+      renumber(f);
+      learnCustomers(f);
+    });
+    if (F) render();
+  }
+  // The last chosen level is kept in this browser; without storage, fall back to "Secrets only"
+  var LEVEL_KEY = 'hidesecrets.level';
+  try {
+    var saved = localStorage.getItem(LEVEL_KEY);
+    if (saved === 'secret' || saved === 'sensitive') { LEVEL = saved; document.querySelector('input[name=lv][value=' + saved + ']').checked = true; }
+  } catch (e) { /* storage unavailable: default level */ }
+  renderCats();
+  document.querySelectorAll('input[name=lv]').forEach(function (r) {
+    r.onchange = function () {
+      if (!r.checked) return;
+      LEVEL = r.value;
+      try { localStorage.setItem(LEVEL_KEY, LEVEL); } catch (e) { /* storage unavailable */ }
+      applyLevel();
+    };
+  });
+
+  var drop = $('drop');
+  ['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('over'); }); });
+  ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('over'); }); });
+  // A dropped folder is read with everything inside it, like "Choose a screenshot folder"
+  function walk(entry, out) {
+    if (entry.isFile) return new Promise(function (ok) {
+      entry.file(function (f) { out.push({ file: f, path: entry.fullPath.replace(/^\//, '') }); ok(); }, function () { ok(); });
+    });
+    if (!entry.isDirectory) return Promise.resolve();
+    var reader = entry.createReader();
+    return new Promise(function (ok) {
+      var all = [];
+      (function more() {   // readEntries returns the content in batches
+        reader.readEntries(function (batch) {
+          if (!batch.length) { Promise.all(all.map(function (c) { return walk(c, out); })).then(ok); return; }
+          all = all.concat(Array.prototype.slice.call(batch)); more();
+        }, function () { ok(); });
+      })();
+    });
+  }
+  drop.addEventListener('drop', function (e) {
+    var items = Array.prototype.slice.call(e.dataTransfer.items || []);
+    var entries = items.map(function (it) { return it.webkitGetAsEntry && it.webkitGetAsEntry(); }).filter(Boolean);
+    if (!entries.some(function (en) { return en.isDirectory; })) { readFiles(e.dataTransfer.files); return; }
+    var out = [];
+    Promise.all(entries.map(function (en) { return walk(en, out); })).then(function () { readFiles(out, true); });
+  });
+  // Stop the browser from opening a file dropped next to the zone
+  window.addEventListener('dragover', function (e) { e.preventDefault(); });
+  window.addEventListener('drop', function (e) { e.preventDefault(); });
+})();
+</script>
+</body>
+</html>

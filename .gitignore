@@ -1,0 +1,38 @@
+# Dependencies and build output
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Output of the tool (cleaned files, report, legend)
+sortie/
+output/
+nettoye/
+out/
+
+# Value -> placeholder tables: they contain the real secrets
+*.table.json
+*table-correspondance*
+
+# Working folders that may hold REAL data (never commit them)
+real-data/
+private/
+local/
+work/
+inbox/
+*.local.*
+
+# Real logs/archives dropped next to the project by mistake.
+# Fake test data lives only under fixtures/.
+/*.har
+/*.log
+/*.zip
+/*.tar
+/*.tar.gz
+/*.tgz
+
+# System files and local configuration
+.DS_Store
+.claude/
+
+# Product settings: private, never published (see config.example.js)
+config.local.js

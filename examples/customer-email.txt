@@ -1,0 +1,17 @@
+From: Infrastructure team <infra@example-customer.test>
+Subject: Install fails at step 6/8 (SSO sign-in)
+
+Hello,
+
+The installation stops at the sign-in step. Here is what we entered:
+  Issuer URL: https://sso.example-customer.test/realms/nimbus
+  Client ID: nimbus-hub
+  client_secret: Fake-Oidc-Secret-7Hq2Lm9Rt4
+
+The browser comes back to https://hub.nimbus.example-customer.test/sso/callback and then shows a 400 error.
+Our firewall sees the calls leaving from 198.51.100.23; the internal server is at 10.20.4.10.
+The test account is test.user@example-customer.test, password: FakeTestPass!2026
+From our French runbook: mot de passe : FakeRunbookPass!2026
+
+Best regards,
+John Example
