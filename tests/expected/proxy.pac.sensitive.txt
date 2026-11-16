@@ -1,0 +1,13 @@
+// Proxy auto-config of an invented agency
+// Specific rules for [CUSTOMER_1] users: see the intranet wiki ([CUSTOMER_1], v2)
+function FindProxyForURL(url, host) {
+  if (isPlainHostName(host) || shExpMatch(host, "10.*.*.*")) { return "DIRECT"; }
+  if (dnsDomainIs(host, ".[DOMAIN_1]") ||
+      dnsDomainIs(host, "*.[DOMAIN_2]") ||
+      dnsDomainIs(host, ".[DOMAIN_3]") ||
+      dnsDomainIs(host, ".github.com") ||
+      shExpMatch(host, "*.internal.example.org")) {
+    return "PROXY 10.20.30.40:3128";
+  }
+  return "DIRECT";
+}

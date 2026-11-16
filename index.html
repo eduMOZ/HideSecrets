@@ -531,12 +531,18 @@ function customerRule() {
   return { type: 'Customer domain', prefix: 'CUSTOMER', g: 1,
     re: new RegExp('(?:' + alts.join('|') + ')' + reEscape(vendor) + '\\.((?:[A-Za-z0-9-]+\\.)+[A-Za-z]{2,})\\b', 'gid') };
 }
+// Words to always mask (project, customer or site names in free text), listed in the product settings
+function termsRule() {
+  var t = cfgList('terms');
+  if (!t.length) return null;
+  return { type: 'Customer domain', prefix: 'CUSTOMER', g: 0, re: new RegExp('(?<![A-Za-z0-9])(?:' + t.map(reEscape).join('|') + ')(?![A-Za-z0-9])', 'gid') };
+}
 var SENS_RULES = [
   { type: 'Email address', prefix: 'EMAIL', g: 0, re: /(?<![\w.%+\/-])[A-Za-z0-9][A-Za-z0-9._%+-]*@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}\b/gd },
   // An address written to dodge robots: anais [at] example [dot] org
   { type: 'Email address', prefix: 'EMAIL', g: 0, re: /(?<![\w.%+\/-])[A-Za-z0-9][A-Za-z0-9._%+-]*[ \t]*[\[({](?:at|arobase)[\])}][ \t]*[A-Za-z0-9-]+(?:[ \t]*[\[({]dot[\])}][ \t]*[A-Za-z0-9-]+)+\b/gid },
   { type: 'Public IP', prefix: 'PUBLIC_IP', g: 0, ip: true, re: /(?<![\w.])(?:\d{1,3}\.){3}\d{1,3}(?![\w]|\.\d)/gd }
-].concat(customerRule() || []);
+].concat(customerRule() || [], termsRule() || []);
 // Private, local and reserved addresses stay visible: they help diagnosis
 function isPublicIp(s) {
   var o = s.split('.').map(Number);
@@ -556,7 +562,7 @@ function isPublicIp(s) {
 var TLDS = new Set(('com net org info biz io ai app dev cloud tech online site xyz top gov edu mil int eu asia pro mobi ' +
   'shop store blog news live digital agency group company services solutions systems network email ' +
   'center zone world today global bank insurance health care law legal media studio design paris berlin ' +
-  'london nyc tokyo swiss bzh alsace corsica test').split(' '));
+  'london nyc tokyo swiss bzh alsace corsica test').split(' ').concat(cfgList('extraTlds').map(function (t) { return t.toLowerCase(); })));   // extraTlds: internal endings (.corp, .intranet…)
 // Two-letter endings that are also file extensions or are too often code
 var TLD_NOT = new Set(['md', 'sh', 'py', 'rs', 'ts', 'so', 'js', 'cc', 'mk', 'pm', 'ps', 'rb', 'gz', 'xz', 'db', 'id', 'in', 'is', 'it', 'me', 'at', 'to', 'do', 'go', 'no', 'on', 'or', 'as', 'be', 'by']);
 // …except when the domain is clearly one (several labels, or a known second level: example.co.uk)
@@ -572,6 +578,8 @@ var PUBLIC_DOMAINS = new Set(('github.com githubusercontent.com github.io docker
   'slack.com zoom.us okta.com auth0.com ' +
   'example.com example.org example.net example.test').split(' ')   // reserved example domains (test data)
   .concat(cfgList('publicDomains').map(function (d) { return d.toLowerCase(); })));   // the product's own public domains
+// The same, written as a suffix: dnsDomainIs(host, ".example.com"), "*.example.com" (proxy auto-config files, certificates)
+var HOST_DOT_RE = /(?<![\w.@%+-])\.((?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+([A-Za-z]{2,24}))(?![\w-]|\.[A-Za-z0-9])/g;
 var HOST_RE = /(?<![\w.@%+-])((?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\.)+([A-Za-z]{2,24}))(?![\w-]|\.[A-Za-z0-9])/g;
 var CODE_START = /^(this|self|window|document|data|value|req|res|args?|opts?|config|params?|console|math|json|object|array|string|date|process|module|exports|e|el|evt|err|ctx|obj|item|node)\./i;
 function registrable(labels) {
@@ -813,14 +821,17 @@ function sensitivePass(text, out, customers) {
   });
   // Other domains: the whole host name is masked (its first labels can name the customer too)
   var kn = Object.keys(known);
-  HOST_RE.lastIndex = 0;
   var hm;
-  while ((hm = HOST_RE.exec(text))) {
-    var host = hm[1], lh = host.toLowerCase();
-    if (!isOtherDomain(host, hm[2])) continue;
-    if (kn.some(function (c) { return lh === c || lh.slice(-c.length - 1) === '.' + c; })) continue;   // already the customer domain
-    out.push({ start: hm.index, end: hm.index + host.length, type: 'Other domain', prefix: 'DOMAIN', sens: true });
-  }
+  [[HOST_RE, 0], [HOST_DOT_RE, 1]].forEach(function (pair) {   // the second form starts with a dot: only the name after it is masked
+    var re = pair[0], skip = pair[1];
+    re.lastIndex = 0;
+    while ((hm = re.exec(text))) {
+      var host = hm[1], lh = host.toLowerCase();
+      if (!isOtherDomain(host, hm[2])) continue;
+      if (kn.some(function (c) { return lh === c || lh.slice(-c.length - 1) === '.' + c; })) continue;   // already the customer domain
+      out.push({ start: hm.index + skip, end: hm.index + skip + host.length, type: 'Other domain', prefix: 'DOMAIN', sens: true });
+    }
+  });
 }
 
 // Overlaps: keep the longest
@@ -1142,7 +1153,7 @@ function makeSampleHar() {
     { type: 'Username in a path', label: 'User names in paths', group: 'People' },
     { type: 'Personal detail', label: 'Birth dates and postal addresses (labeled)', group: 'People' },
     { type: 'Public IP', label: 'Public IP addresses (IPv4, IPv6)', group: 'Network and company' },
-    { type: 'Customer domain', label: 'Customer domain', group: 'Network and company' },
+    { type: 'Customer domain', label: 'Customer domain and listed terms', group: 'Network and company' },
     { type: 'Other domain', label: 'Other domains', group: 'Network and company' },
     { type: 'Bank or card number', label: 'IBAN and card numbers', group: 'Devices and money' },
     { type: 'Device or location', label: 'Devices and locations (MAC, serial, GPS)', group: 'Devices and money' }

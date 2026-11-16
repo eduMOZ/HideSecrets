@@ -135,7 +135,7 @@ Doubling the workers made the batch 1.8 times faster. Reading the same folder wi
 
 ### Product settings (optional)
 
-HideSecrets works without any settings. To make it recognize the product you install (its host names, its own public domains, the generic account names its installer uses), copy `config.example.js` to `config.local.js` next to `index.html` and put your own values in it. The page loads it if it exists. `config.local.js` is ignored by git, so it never ends up in a public repository. The test data and `tests/verify.js` use `config.example.js`, which describes an invented product.
+HideSecrets works without any settings. To make it recognize the product you install (its host names, its own public domains, the generic account names its installer uses), copy `config.example.js` to `config.local.js` next to `index.html` and put your own values in it. The page loads it if it exists. `config.local.js` is ignored by git, so it never ends up in a public repository. The settings can also list **internal domain endings** that are not on the usual list (`extraTlds`: `.corp`, `.intranet`…) and **words to mask wherever they appear** (`terms`: a project, customer or site name that shows up in comments and free text, which nothing else can guess). The words are masked together with the customer domain and share its checkbox. The test data and `tests/verify.js` use `config.example.js`, which describes an invented product.
 
 ## What stays visible
 
@@ -170,6 +170,7 @@ The [`examples/`](examples/) folder holds realistic files in which **every value
 | [`users.csv`](examples/users.csv) | A CSV export: the password column, e-mail addresses, phone numbers |
 | [`dump.sql`](examples/dump.sql) | A SQL dump: `IDENTIFIED BY`, `WITH PASSWORD`, password hashes and tokens in an `INSERT` |
 | [`diagnostic-notes.txt`](examples/diagnostic-notes.txt) | Hard cases: a name with no capital letters, an address written with `[at]`, a birth date with the month in letters, a PIN, a security answer, a password split in two strings, JSON escapes, coordinates in degrees, a network share; and look-alikes that stay visible |
+| [`proxy.pac`](examples/proxy.pac) | A proxy auto-config file: domains written as suffixes (`.example.test`, `*.corp.example.test`), an internal ending, a listed project name; a public service and a private address stay visible |
 | [`personal-data.txt`](examples/personal-data.txt) | Phone numbers, IBAN, cards, serial number, MAC, IPv6, GPS, paths with a user name, a license key, and values that must stay visible |
 
 For each example, [`tests/expected/`](tests/expected/) holds the expected result at both levels. To check that the engine still produces them:
@@ -188,7 +189,7 @@ The tool helps you review; it does not guarantee that nothing is left. Always ch
 
 - **Screenshots**: detection depends on how well the OCR reads the image (small text, low contrast). Each image is read twice, the second time to catch light text on colored panels, which takes one to two seconds per image. Several images are read at the same time (see [Reading speed](#reading-speed)), and the one on screen is read first. Draw a rectangle over anything that was missed.
 - **Person names**: found from a list of common first names, from words in capitals followed by an identifier, or after a label such as `Author:`. A name with an unusual first name and no such clue is missed. A street named after a person (`Victor Hugo Avenue`) is masked too.
-- **Other domains**: a public service missing from the built-in list is masked by default; uncheck it. A domain without a usual ending (`.com`, `.fr`, `.de`…) is not detected.
+- **Other domains**: a public service missing from the built-in list is masked by default; uncheck it. A domain without a usual ending (`.com`, `.fr`, `.de`…) is not detected: list its ending in `extraTlds` of your product settings. Domains written as a suffix (`.example.com`, `*.example.com`, as in proxy auto-config files) are detected like the others.
 - **Decisions on single values** count for one file and are lost when the page is reloaded.
 - **Authentication parameters in URLs** (`state=`, `code=` in an SSO callback): not masked.
 - **A four-part version number** (`1.84.2.0`) can be mistaken for a public IP: uncheck it.

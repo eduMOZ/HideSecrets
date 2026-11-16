@@ -17,5 +17,9 @@ var HIDESECRETS_CONFIG = {
   // The product's own public domains (download site, image registry): they identify no customer and stay visible
   publicDomains: ['nimbus-cloud.test'],
   // Generic account and machine names used when installing the product: "nimbus@nimbus" stays visible
-  genericNames: ['nimbus']
+  genericNames: ['nimbus'],
+  // Internal endings that are not on the usual list (.corp, .intranet…): their domains are masked like the others
+  extraTlds: ['intranet'],
+  // Words to mask wherever they appear: project, customer or site names in comments and free text
+  terms: ['project-aurora']
 };
