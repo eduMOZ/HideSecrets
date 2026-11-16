@@ -36,13 +36,20 @@
   .steps b { display:block; font-size:14px; line-height:1.25; }
   .sdesc { display:block; font-size:12.5px; color:rgb(255 255 255 / .78); line-height:1.3; }
   @media (max-width: 800px) { .steps li:not(:last-child)::after { display:none; } }
-  .privacy { margin-top:12px !important; display:flex; gap:7px; align-items:center; font-size:12.5px; }
-  .privacy svg { flex:none; width:14px; height:14px; }
+  .top { display:flex; align-items:center; justify-content:space-between; gap:14px 28px; flex-wrap:wrap; width:100%; }
+  /* The privacy promise: a translucent card, not a footnote */
+  .trust { display:flex; align-items:center; gap:12px; padding:10px 18px 10px 12px; border-radius:14px; background:rgb(255 255 255 / .1); border:1px solid rgb(255 255 255 / .3); backdrop-filter:blur(6px); max-width:390px; }
+  .tbadge { flex:none; width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#c13fd6,#ff7a59); display:grid; place-items:center; box-shadow:0 2px 8px rgb(0 0 0 / .3); }
+  .tbadge svg { width:19px; height:19px; color:#fff; }
+  .trust b { display:block; font-size:14.5px; line-height:1.25; }
+  .tsub { display:block; font-size:12.5px; color:rgb(255 255 255 / .82); line-height:1.3; }
   @media (max-width: 600px) {
     .brand { align-items:flex-start; gap:12px; }
     .logo { width:58px; }
     h1 { font-size:23px; }
     .tag { font-size:14.5px; }
+    .trust { max-width:none; width:100%; }
+    body.working .trust b { display:none; }
   }
   /* Once files are loaded: a compact bar that stays on screen */
   body.working header { position:sticky; top:0; z-index:20; box-shadow:0 1px 6px rgb(0 0 0 / .25); }
@@ -51,6 +58,12 @@
   body.working .logo { width:38px; filter:none; }
   body.working h1 { font-size:19px; }
   body.working .tag, body.working .intro { display:none; }
+  body.working .top { flex-wrap:nowrap; }
+  body.working .trust { padding:4px 14px 4px 5px; border-radius:999px; gap:8px; width:auto; }
+  body.working .tbadge { width:26px; height:26px; box-shadow:none; }
+  body.working .tbadge svg { width:14px; height:14px; }
+  body.working .trust b { font-size:13px; }
+  body.working .tsub { display:none; }
   body.working #work { height:calc(100vh - 88px); scroll-margin-top:60px; }
   @media (max-width:800px) { body.working #work { height:auto; } }
   main { max-width:1440px; margin:0 auto; padding:12px 16px 40px; }
@@ -136,11 +149,17 @@
 <body>
 <header>
  <div class="hwrap">
-  <div class="brand">
-<img class="logo" src="assets/logo.svg" alt="" width="96" height="96">
-    <div>
-      <h1>HideSecrets</h1>
-      <p class="tag">Mask secrets and personal data before you share a log, a network capture, a screenshot or a support bundle.</p>
+  <div class="top">
+    <div class="brand">
+      <img class="logo" src="assets/logo.svg" alt="" width="96" height="96">
+      <div>
+        <h1>HideSecrets</h1>
+        <p class="tag">Mask secrets and personal data before you share a log, a network capture, a screenshot or a support bundle.</p>
+      </div>
+    </div>
+    <div class="trust" role="note">
+      <span class="tbadge"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg></span>
+      <div><b>Nothing leaves your browser</b><span class="tsub">A security rule stops this page from contacting any site.</span></div>
     </div>
   </div>
   <div class="intro">
@@ -149,10 +168,8 @@
       <li><span class="sico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6l1.5 1.5L7.5 4.5M3.5 13l1.5 1.5 2.5-3M10.5 6h6M10.5 13h6"/></svg></span><div><b>Review what was found</b><span class="sdesc">uncheck whatever can stay readable</span></div></li>
       <li><span class="sico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h6l3 3v11H6zM12 3v3h3M8.5 12.5 10 14l2.5-3.5"/></svg></span><div><b>Download the clean copy</b><span class="sdesc">the original is never changed</span></div></li>
     </ol>
-    <p class="privacy"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>
-      Everything happens in your browser: a security rule stops this page from contacting any site.</p>
   </div>
-</div>
+ </div>
 </header>
 <main>
   <div id="level" class="bar" role="radiogroup" aria-label="Masking level">
@@ -255,6 +272,12 @@ var RULES = [
   { type: 'Password in a URL', g: 1, re: /\b[a-z][a-z0-9+.-]*:\/\/[^\s:\/@"']*:([^\s@\/"']+)@/gid },
   // A secret written as two or three strings: password = "Demo" + "Only!729"
   { type: 'Password (split in strings)', g: 1, re: /\b(?:password|passwd|pwd|secret|token|api[_-]?key)(?:\\?["'])?[ \t]*[:=][ \t]*(["'][^"'\n]{1,60}["'](?:[ \t]*\+[ \t]*["'][^"'\n]{1,60}["'])+)/gid },
+  // Tokens in a link: ...?code=demo_k8P4t9 (long, with letters and digits: code=200 or state=ready are not secrets)
+  { type: 'URL parameter (code, state…)', g: 1, mixed: true, re: /[?&](?:code|state|invite|invitation|sig|signature|auth|sid|sessionid|ticket)=([A-Za-z0-9._~%-]{8,})/gid },
+  // A door, gate or Wi-Fi code given in a sentence: "le code pour entrer demain est 7391#"
+  { type: 'Access code', g: 1, re: /(?<![A-Za-z0-9])(?:digicode|passcode|(?:door|access|entry|gate|wi-?fi) (?:code|password)|code (?:d['’](?:acc[èe]s|entr[ée]e)|pour entrer|de la porte|porte|du portail|wifi))(?:[ \t]+\p{L}{2,12}){0,3}?[ \t]*(?:[:=]|est|is)[ \t]*["'«]?([A-Za-z0-9#*]{3,12})/giud },
+  // The answer to a security question, given in a sentence: "pour récupérer mon compte, la réponse est « Plume »"
+  { type: 'Security answer', g: 1, re: /(?:compte|account|r[ée]cup[ée]r|recover|reset|s[ée]curit|security)[^\n]{0,60}?(?:r[ée]ponse|answer)[ \t]+(?:est|is)[ \t]*[«"“]\s*([^»"”\n]{2,40}?)\s*[»"”]/gid },
   { type: 'PIN code', g: 1, re: /(?<![A-Za-z0-9])(?:code[ ]+)?pin(?:[ _-]?code)?(?:[ ]+(?:de|du|of|for|test|carte|card))*[ \t]*[:=][ \t]*["']?(\d{4,8})(?!\d)/gid },
   // The answer to a security question, on the line after the question
   { type: 'Security answer', g: 1, re: /(?:(?:security|secret|recovery)[ ]question|question[ ](?:de[ ])?(?:s[ée]curit[ée]|r[ée]cup[ée]ration|secr[èe]te))[^\n]*\n[ \t]*(?:r[ée]ponse|answer)[ \t]*[:=][ \t]*([^\n]{2,80})/gid },
@@ -316,6 +339,7 @@ function regexPass(text, out) {
       if (IGNORE.test(v)) continue;
       if (r.g > 0 && !plausible(v)) continue;
       if (r.words && looksLikeWords(v)) continue;
+      if (r.mixed && !(/\d/.test(v) && /[A-Za-z]/.test(v))) continue;
       if (r.needsEq && v.indexOf('=') < 0) continue;
       if (r.cookie) {   // one secret per cookie, not the whole header
         var isSet = /^set-/i.test(m[0]), off = 0;
@@ -417,6 +441,21 @@ function secretManifestPass(text, out) {
       }
     }
   });
+}
+// "Password:" alone at the end of a line, the secret on the next line(s): chat boxes, mails, terminals
+function nextLinePasswordPass(text, out) {
+  var re = /(?:mot[ _-]?de[ _-]?passe|password|passwd|mdp|passphrase)[^\n]{0,70}:[ \t]*\r?\n/gi, m;
+  while ((m = re.exec(text))) {
+    var p = m.index + m[0].length;
+    for (var k = 0; k < 3; k++) {
+      var mm = /^[ \t|│>$]*([^\s|│]{4,40})[ \t|│]*(?:\r?\n|$)/.exec(text.slice(p, p + 160));
+      if (!mm || !/\d/.test(mm[1]) || IGNORE.test(mm[1])) break;   // a word alone ("WARNING!") is not a password
+      var at = p + mm[0].indexOf(mm[1]);
+      out.push({ start: at, end: at + mm[1].length, type: 'Password on its own line' });
+      p += mm[0].length;
+    }
+    re.lastIndex = Math.max(re.lastIndex, p);
+  }
 }
 // INSERT INTO t (id, email, password) VALUES (...), (...): the cells of a sensitive column
 function sqlInsertPass(text, out) {
@@ -539,6 +578,9 @@ var SENS_RULES = [
   { type: 'Email address', prefix: 'EMAIL', g: 0, re: /(?<![\w.%+\/-])[A-Za-z0-9][A-Za-z0-9._%+-]*@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}\b/gd },
   // An address written to dodge robots: anais [at] example [dot] org
   { type: 'Email address', prefix: 'EMAIL', g: 0, re: /(?<![\w.%+\/-])[A-Za-z0-9][A-Za-z0-9._%+-]*[ \t]*[\[({](?:at|arobase)[\])}][ \t]*[A-Za-z0-9-]+(?:[ \t]*[\[({]dot[\])}][ \t]*[A-Za-z0-9-]+)+\b/gid },
+  // An address cut by the end of a line ("jane.doe@" then "example.com"), or encoded in a link (jane%2Edoe%40example%2Ecom)
+  { type: 'Email address', prefix: 'EMAIL', g: 0, re: /(?<![\w.%+\/-])[A-Za-z0-9][A-Za-z0-9._%+-]*@[ \t]*\r?\n[ \t]*[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}\b/gd },
+  { type: 'Email address', prefix: 'EMAIL', g: 0, re: /(?<![\w.%+\/-])(?:[A-Za-z0-9_+-]|%2[Ee])(?:[A-Za-z0-9_+-]|%2[Ee]|\.)*%40(?:[A-Za-z0-9-]+(?:\.|%2[Ee]))+[A-Za-z]{2,}\b/gd },
   { type: 'Public IP', prefix: 'PUBLIC_IP', g: 0, ip: true, re: /(?<![\w.])(?:\d{1,3}\.){3}\d{1,3}(?![\w]|\.\d)/gd }
 ].concat(customerRule() || [], termsRule() || []);
 // Private, local and reserved addresses stay visible: they help diagnosis
@@ -617,19 +659,49 @@ var FIRST_NAMES = ('adam adrien agnes alain alex alexandre alexandra alexis alic
   'giovanni marco luca giulia paolo pedro joao kenji yuki wei li mei').split(' ');
 var FN_SET = new Set(FIRST_NAMES);
 function plain(w) { return w.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }   // Hélène -> helene
-var NAME_WORD = "\\p{Lu}(?:\\p{Ll}+|\\p{Lu}+)(?:[-'’]\\p{Lu}?\\p{L}+)*";
+var NAME_WORD = "(?:[dl]['’])?\\p{Lu}(?:\\p{Ll}+|\\p{Lu}+)(?:[-'’]\\p{Lu}?\\p{L}+)*";   // d'Aubigné, Marie, DUPONT
 var PERSON_FIRST_RE = new RegExp('(?<![\\p{L}\\d_.@-])(' + NAME_WORD + ')((?:[ \\t]+' + NAME_WORD + '){1,2})(?:[ \\t]+(\\d{4,}))?(?![\\p{L}\\d_@-])', 'gu');
 var PERSON_CAPS_RE = /(?<![\p{L}\d_])(\p{Lu}{2,}(?:[-'\u2019]\p{Lu}+)*(?:[ \t]+\p{Lu}{2,}(?:[-'\u2019]\p{Lu}+)*){1,2})[ \t]*(\d{4,})(?![\p{L}\d])/gu;   // the ID may be stuck to the name (OCR)
-var PERSON_LABEL_RE = /\b(?:name|full[ _-]?name|display[ _-]?name|nom|pr[ée]nom|author|auteur|owner|assignee|reporter|contact|signed in as|logged in as|connect[ée](?:e)? en tant que|user|utilisateur)\b[ \t]*[:=]?[ \t]*["']?(\p{Lu}\p{Ll}+(?:[- ]\p{Lu}[\p{L}'’-]+){1,2})/giu;
+var PERSON_LABEL_RE = /\b(?:nom complet est|mon nom est|full name is|my name is|je m['’]appelle|contact de secours|emergency contact|personne [àa] pr[ée]venir|name|full[ _-]?name|display[ _-]?name|nom|pr[ée]nom|author|auteur|owner|assignee|reporter|contact|signed in as|logged in as|connect[ée](?:e)? en tant que|user|utilisateur)\b[ \t]*[:=]?[ \t]*["']?(\p{Lu}\p{Ll}+(?:[- ](?:[dl]['’])?\p{Lu}[\p{L}'’-]+){1,2})/giu;
 var CAPS_STOP = new Set(('GET POST PUT DELETE PATCH HEAD OPTIONS HTTP HTTPS INFO WARN WARNING ERROR DEBUG TRACE FATAL NOTICE CRIT ' +
   'UTC GMT CET CEST PID UID GID TCP UDP DNS TLS SSL API URL URI ID IDS OK KO NAME READY STATUS AGE PORT PORTS IP CPU MEM ' +
   'SELECT FROM WHERE INSERT UPDATE INTO VALUES AND OR NOT NULL TRUE FALSE THE TOTAL SIZE TYPE DATE TIME USER').split(' '));
 // A first name alone, in a screen-sharing label of a video call: "Jane's screen", "Jane is presenting"
 var PERSON_SHARE_RE = /(?<![\p{L}\d_])(\p{Lu}\p{Ll}+)(?=['\u2019]s (?:screen|desktop|window)\b| is (?:presenting|sharing)\b| (?:partage|présente) (?:son |l['\u2019])?écran)/gu;
+// A chat message header: a name (two to four words, particles allowed) alone on a line with a time: "Jane Doe 09:41"
+var PERSON_SEP = '[ \\t]+(?:(?:de|du|des|van|von|der|den|da|di|del|la|le)[ \\t]+)?';
+var NAME_SEQ = NAME_WORD + '(?:' + PERSON_SEP + NAME_WORD + '){1,3}';
+var PERSON_CHAT_RE = new RegExp('^[ \\t]*(' + NAME_SEQ + ')[ \\t]+\\d{1,2}[:h]\\d{2}(?:[ \\t]*[AaPp][Mm])?[ \\t]*$', 'gmu');
+var PERSON_NAME_ONLY = new RegExp('^' + NAME_SEQ + '$', 'u');
+// E-mail headers: "From: Jane Doe", "À : Jane Doe" (a colon is required: "de Lyon Part-Dieu" is no name)
+var PERSON_HEADER_RE = /(?<![\p{L}\d_])(?:from|to|cc|bcc|sender|recipient|de|à|pour|exp[ée]diteur|destinataire)[ \t]*:[ \t]*["']?([^\n<@"']{3,60})/giu;
+// A name found once is a name everywhere in the text: its words are masked wherever they appear,
+// and the word before a family name that was seen ("Noé d'Aubigné" after "Maëlys d'Aubigné")
+function learnNames(text, found, out) {
+  var first = new Set(), last = new Set(), wre = new RegExp(NAME_WORD, 'gu');
+  found.forEach(function (d) {
+    (text.slice(d.start, d.end).match(wre) || []).forEach(function (t, i) {
+      if (t.length < 3 || CAPS_STOP.has(t.toUpperCase())) return;
+      (i === 0 ? first : last).add(t);
+    });
+  });
+  if (!first.size && !last.size) return;
+  var sre = new RegExp('(?<![\\p{L}\\d_])(' + NAME_WORD + ')(?![\\p{L}\\d_])', 'gu'), toks = [], m;
+  while ((m = sre.exec(text))) toks.push({ s: m.index, e: m.index + m[0].length, w: m[1], k: first.has(m[1]) || last.has(m[1]) });
+  var gap = function (a, b) { return /^[ \t]+(?:(?:de|du|des|van|von|der|den|da|di|del|la|le)[ \t]+)?$/.test(text.slice(a.e, b.s)); };
+  toks.forEach(function (t, i) { if (last.has(t.w) && i > 0 && gap(toks[i - 1], t)) toks[i - 1].k = true; });
+  for (var i = 0; i < toks.length; i++) {
+    if (!toks[i].k) continue;
+    var j = i;
+    while (j + 1 < toks.length && toks[j + 1].k && gap(toks[j], toks[j + 1])) j++;
+    out.push({ start: toks[i].s, end: toks[j].e, type: 'Person name', prefix: 'PERSON', sens: true });
+    i = j;
+  }
+}
 // "Alias: …", "Nickname: …": the value may be in any script (no capital letters to rely on)
 var ALIAS_RE = /(?<![\p{L}\d_])(?:alias|pseudonym|pseudo|aka|also known as|surnom|nickname)[ \t]*[:=][ \t]*([^\n]{2,60})/giu;
 function personPass(text, out) {
-  var m;
+  var m, before = out.length;
   ALIAS_RE.lastIndex = 0;
   while ((m = ALIAS_RE.exec(text))) {
     var av = m[1].replace(/[ \t]+$/, '');
@@ -657,10 +729,24 @@ function personPass(text, out) {
   PERSON_LABEL_RE.lastIndex = 0;
   while ((m = PERSON_LABEL_RE.exec(text))) {
     // The label ignores case, the name does not: "NAME READY STATUS" (a table header) is no name
-    if (!/^\p{Lu}\p{Ll}+(?:[- ]\p{Lu}\p{Ll}[\p{L}'\u2019-]*){1,2}$/u.test(m[1])) continue;
+    if (!/^\p{Lu}\p{Ll}+(?:[- ](?:[dl]['\u2019])?\p{Lu}\p{Ll}[\p{L}'\u2019-]*){1,2}$/u.test(m[1])) continue;
     var ix = m.index + m[0].length - m[1].length;
     out.push({ start: ix, end: ix + m[1].length, type: 'Person name', prefix: 'PERSON', sens: true });
   }
+  PERSON_CHAT_RE.lastIndex = 0;
+  while ((m = PERSON_CHAT_RE.exec(text))) {
+    if (m[1].split(/[ \t]+/).some(function (w) { return CAPS_STOP.has(w.toUpperCase()); })) continue;
+    var cs = m.index + m[0].indexOf(m[1]);
+    out.push({ start: cs, end: cs + m[1].length, type: 'Person name', prefix: 'PERSON', sens: true });
+  }
+  PERSON_HEADER_RE.lastIndex = 0;
+  while ((m = PERSON_HEADER_RE.exec(text))) {
+    var hv = m[1].replace(/[ \t]+$/, '');
+    if (!PERSON_NAME_ONLY.test(hv) || hv.split(/[ \t]+/).some(function (w) { return CAPS_STOP.has(w.toUpperCase()); })) continue;
+    var hs = m.index + m[0].length - m[1].length;
+    out.push({ start: hs, end: hs + hv.length, type: 'Person name', prefix: 'PERSON', sens: true });
+  }
+  learnNames(text, out.slice(before), out);
 }
 
 // ---------- Logins: name@machine (shell prompts, terminal tabs) ----------
@@ -683,7 +769,15 @@ function loginPass(text, out) {
     if (/^(?:sha\d+|md5|latest|stable|main|master|v?\d+)$/i.test(m[2])) continue;   // image@sha256, package@1, branch@main
     out.push({ start: m.index, end: m.index + m[0].length, type: 'User login', prefix: 'LOGIN', sens: true });
   }
+  // A Windows account: ATELIER\jdoe (the domain in capitals; drives, UNC paths and system folders are left alone)
+  DOMAIN_USER_RE.lastIndex = 0;
+  while ((m = DOMAIN_USER_RE.exec(text))) {
+    if (NOT_DOMAIN.has(m[1]) || GENERIC_USERS.has(m[2].toLowerCase()) || /^(?:system32|system|users|temp|local|roaming)$/i.test(m[2])) continue;
+    out.push({ start: m.index, end: m.index + m[0].length, type: 'User login', prefix: 'LOGIN', sens: true });
+  }
 }
+var DOMAIN_USER_RE = /(?<![\w\\:])([A-Z][A-Z0-9_-]{1,15})\\([A-Za-z][A-Za-z0-9._-]{1,30})(?![\w\\])/g;
+var NOT_DOMAIN = new Set('WINDOWS SYSTEM32 PROGRAM PROGRAMDATA BUILTIN NT USERS TEMP APPDATA LOCAL ROAMING'.split(' '));
 
 // ---------- More personal data: phone numbers, IBAN, cards, devices, IPv6, paths ----------
 function luhnOk(digits) {
@@ -728,6 +822,14 @@ var DOB_RE = new RegExp('(?<![A-Za-z0-9])(?:birth[ _-]?date|date[ _-]?of[ _-]?bi
   '(\\d{4}-\\d{2}-\\d{2}|\\d{1,2}[\\/.-]\\d{1,2}[\\/.-]\\d{2,4}|\\d{1,2}(?:st|nd|rd|th|er)?[ ]+(?:' + MONTHS + ')[ ]+\\d{4}|(?:' + MONTHS + ')[ ]+\\d{1,2}(?:st|nd|rd|th)?,?[ ]+\\d{4})(?!\\d)', 'gid');
 var ADDRESS_RE = /(?<![A-Za-z0-9])(?:(?:home|postal|billing|shipping|street|mailing|delivery|customer|contact)[ _-]?)?(?:address|adresse)\b["']?[ \t]*[:=][ \t]*(?:"([^"\n]{8,160})"|'([^'\n]{8,160})'|([^\n"']{8,160}))/gid;
 var NOT_POSTAL = /(?:ip|mac|e-?mail|mail|remote|client|server|host|bind|listen|url|web|wallet|public|private|memory|contract)[ _-]*$/i;   // ip_address, email address…
+// A phone number spelled out: "zéro six, douze, trente-quatre, cinquante-six, soixante-dix-huit"
+var NUMW = 'z[ée]ro|un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingts?|trente|quarante|cinquante|soixante|cent';
+var SPOKEN_PHONE_FR = new RegExp('(?<![\\p{L}])z[ée]ro[ -](?:un|deux|trois|quatre|cinq|six|sept|huit|neuf)(?:[ ,]+(?:' + NUMW + ')(?:-(?:' + NUMW + '))*){4,6}(?![\\p{L}])', 'giu');
+var SPOKEN_PHONE_EN = /(?<![A-Za-z])(?:zero|oh|one|two|three|four|five|six|seven|eight|nine)(?:[ ,-]+(?:zero|oh|one|two|three|four|five|six|seven|eight|nine|double|triple)){7,}(?![A-Za-z])/gi;
+// Identity documents, tickets and booking references, when a label names them: "Passeport de test : 00AA00000"
+var ID_RE = /(?<![A-Za-z0-9])(?:passport|passeport|id[ _-]?card|carte[ ]d['’]identit[ée]|cni|driver'?s?[ ]licen[cs]e|permis(?:[ ]de[ ]conduire)?|social[ ]security|s[ée]curit[ée][ ]sociale|ssn|ticket|billet|booking|r[ée]servation|dossier|pnr|reference|r[ée]f[ée]rence)(?:[ \t]+(?:number|no\.?|n°|num[ée]ro|code|de[ ]test|test))*[ \t]*[:=#]?[ \t]*["']?([A-Za-z0-9][A-Za-z0-9-]{4,24})(?![A-Za-z0-9-])/gid;
+// An address whose label stands alone on its line, the street and town on the next ones
+var ADDRESS_NEXT_RE = /(?<![A-Za-z0-9])(?:(?:home|postal|billing|shipping|mailing|delivery|secours|emergency)[ _-]?)?(?:adresse|address)(?:[ ]+(?:de|du)[ ]+(?:livraison|facturation|secours|domicile))?[ \t]*:?[ \t]*\r?\n[ \t]*(\d{1,4}[^\n]{4,80}(?:\r?\n[ \t]*\d{4,5}[^\n]{2,50})?)/gid;
 var DMS_RE = /(?<![\d.])\d{1,3}°[ \t]*\d{1,2}['′][ \t]*\d{1,2}(?:\.\d+)?(?:\\?"|″|'')?[ \t]*[NS][ \t,;\/]*\d{1,3}°[ \t]*\d{1,2}['′][ \t]*\d{1,2}(?:\.\d+)?(?:\\?"|″|'')?[ \t]*[EW]\b/g;
 var UNC_USER_RE = /\\{2,4}[A-Za-z0-9._-]+\\{1,2}(?:homes?|users|profiles?|personal)\\{1,2}([^\\\/\s"'<>:*?|]{1,40})/gid;
 var GPS_RE = /(?<![\d.])-?(?:[1-8]?\d|90)\.\d{4,}[ \t]*,[ \t]*-?(?:1[0-7]\d|[1-9]?\d|180)\.\d{4,}(?![\d.])/g;
@@ -775,6 +877,14 @@ function piiPass(text, out) {
   labeled(DOB_RE, 'Personal detail', 'PERSONAL');
   labeled(ADDRESS_RE, 'Personal detail', 'PERSONAL', function (v, mm) {
     return /\d/.test(v) && /\p{L}/u.test(v) && /\s/.test(v) && !NOT_POSTAL.test(text.slice(Math.max(0, mm.index - 16), mm.index));
+  });
+  labeled(ID_RE, 'Personal detail', 'PERSONAL', function (v) { return /\d/.test(v) && v === v.toUpperCase(); });
+  labeled(ADDRESS_NEXT_RE, 'Personal detail', 'PERSONAL', function (v, mm) {
+    return /\d/.test(v) && /\p{L}/u.test(v) && !NOT_POSTAL.test(text.slice(Math.max(0, mm.index - 16), mm.index));
+  });
+  [SPOKEN_PHONE_FR, SPOKEN_PHONE_EN].forEach(function (re) {
+    re.lastIndex = 0;
+    while ((m = re.exec(text))) add(m.index, m.index + m[0].length, 'Phone number', 'PHONE');
   });
   GPS_RE.lastIndex = 0;
   while ((m = GPS_RE.exec(text))) add(m.index, m.index + m[0].length, 'Device or location', 'DEVICE');
@@ -847,6 +957,7 @@ function detect(text, filename, opts) {
   regexPass(text, raw);
   secretManifestPass(text, raw);
   sqlInsertPass(text, raw);
+  nextLinePasswordPass(text, raw);
   if (/\.(csv|tsv)$/i.test(filename)) csvPass(text, raw);
   if (/\.har$/i.test(filename) || /^\s*\{/.test(text)) harPass(text, raw);
   raw = raw.reduce(function (acc, d) { return acc.concat(expandJsonCookie(text, d)); }, []);
@@ -860,6 +971,7 @@ function detect(text, filename, opts) {
   res.forEach(function (d, i) {
     d.id = i; d.value = text.slice(d.start, d.end);
     d.key = d.sens ? normKey(d.value).toLowerCase() : normKey(d.value);
+    if (d.prefix === 'EMAIL') d.key = d.key.replace(/\s+/g, '');   // an address cut over two lines is the same address
     d.checked = true;
   });
   return res;
@@ -1146,10 +1258,10 @@ function makeSampleHar() {
   var CATS = [
     { type: 'Email address', label: 'Email addresses', group: 'People' },
     { type: 'Person name', label: 'Person names', group: 'People' },
-    { type: 'User login', label: 'Logins (name@machine)', group: 'People' },
+    { type: 'User login', label: 'Logins (name@machine, DOMAIN\\name)', group: 'People' },
     { type: 'Phone number', label: 'Phone numbers', group: 'People' },
     { type: 'Username in a path', label: 'User names in paths', group: 'People' },
-    { type: 'Personal detail', label: 'Birth dates and postal addresses (labeled)', group: 'People' },
+    { type: 'Personal detail', label: 'Labeled details (birth date, address, ID, booking)', group: 'People' },
     { type: 'Public IP', label: 'Public IP addresses (IPv4, IPv6)', group: 'Network and company' },
     { type: 'Customer domain', label: 'Customer domain and listed terms', group: 'Network and company' },
     { type: 'Other domain', label: 'Other domains', group: 'Network and company' },

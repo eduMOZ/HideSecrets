@@ -1,0 +1,41 @@
+TEST ENVIRONMENT - invented identities and accesses
+Camille d'Orval 09:41
+Pour le badge, mon nom complet est Camille Inès d'Orval.
+Je suis née le 12 mars 1990 à Ville-Fictive.
+Vous pouvez me joindre au zéro six, douze, trente-quatre, cinquante-six, soixante-dix-huit.
+Théo Marchand 09:43
+Je t'ai envoyé l'invitation sur :
+camille.dorval@
+example.com
+Camille d'Orval 09:45
+Le code pour entrer demain est 7391#.
+Pour récupérer mon compte, la réponse est « Plume ».
+Le mot de passe temporaire est sur ces deux lignes :
+Orbite!47
+Nuage?82
+Théo Marchand 09:47
+Voilà le dossier de test.
+De : Réservations <noreply@example.com>
+À : Camille d'Orval <camille.dorval@example.com>
+Objet : votre dossier Q7X9LM
+Passeport de test : 00AA00000
+Billet de test : 000-1234567890
+Camille d'Orval 09:50
+Pour le support, voici le lien reçu :
+https://assistance.example.com/invite?code=demo_k8P4t9&user=camille%2Edorval%40example%2Ecom
+Et le poste qui bloque est ATELIER\cdorval
+Adresse de livraison
+8 passage des Lucioles
+00000 Ville-Fictive
+Contact de secours
+Anouk d'Orval
+Théo Marchand 09:52
+Repères techniques : version 3.14.159, ticket #7391, résolution 1920 x 1080.
+
+Not personal data:
+Gare de Lyon Part-Dieu, Paris
+https://assistance.example.com/list?page=2&code=200&state=ready&country_code=FR
+Le dossier de test est prêt. Reference: ABCDEF
+Dossiers: C:\Users\Public\Documents, C:\Program Files\App, NT AUTHORITY\SYSTEM
+Le mot de passe est requis:
+WARNING!
