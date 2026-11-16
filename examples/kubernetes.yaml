@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Config
+clusters:
+- name: nimbus-prod
+  cluster:
+    server: https://10.20.0.5:6443
+    certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tZmFrZQ==
+users:
+- name: ops
+  user:
+    client-key-data: LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLWZha2VrZXlmYWtla2V5
+    token: fake-kube-token-Zm9vYmFyYmF6cXV4MTIzNDU2
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nimbus-db
+  namespace: nimbus
+type: Opaque
+data:
+  username: bmltYnVz
+  db-credentials: RmFrZS1EYi1QYXNzLTEyMzQ1Ng==
+stringData:
+  api: "fake-plain-value-9f8e7d6c"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nimbus-settings
+data:
+  log_level: debug
+  feature_flags: "beta"

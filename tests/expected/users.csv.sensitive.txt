@@ -1,0 +1,4 @@
+id,email,password,phone,role
+1,[EMAIL_1],[SECRET_1],[PHONE_1],admin
+2,[EMAIL_2],"[SECRET_2]",[PHONE_2],user
+3,[EMAIL_3],[SECRET_3],[PHONE_3],user

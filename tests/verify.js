@@ -21,7 +21,9 @@ const ctx = {};
 vm.createContext(ctx);
 // The tests use the example product settings (an invented product), as config.local.js would in the page
 vm.runInContext(fs.readFileSync(path.join(root, 'config.example.js'), 'utf8'), ctx);
-vm.runInContext(engine[1] + ';this.detect = detect; this.sanitize = sanitize;', ctx);
+// The archive reader needs a few browser APIs, which Node provides as globals
+Object.assign(ctx, { Blob, DecompressionStream, TextDecoder });
+vm.runInContext(engine[1] + ';this.detect = detect; this.sanitize = sanitize; this.readArchive = readArchive;', ctx);
 
 const update = process.argv.includes('--update');
 const examplesDir = path.join(root, 'examples');
@@ -54,7 +56,75 @@ for (const name of fs.readdirSync(examplesDir).sort()) {
   }
 }
 
-if (!update) {
-  console.log(mismatches ? '\n' + mismatches + ' mismatch(es).' : '\nAll results match.');
-  process.exit(mismatches ? 1 : 0);
+// ---------- Archives: built in memory, then read back by the engine ----------
+const zlib = require('zlib');
+function crc32(b) { return zlib.crc32 ? zlib.crc32(b) : (function () { let c = ~0; for (const x of b) { c ^= x; for (let k = 0; k < 8; k++) c = c & 1 ? (c >>> 1) ^ 0xEDB88320 : c >>> 1; } return ~c >>> 0; })(); }
+function makeZip(entries) {   // entries: { name, data, deflate, flags }
+  const parts = [], central = []; let offset = 0;
+  for (const e of entries) {
+    const name = Buffer.from(e.name), raw = Buffer.from(e.data), body = e.deflate ? zlib.deflateRawSync(raw) : raw;
+    const lh = Buffer.alloc(30); lh.writeUInt32LE(0x04034b50, 0); lh.writeUInt16LE(20, 4); lh.writeUInt16LE(e.flags || 0, 6); lh.writeUInt16LE(e.deflate ? 8 : 0, 8);
+    lh.writeUInt32LE(crc32(raw), 14); lh.writeUInt32LE(body.length, 18); lh.writeUInt32LE(raw.length, 22); lh.writeUInt16LE(name.length, 26);
+    const ch = Buffer.alloc(46); ch.writeUInt32LE(0x02014b50, 0); ch.writeUInt16LE(20, 4); ch.writeUInt16LE(20, 6); ch.writeUInt16LE(e.flags || 0, 8); ch.writeUInt16LE(e.deflate ? 8 : 0, 10);
+    ch.writeUInt32LE(crc32(raw), 16); ch.writeUInt32LE(body.length, 20); ch.writeUInt32LE(raw.length, 24); ch.writeUInt16LE(name.length, 28); ch.writeUInt32LE(offset, 42);
+    parts.push(lh, name, body); central.push(Buffer.concat([ch, name])); offset += 30 + name.length + body.length;
+  }
+  const cd = Buffer.concat(central), end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50, 0); end.writeUInt16LE(entries.length, 8); end.writeUInt16LE(entries.length, 10); end.writeUInt32LE(cd.length, 12); end.writeUInt32LE(offset, 16);
+  return Buffer.concat([...parts, cd, end]);
 }
+function tarHeader(name, size, type, ustar) {
+  const h = Buffer.alloc(512); h.write(name.slice(0, 100), 0); h.write('0000644\0', 100); h.write(size.toString(8).padStart(11, '0') + '\0', 124);
+  h.write(type, 156); if (ustar) h.write('ustar\0', 257);
+  return h;
+}
+function makeTar(entries) {   // entries: { name, data }; names over 100 characters use a GNU long-name record
+  const parts = [];
+  for (const e of entries) {
+    const data = Buffer.from(e.data), pad = (b) => Buffer.concat([b, Buffer.alloc((512 - b.length % 512) % 512)]);
+    if (e.name.length > 100) { const ln = Buffer.from(e.name + '\0'); parts.push(tarHeader('././@LongLink', ln.length, 'L'), pad(ln)); }
+    parts.push(tarHeader(e.name, data.length, '0'), pad(data));
+  }
+  parts.push(Buffer.alloc(1024));
+  return Buffer.concat(parts);
+}
+async function archiveTests() {
+  const eq = (label, got, want) => {
+    const ok = JSON.stringify(got) === JSON.stringify(want);
+    console.log((ok ? 'ok        ' : 'MISMATCH  ') + label.padEnd(42));
+    if (!ok) { mismatches++; console.log('   expected: ' + JSON.stringify(want)); console.log('   actual:   ' + JSON.stringify(got)); }
+  };
+  const view = (r) => ({ entries: r.entries.map((e) => [e.path, Buffer.from(e.data).toString()]).sort(), skipped: r.skipped.map((k) => k.path + ' ' + k.why).sort() });
+  const longName = 'deep/' + 'd'.repeat(60) + '/' + 'f'.repeat(50) + '.log';
+  const zip = makeZip([
+    { name: 'logs/app.log', data: 'password=Fake-Zip-Pass-1\n'.repeat(50), deflate: true },
+    { name: 'notes.txt', data: 'stored entry' },
+    { name: 'folder/', data: '' },
+    { name: '__MACOSX/._notes.txt', data: 'noise' },
+    { name: 'logs/._app.log', data: 'macOS metadata' },
+    { name: '../../evil.txt', data: 'path is cleaned' },
+    { name: 'locked.txt', data: 'x', flags: 1 }
+  ]);
+  const z = view(await ctx.readArchive('bundle.zip', new Uint8Array(zip)));
+  eq('zip: entries (stored, deflated, cleaned path)', z.entries.map((e) => e[0]), ['evil.txt', 'logs/app.log', 'notes.txt']);
+  eq('zip: deflated content intact', z.entries.find((e) => e[0] === 'logs/app.log')[1], 'password=Fake-Zip-Pass-1\n'.repeat(50));
+  eq('zip: encrypted entry reported, not read', z.skipped, ['locked.txt password-protected']);
+  const tgz = zlib.gzipSync(makeTar([{ name: 'a/readme.txt', data: 'hello' }, { name: longName, data: 'long name' }]));
+  const t = view(await ctx.readArchive('support.tar.gz', new Uint8Array(tgz)));
+  eq('tar.gz: entries, long name', t.entries, [['a/readme.txt', 'hello'], [longName, 'long name']]);
+  const g = view(await ctx.readArchive('app.log.gz', new Uint8Array(zlib.gzipSync('token=fake_gz_token_1234'))));
+  eq('gz: one compressed log', g.entries, [['app.log', 'token=fake_gz_token_1234']]);
+  ctx.ARCHIVE_MAX_BYTES = 100;
+  const big = await ctx.readArchive('bomb.gz', new Uint8Array(zlib.gzipSync(Buffer.alloc(100000)))).then(() => 'read', (e) => e.message);
+  eq('gz: size limit stops a bomb', /too large/.test(big), true);
+  ctx.ARCHIVE_MAX_BYTES = 512 * 1024 * 1024;
+  const bad = await ctx.readArchive('x.zip', new Uint8Array(Buffer.from('not a zip at all, just text'))).then(() => 'read', (e) => e.message);
+  eq('zip: garbage is refused', bad, 'not a zip file');
+}
+
+archiveTests().then(function () {
+  if (!update) {
+    console.log(mismatches ? '\n' + mismatches + ' mismatch(es).' : '\nAll results match.');
+    process.exit(mismatches ? 1 : 0);
+  }
+});

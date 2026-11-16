@@ -1,0 +1,15 @@
+Customer record (invented data)
+Contact: [PHONE_1], [PHONE_2] or [PHONE_3]
+UK mobile: [PHONE_4]
+IBAN: [BANK_1]
+Card: [BANK_2] (expires 12/30), other: [BANK_3]
+Laptop serial number: [DEVICE_1], MAC [DEVICE_2]
+Public IPv6: [PUBLIC_IP_1], link-local fe80::1ff:fe23:4567:890a, loopback ::1
+Site coordinates: [DEVICE_3]
+Profile folder: /Users/[USERNAME_1]/Documents and C:\Users\[USERNAME_2]\AppData\Local\Temp
+Build runs as /home/runner/work and /Users/Shared/cache
+License key: [SECRET_1]
+
+Not personal data:
+Timestamp 2025-03-14 09:12:03, build 1.84, order 1234567890123456, checksum 4f3a:9b2c
+Request id 0123456789 and hex 00:00:00:00:00:00

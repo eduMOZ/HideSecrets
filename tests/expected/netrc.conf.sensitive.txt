@@ -1,0 +1,5 @@
+machine registry.example.test
+login robot
+password [SECRET_1]
+
+machine git.example.test login deploy password [SECRET_2]

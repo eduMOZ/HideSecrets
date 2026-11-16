@@ -32,7 +32,7 @@ All the screenshots use invented data.
 
 No installation, no dependencies.
 
-- **For text and files** (logs, HAR, configuration): open `index.html` in a recent browser (Firefox, Chrome, Edge, Safari).
+- **For text and files** (logs, HAR, configuration, archives): open `index.html` in a recent browser (Firefox, Chrome, Edge, Safari).
 - **For screenshots**, reading the text in the image (OCR) needs the page to be served from a local web address:
 
   ```bash
@@ -46,14 +46,14 @@ The "a fake .log", "a fake .har" and "a fake screenshot" buttons let you try it 
 ## How to use it
 
 1. **Choose what to mask**: "Secrets only", or "Secrets and sensitive data" (see below).
-2. **Give it some content**: paste text into the text box, drop one or more files (`.log`, `.txt`, `.har`, `.json`, images), or choose or drop a folder of screenshots.
+2. **Give it some content**: paste text into the text box, **paste a screenshot** (⌘V / Ctrl+V anywhere on the page), drop one or more files or archives (see [Accepted files](#accepted-files)), or choose or drop a folder of screenshots.
 3. **Review.** Each detected value is highlighted in the text or blacked out on the image, and listed on the right. Uncheck what should stay readable; a decision applies to every occurrence of the same value in that file. On an image, draw a rectangle to mask an area by hand, or click an area to turn it on or off.
 4. **Get the result**: "Copy clean text" for pasted text, "Download clean version" for a file, or "Download all (ZIP)" when there are several. The originals are never changed.
 
 ### Choosing what to mask
 
 - **Secrets only** (default): passwords, tokens, keys, session cookies… Secrets are always masked.
-- **Secrets and sensitive data**: also email addresses, person names, logins, public IPs, the customer domain and other domains.
+- **Secrets and sensitive data**: also email addresses, person names, logins, public IPs, phone numbers, IBAN and card numbers, devices and locations, user names in paths, the customer domain and other domains.
 
 At the second level, a list lets you leave a whole category visible, for example the public IPs when you debug a proxy, or the domains for a certificate problem:
 
@@ -71,6 +71,15 @@ The level and the categories are remembered in your browser.
 - **Zoom**: the − + buttons, the `+` `-` keys, or a trackpad pinch (⌘ + scroll). Each image opens in "Fit" (`0`), which shows the whole image without enlarging a small one; "Actual size" (`1`) shows it at the size it had on screen.
 - **Moving a zoomed image**: hold space and drag (the cursor becomes a hand), or swipe with two fingers on a trackpad. Without space, a drag draws a rectangle.
 - **Progress**: while images are being read, the ZIP button shows how many are done.
+
+### Accepted files
+
+- **Text**: logs (`.log`, rotated `.log.1`), `.txt`, `.har`, `.json`/`.jsonl`, `.env` and other settings files (`.yaml`, `.toml`, `.ini`, `.conf`, `.properties`), Terraform (`.tf`, `.tfvars`, `.tfstate`), PEM keys and certificates, shell scripts and shell history, `.sql` dumps, `.csv`/`.tsv`, e-mails (`.eml`), `.xml`, notebooks (`.ipynb`), `.md`, and files known by name (`.npmrc`, `.netrc`, `.pypirc`, `.git-credentials`, `kubeconfig`, `credentials`, `known_hosts`…).
+- **Images**: PNG, JPEG, WebP, GIF, BMP.
+- **Archives**: `.zip`, `.tar.gz` / `.tgz`, `.tar`, and a compressed single file such as `app.log.gz`. A support bundle is opened in the page; every text file and image inside is reviewed like a file you dropped. Anything else in the archive (a PDF, a database, a binary) is **listed under the drop zone and left out of the cleaned ZIP**: look at that list, such files may hold secrets. Encrypted and ZIP64 archives, archives inside archives, and archives above 5,000 files or 512 MB once unpacked are refused or left out.
+- **Anything else** is skipped, with a message. A binary file with a text extension (for example a Keynote `.key`) is shown as "unreadable" and is not exported.
+
+The cleaned ZIP of an archive keeps the layout and file names: `<archive>-clean/…`.
 
 ### A folder of screenshots
 
@@ -105,11 +114,15 @@ Doubling the workers made the batch 1.8 times faster. Reading the same folder wi
 
 | Level | What is masked | Placeholder |
 |---|---|---|
-| **Secrets only** | Passwords (including the French "mot de passe: …"), tokens, OAuth/OIDC client secrets, `Authorization` headers, session cookies, JWTs, PEM private keys, well-known API keys (AWS, GitHub, Slack, Google…), variables named `*_SECRET`, `*_PASSWORD`, `*_TOKEN`, named keys (`*_BASE_KEY`, `*_COOKIE_KEY`, `kek`…), passwords embedded in a URL (`postgres://user:PASSWORD@host`). On images, also long random strings with no name in front. | `[SECRET_n]` |
+| **Secrets only** | Passwords (including the French "mot de passe: …"), tokens, OAuth/OIDC client secrets, `Authorization` headers, session cookies, JWTs, PEM private keys, well-known API keys (AWS, GitHub, Slack, Google…), variables named `*_SECRET`, `*_PASSWORD`, `*_TOKEN`, named keys (`*_BASE_KEY`, `*_COOKIE_KEY`, `kek`…), passwords embedded in a URL (`postgres://user:PASSWORD@host`). Also: every value of a Kubernetes `Secret`, private key data in a kubeconfig, `.netrc` passwords, passwords on a command line (`curl -u user:PASSWORD`, `--password`, `mysql -pPASSWORD`, `sshpass -p`), SQL (`IDENTIFIED BY '…'`, the sensitive columns of an `INSERT`), the `password` column of a CSV, password hashes (bcrypt, argon2, crypt), license keys, PGP private keys. On images, also long random strings with no name in front. | `[SECRET_n]` |
 | **Secrets and sensitive data** | All of the above, plus email addresses | `[EMAIL_n]` |
 | | person names, with the user ID shown next to them (`Jane DOE`, `JANE DOE 1234567`, `Author: Jane Doe`, `Jane's screen` in a video call) | `[PERSON_n]` |
 | | logins shown as `account@machine` in shell prompts and terminal tabs (`jdoe@WS-0042`, `localadmin@WS-0042`); only a generic account on a generic machine (`admin@ubuntu-server`) stays visible | `[LOGIN_n]` |
-| | public IP addresses | `[PUBLIC_IP_n]` |
+| | public IP addresses, IPv4 and IPv6 (loopback, link-local and private addresses stay visible) | `[PUBLIC_IP_n]` |
+| | phone numbers: international (`+44 7700 900123`), French (`01 99 00 12 34`, `0612345678`), North American (`(555) 010-0199`) | `[PHONE_n]` |
+| | IBANs (checksum verified) and bank card numbers (known card prefix and Luhn checksum) | `[BANK_n]` |
+| | devices and locations: MAC addresses, labeled serial numbers (`Serial number: …`, `S/N`, `service tag`, IMEI), GPS coordinates | `[DEVICE_n]` |
+| | the user name in a path: `/Users/jdoe/…`, `/home/jdoe/…`, `C:\Users\jdoe\…` (`root`, `runner`, `Shared`… stay visible) | `[USERNAME_n]` |
 | | the customer part of a product's host names, once described in the [product settings](#product-settings-optional) (`<service>.<vendor>.<customer>.<tld>`) | `[CUSTOMER_n]` |
 | | any other domain that is not a well-known public service (identity provider, intranet…), as a whole host name | `[DOMAIN_n]` |
 
@@ -150,6 +163,12 @@ The [`examples/`](examples/) folder holds realistic files in which **every value
 | [`install-console.txt`](examples/install-console.txt) | Console output from a failing install: PostgreSQL URL with a password, `Proxy-Authorization` header, public IP, email address in a log |
 | [`customer-email.txt`](examples/customer-email.txt) | An email from a customer describing their problem and pasting a secret and passwords along the way (including one written in French) |
 | [`browsing.har`](examples/browsing.har) | A browser network export: credentials sent at sign-in, session cookie, access token, customer domain |
+| [`kubernetes.yaml`](examples/kubernetes.yaml) | A kubeconfig (key data, token) and a Kubernetes `Secret`; a `ConfigMap` and a public certificate stay readable |
+| [`commands.sh`](examples/commands.sh) | Commands from a shell history: `curl -u`, `--password`, `mysql -p`, `sshpass`, an API key header, an exported token |
+| [`netrc.conf`](examples/netrc.conf) | A `.netrc` file, in its two layouts |
+| [`users.csv`](examples/users.csv) | A CSV export: the password column, e-mail addresses, phone numbers |
+| [`dump.sql`](examples/dump.sql) | A SQL dump: `IDENTIFIED BY`, `WITH PASSWORD`, password hashes and tokens in an `INSERT` |
+| [`personal-data.txt`](examples/personal-data.txt) | Phone numbers, IBAN, cards, serial number, MAC, IPv6, GPS, paths with a user name, a license key, and values that must stay visible |
 
 For each example, [`tests/expected/`](tests/expected/) holds the expected result at both levels. To check that the engine still produces them:
 
@@ -159,7 +178,7 @@ node tests/verify.js
 
 The script reads the engine straight from `index.html` and reports the first difference. After an intentional change to the rules, `node tests/verify.js --update` regenerates the expected results. **Review them before committing**: they are the reference for what must be masked.
 
-For screenshots, use the "a fake screenshot" button on the page.
+The same script also builds small archives in memory (zip, tar.gz, gz) and checks that the reader unpacks them, cleans their paths, reports encrypted entries and stops an oversized one. For screenshots, use the "a fake screenshot" button on the page.
 
 ## Known limitations
 
@@ -170,13 +189,15 @@ The tool helps you review; it does not guarantee that nothing is left. Always ch
 - **Other domains**: a public service missing from the built-in list is masked by default; uncheck it. A domain without a usual ending (`.com`, `.fr`, `.de`…) is not detected.
 - **Decisions on single values** count for one file and are lost when the page is reloaded.
 - **Authentication parameters in URLs** (`state=`, `code=` in an SSO callback): not masked.
-- **IPv6**: not handled. A four-part version number (`1.84.2.0`) can be mistaken for a public IP: uncheck it.
+- **A four-part version number** (`1.84.2.0`) can be mistaken for a public IP: uncheck it.
+- **Not detected**: postal addresses, national identity numbers, birth dates, personal names in file names, and any value with no clue around it. Phone-number patterns can match some long numbers: uncheck them, or turn the category off.
+- **Documents** (PDF, Word, Excel, PowerPoint), video, network captures and password-manager exports are not read. Do not share them through this tool.
 - **Very large files** (HAR files of several tens of MB): the display can slow down.
 
 ## Repository layout
 
 ```text
-index.html          the page: interface and detection engine (inside <script id="engine">)
+index.html          the page: interface, detection engine and archive reader (inside <script id="engine">)
 config.example.js   example product settings (copy to config.local.js, which is not published)
 ocr/                Tesseract.js OCR engine and language data (English, French), with their licenses
 examples/           invented test data

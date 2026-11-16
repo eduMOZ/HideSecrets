@@ -98,14 +98,14 @@
     <label class="lv"><input type="radio" name="lv" value="secret" checked>
       <span><b>Secrets only</b><br><span class="small">passwords, tokens, keys, session cookies…</span></span></label>
     <label class="lv"><input type="radio" name="lv" value="sensitive">
-      <span><b>Secrets and sensitive data</b><br><span class="small">also: email addresses, person names, logins, public IPs, customer and other domains</span></span></label>
+      <span><b>Secrets and sensitive data</b><br><span class="small">also: email addresses, person names, logins, public IPs, phone numbers, bank and card numbers, devices, customer and other domains</span></span></label>
   </div>
   <div id="cats" class="bar" style="display:none" aria-label="Sensitive data to mask">
     <span class="small">Sensitive data to mask:</span>
     <span class="catwarn" id="catwarn"></span>
   </div>
   <div id="drop">
-    <p style="margin:0 0 10px">Drop <b>.log</b>, <b>.txt</b> or <b>.har</b> files, screenshots, or a screenshot folder, here</p>
+    <p style="margin:0 0 10px">Drop logs, <b>.har</b>, configuration and other text files, archives (<b>.zip</b>, <b>.tar.gz</b>), screenshots, or a screenshot folder, here</p>
     <div class="bar" style="justify-content:center">
       <button class="primary" id="pick">Choose files…</button>
       <button class="primary" id="pickdir">Choose a screenshot folder…</button>
@@ -113,10 +113,10 @@
     <div class="bar small" style="justify-content:center;margin-top:10px">Try with:
       <button id="s-log">a fake .log</button><button id="s-har">a fake .har</button><button id="s-img">a fake screenshot</button>
     </div>
-    <textarea id="paste" rows="3" placeholder="…or paste text here (log, console output, email): it is analyzed right away" aria-label="Paste text"></textarea>
+    <textarea id="paste" rows="3" placeholder="…or paste text here (log, console output, email), or paste a screenshot (⌘V / Ctrl+V): it is analyzed right away" aria-label="Paste text"></textarea>
     <div class="bar" style="justify-content:flex-end;margin-top:6px"><button id="gopaste">Analyze typed text</button></div>
     <p class="small" id="msg" style="margin:8px 0 0"></p>
-    <input type="file" id="file" accept=".log,.txt,.har,.json,.png,.jpg,.jpeg,.webp,.gif,.bmp" multiple hidden>
+    <input type="file" id="file" multiple hidden>
     <input type="file" id="dir" webkitdirectory multiple hidden>
   </div>
 
@@ -189,6 +189,23 @@ var RULES = [
   { type: 'client_secret', g: 1, re: /client_secret(?:\\?["'])?[ \t]*[:=][ \t]*(?:\\?["'])?([^\s"'&,;}\\<>]{4,})/gid },
   // Password embedded in a URL: postgres://user:PASSWORD@host, redis://:PASSWORD@host
   { type: 'Password in a URL', g: 1, re: /\b[a-z][a-z0-9+.-]*:\/\/[^\s:\/@"']*:([^\s@\/"']+)@/gid },
+  { type: 'Private key (PGP)', g: 0, re: /-----BEGIN PGP PRIVATE KEY BLOCK-----[\s\S]*?-----END PGP PRIVATE KEY BLOCK-----/gd },
+  // Hashes of passwords: /etc/shadow, database dumps (bcrypt, argon2, crypt)
+  { type: 'Password hash', g: 0, re: /\$2[aby]\$\d\d\$[.\/A-Za-z0-9]{53}|\$argon2(?:id|i|d)\$[^\s'"]{20,}|\$[156y]\$[.\/A-Za-z0-9$,=-]{20,}/gd },
+  // Product license keys: XXXXX-XXXXX-XXXXX-XXXXX-XXXXX (letters and digits)
+  { type: 'License key', g: 0, re: /(?<![\w-])(?=[A-Z0-9-]*\d)(?=[A-Z0-9-]*[A-Z])[A-Z0-9]{5}(?:-[A-Z0-9]{5}){3,5}(?![\w-])/gd },
+  // Private key material in Kubernetes and PEM-like files
+  { type: 'Private key data', g: 1, re: /\b(?:client-key-data|private[_-]?key[_-]?data|tls\.key|ssh-privatekey)(?:\\?["'])?[ \t]*[:=][ \t]*(?:\\?["'])?([A-Za-z0-9+\/=_-]{16,})/gid },
+  { type: 'SAML message', g: 1, re: /\bSAML(?:Response|Request)(?:\\?["'])?[ \t]*[:=][ \t]*(?:\\?["'])?([A-Za-z0-9%+\/=_-]{40,})/gid },
+  // Command lines: curl -u user:PASSWORD, --password PASSWORD, mysql -pPASSWORD, sshpass -p PASSWORD
+  { type: 'Command-line password', g: 1, re: /(?<![\w-])(?:-u|--user|--proxy-user)[ \t]+["']?[^\s:"']+:([^\s"']{3,})/gid },
+  { type: 'Command-line password', g: 1, re: /(?<![\w-])--(?:password|passwd|pass|token|secret|api-key|apikey|auth-token|access-token)[ \t]+["']?([^\s"'-][^\s"']{3,})/gid },
+  { type: 'Command-line password', g: 1, re: /\b(?:mysql|mysqldump|mysqladmin|mariadb)\b[^\n|;&]*?[ \t]-p([^\s"'-][^\s"']{2,})/gid },
+  { type: 'Command-line password', g: 1, re: /\bsshpass[ \t]+-p[ \t]*["']?([^\s"']{3,})/gid },
+  // .netrc: machine example.test login name password SECRET
+  { type: 'Password (netrc)', g: 1, words: true, re: /\bmachine[ \t]+\S+[ \t\r\n]+login[ \t]+\S+[ \t\r\n]+password[ \t]+([^\s"']{4,})/gid },
+  // SQL: IDENTIFIED BY 'x', WITH PASSWORD 'x', PASSWORD('x')
+  { type: 'SQL password', g: 1, re: /\b(?:IDENTIFIED[ \t]+BY|WITH[ \t]+(?:ENCRYPTED[ \t]+)?PASSWORD|PASSWORD)[ \t]*\(?[ \t]*(?:PASSWORD[ \t]+)?'([^'\r\n]{3,})'/gid },
   { type: 'Password / token / key', g: 2, words: true, re: new RegExp('([A-Za-z0-9_.-]*' + NAME + '[0-9_-]*(?![A-Za-z]))(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*(?:\\\\?["\'])?([^\\s"\'&,;}\\\\<>]{4,})', 'gid') }
 ];
 // A cookie is secret if its name says so, or if its value is long and is not a word (theme=dark is not)
@@ -216,7 +233,7 @@ function plausible(v) {
   return true;
 }
 function looksLikeWords(v) { return /^\p{L}+(?:[-_.\u2019']\p{L}+)*$/u.test(v); }   // "policy-description-X", "this.accessKey"
-var IGNORE = /^(true|false|null|undefined|nil|none|\*+|x+|\[?redacted\]?|\[(?:secret|email|public_ip|customer|domain|person|login)_\d+\])$/i;
+var IGNORE = /^(true|false|null|undefined|nil|none|\*+|x+|\[?redacted\]?|\[(?:secret|email|public_ip|customer|domain|person|login|phone|bank|device|username)_\d+\])$/i;
 
 function regexPass(text, out) {
   for (var r of RULES) {
@@ -302,6 +319,99 @@ function harPass(text, out) {
   }
   j.log.entries.forEach(function (e) { side(e.request); side(e.response); });
   return true;
+}
+
+// ---------- Other formats: Kubernetes Secrets, SQL tables, CSV columns ----------
+// A Kubernetes Secret: every value under data: / stringData: is secret, whatever its key is called
+function secretManifestPass(text, out) {
+  if (!/^kind:[ \t]*Secret\b/m.test(text)) return;
+  var starts = [0], ends = [], sep = /^---[ \t]*\r?$/gm, sm;
+  while ((sm = sep.exec(text))) { ends.push(sm.index); starts.push(sm.index + sm[0].length); }
+  ends.push(text.length);
+  starts.forEach(function (ds, di) {
+    var doc = text.slice(ds, ends[di]);
+    if (!/^kind:[ \t]*Secret\b/m.test(doc)) return;
+    var re = /^(?:data|stringData):[ \t]*\r?$/gm, m;
+    while ((m = re.exec(doc))) {
+      var off = m.index + m[0].length + 1, lines = doc.slice(off).split('\n');
+      for (var i = 0; i < lines.length; i++) {
+        var ln = lines[i];
+        if (/^\S/.test(ln)) break;
+        var kv = /^([ \t]+)([A-Za-z0-9_.\/-]+):[ \t]*(\S.*?)[ \t\r]*$/.exec(ln);
+        if (kv && kv[3].charAt(0) !== '#' && kv[3] !== '|' && kv[3] !== '>') {
+          var vs = ln.indexOf(kv[3], kv[1].length + kv[2].length + 1), ve = vs + kv[3].length;
+          if (/^["']/.test(kv[3]) && kv[3].slice(-1) === kv[3].charAt(0) && kv[3].length > 1) { vs++; ve--; }
+          if (ve - vs >= 4 && !IGNORE.test(ln.slice(vs, ve))) out.push({ start: ds + off + vs, end: ds + off + ve, type: 'Kubernetes Secret value' });
+        }
+        off += ln.length + 1;
+      }
+    }
+  });
+}
+// INSERT INTO t (id, email, password) VALUES (...), (...): the cells of a sensitive column
+function sqlInsertPass(text, out) {
+  var re = /\bINSERT[ \t]+INTO[ \t]+[^\s(]+[ \t]*\(([^)]*)\)[ \t\r\n]*VALUES[ \t\r\n]*/gi, m, S = new RegExp(NAME, 'i');
+  while ((m = re.exec(text))) {
+    var idx = [];
+    m[1].split(',').forEach(function (c, i) { if (S.test(c.replace(/[`"'\[\]\s]/g, ''))) idx.push(i); });
+    var p = m.index + m[0].length;
+    if (!idx.length) continue;
+    while (text.charAt(p) === '(') {
+      var vals = [], q = p + 1, cur = q, inS = false;
+      for (; q < text.length; q++) {
+        var ch = text.charAt(q);
+        if (inS) { if (ch === "'") { if (text.charAt(q + 1) === "'") q++; else inS = false; } else if (ch === '\\') q++; }
+        else if (ch === "'") inS = true;
+        else if (ch === ',' || ch === ')') { vals.push([cur, q]); cur = q + 1; if (ch === ')') break; }
+      }
+      idx.forEach(function (i) {
+        var v = vals[i]; if (!v) return;
+        var a = v[0], b = v[1];
+        while (a < b && /\s/.test(text.charAt(a))) a++;
+        while (b > a && /\s/.test(text.charAt(b - 1))) b--;
+        if (text.charAt(a) === "'" && text.charAt(b - 1) === "'" && b - a >= 2) { a++; b--; }
+        if (b - a >= 4 && !IGNORE.test(text.slice(a, b))) out.push({ start: a, end: b, type: 'SQL column value' });
+      });
+      p = q + 1;
+      while (/\s/.test(text.charAt(p))) p++;
+      if (text.charAt(p) !== ',') break;
+      p++; while (/\s/.test(text.charAt(p))) p++;
+    }
+    re.lastIndex = Math.max(p, m.index + m[0].length);
+  }
+}
+// CSV / TSV: the cells under a column whose header names a secret (password, token, api_key…)
+function csvPass(text, out) {
+  var S = new RegExp(NAME, 'i'), cols = null, delim = ',', pos = 0;
+  text.split('\n').forEach(function (line) {
+    var lineStart = pos; pos += line.length + 1;
+    if (!line.trim()) return;
+    var cells = [], start = 0, inQ = false;
+    for (var i = 0; i <= line.length; i++) {
+      var ch = line.charAt(i);
+      if (ch === '"') inQ = !inQ;
+      else if (i === line.length || (!inQ && ch === delim)) { cells.push([start, i]); start = i + 1; }
+    }
+    if (!cols) {
+      delim = [',', ';', '\t'].map(function (d) { return [d, line.split(d).length]; }).sort(function (a, b) { return b[1] - a[1]; })[0][0];
+      cells = []; start = 0; inQ = false;
+      for (var j = 0; j <= line.length; j++) {
+        var c2 = line.charAt(j);
+        if (c2 === '"') inQ = !inQ;
+        else if (j === line.length || (!inQ && c2 === delim)) { cells.push([start, j]); start = j + 1; }
+      }
+      cols = [];
+      cells.forEach(function (c, k) { if (S.test(line.slice(c[0], c[1]).replace(/["\s]/g, ''))) cols.push(k); });
+      return;
+    }
+    cols.forEach(function (k) {
+      var c = cells[k]; if (!c) return;
+      var a = c[0], b = c[1];
+      while (b > a && /[\s\r]/.test(line.charAt(b - 1))) b--;
+      if (line.charAt(a) === '"' && line.charAt(b - 1) === '"' && b - a >= 2) { a++; b--; }
+      if (b - a >= 4 && !IGNORE.test(line.slice(a, b))) out.push({ start: lineStart + a, end: lineStart + b, type: 'CSV column value' });
+    });
+  });
 }
 
 function normKey(v) {
@@ -485,10 +595,88 @@ function loginPass(text, out) {
   }
 }
 
+// ---------- More personal data: phone numbers, IBAN, cards, devices, IPv6, paths ----------
+function luhnOk(digits) {
+  var sum = 0, dbl = false;
+  for (var i = digits.length - 1; i >= 0; i--) { var d = digits.charCodeAt(i) - 48; if (dbl) { d *= 2; if (d > 9) d -= 9; } sum += d; dbl = !dbl; }
+  return sum % 10 === 0;
+}
+function ibanOk(s) {
+  var t = s.replace(/ /g, '').toUpperCase();
+  if (t.length < 15 || t.length > 34 || !/^[A-Z]{2}\d{2}[A-Z0-9]+$/.test(t)) return false;
+  var r = 0, moved = t.slice(4) + t.slice(0, 4);
+  for (var i = 0; i < moved.length; i++) {
+    var c = moved.charCodeAt(i), n = c >= 65 ? String(c - 55) : moved.charAt(i);
+    for (var k = 0; k < n.length; k++) r = (r * 10 + (n.charCodeAt(k) - 48)) % 97;
+  }
+  return r === 1;
+}
+// Loopback, link-local, unique-local and multicast addresses stay visible, like the private IPv4 ones
+function isPublicIpv6(s) {
+  if (s.indexOf('::') === 0 || /^0*:/.test(s)) return false;
+  var n = s.split(':').filter(Boolean).length, f = parseInt(s.split(':')[0], 16);
+  if (s.indexOf('::') >= 0 ? n < 2 : n !== 8) return false;
+  if ((f & 0xffc0) === 0xfe80 || (f & 0xfe00) === 0xfc00 || (f >> 8) === 0xff) return false;
+  return true;
+}
+var PHONE_RES = [
+  /(?<![\w+.\/-])\+\d{1,3}(?:[ .-]?\(0\))?(?:[ .-]?\d{1,4}){2,5}(?![\w-]|\.\d)/g,   // +33 1 99 00 12 34, +44 7700 900123
+  /(?<![\w.+\/-])(?:0[1-9](?:[ .-]\d{2}){4}|0[67]\d{8})(?![\w-]|\.\d)/g,           // 01 99 00 12 34, 0612345678
+  /(?<![\w.+\/-])\(?\d{3}\)?[ .-]\d{3}[ .-]\d{4}(?![\w-]|\.\d)/g                   // (555) 010-0199
+];
+var IBAN_RE = /(?<![A-Za-z0-9])[A-Z]{2}\d{2}(?: ?[A-Z0-9]{4}){2,7}(?: ?[A-Z0-9]{1,3})?(?![A-Za-z0-9])/g;
+var CARD_RE = /(?<![\d-])\d(?:[ -]?\d){12,18}(?![\d-])/g;
+var CARD_IIN = /^(?:4|5[1-5]|2[2-7]|3[47]|35|6011|65)/;
+var MAC_RE = /(?<![\w:-])[0-9A-Fa-f]{2}(?:[:-][0-9A-Fa-f]{2}){5}(?![\w:-])/g;
+var IPV6_RE = /(?<![\w:.])(?:(?:[0-9a-f]{1,4}:){7}[0-9a-f]{1,4}|(?:[0-9a-f]{1,4}(?::[0-9a-f]{1,4}){0,6})?::(?:[0-9a-f]{1,4}(?::[0-9a-f]{1,4}){0,6})?)(?![\w:])/gi;
+var SERIAL_RE = /\b(?:serial(?:[ _-]?(?:number|no\.?))?|s\/n|num[ée]ro[ ]de[ ]s[ée]rie|service[ _-]?tag|asset[ _-]?tag|imei|udid|hardware[ _-]?uuid)\b[ \t]*[:=#]?[ \t]*([A-Za-z0-9][A-Za-z0-9-]{5,35})/gid;
+var GPS_RE = /(?<![\d.])-?(?:[1-8]?\d|90)\.\d{4,}[ \t]*,[ \t]*-?(?:1[0-7]\d|[1-9]?\d|180)\.\d{4,}(?![\d.])/g;
+var PATH_USER_RE = /(?:\/Users\/|\/home\/|[A-Za-z]:(?:\\{1,2}|\/)Users(?:\\{1,2}|\/))([^\/\\\s"'<>:*?|$%{}`~]{1,40})/gid;
+var GENERIC_PATH_USERS = new Set(('shared public default all guest user users administrator admin root runner ubuntu ' +
+  'debian ec2-user azureuser vagrant jenkins git postgres www-data nobody deploy').split(' '));
+function piiPass(text, out) {
+  var m, add = function (s, e, type, prefix) { out.push({ start: s, end: e, type: type, prefix: prefix, sens: true }); };
+  PHONE_RES.forEach(function (re, k) {
+    re.lastIndex = 0;
+    while ((m = re.exec(text))) {
+      var digits = m[0].replace(/\D/g, '').length;
+      if (k === 0 && (digits < 8 || digits > 15)) continue;
+      add(m.index, m.index + m[0].length, 'Phone number', 'PHONE');
+    }
+  });
+  IBAN_RE.lastIndex = 0;
+  while ((m = IBAN_RE.exec(text))) if (ibanOk(m[0])) add(m.index, m.index + m[0].length, 'Bank or card number', 'BANK');
+  CARD_RE.lastIndex = 0;
+  while ((m = CARD_RE.exec(text))) {
+    var dg = m[0].replace(/\D/g, '');
+    if (dg.length >= 13 && dg.length <= 19 && CARD_IIN.test(dg) && luhnOk(dg) && !/^(\d)\1+$/.test(dg)) add(m.index, m.index + m[0].length, 'Bank or card number', 'BANK');
+  }
+  MAC_RE.lastIndex = 0;
+  while ((m = MAC_RE.exec(text))) {
+    var hx = m[0].replace(/[:-]/g, '').toLowerCase();
+    if (!/^(?:0+|f+)$/.test(hx)) add(m.index, m.index + m[0].length, 'Device or location', 'DEVICE');
+  }
+  SERIAL_RE.lastIndex = 0;
+  while ((m = SERIAL_RE.exec(text))) {
+    var sv = m[1];
+    if (/\d/.test(sv) && !IGNORE.test(sv)) add(m.indices[1][0], m.indices[1][1], 'Device or location', 'DEVICE');
+  }
+  GPS_RE.lastIndex = 0;
+  while ((m = GPS_RE.exec(text))) add(m.index, m.index + m[0].length, 'Device or location', 'DEVICE');
+  IPV6_RE.lastIndex = 0;
+  while ((m = IPV6_RE.exec(text))) if (isPublicIpv6(m[0].toLowerCase())) add(m.index, m.index + m[0].length, 'Public IP', 'PUBLIC_IP');
+  PATH_USER_RE.lastIndex = 0;
+  while ((m = PATH_USER_RE.exec(text))) {
+    var u = m[1].toLowerCase();
+    if (!GENERIC_PATH_USERS.has(u) && !GENERIC_USERS.has(u)) add(m.indices[1][0], m.indices[1][1], 'Username in a path', 'USERNAME');
+  }
+}
+
 // customers: customer domains already known (from this text or from other files of the session)
 function sensitivePass(text, out, customers) {
   personPass(text, out);
   loginPass(text, out);
+  piiPass(text, out);
   for (var r of SENS_RULES) {
     r.re.lastIndex = 0;
     var m;
@@ -535,6 +723,9 @@ function keepLongest(raw) {
 function detect(text, filename, opts) {
   var raw = [];
   regexPass(text, raw);
+  secretManifestPass(text, raw);
+  sqlInsertPass(text, raw);
+  if (/\.(csv|tsv)$/i.test(filename)) csvPass(text, raw);
   if (/\.har$/i.test(filename) || /^\s*\{/.test(text)) harPass(text, raw);
   raw = raw.reduce(function (acc, d) { return acc.concat(expandJsonCookie(text, d)); }, []);
   var res = keepLongest(raw);
@@ -550,6 +741,97 @@ function detect(text, filename, opts) {
     d.checked = true;
   });
   return res;
+}
+
+// ---------- Archives: zip, tar, tar.gz, gz (unpacked in the browser; nothing leaves the page) ----------
+var ARCHIVE_MAX_FILES = 5000, ARCHIVE_MAX_BYTES = 512 * 1024 * 1024;
+// Decompress with a size limit (a "zip bomb" must not exhaust the memory)
+function inflate(u8, format, limit) {
+  var reader = new Blob([u8]).stream().pipeThrough(new DecompressionStream(format)).getReader(), chunks = [], total = 0;
+  return (function next() {
+    return reader.read().then(function (r) {
+      if (r.done) {
+        var out = new Uint8Array(total), o = 0;
+        chunks.forEach(function (c) { out.set(c, o); o += c.length; });
+        return out;
+      }
+      total += r.value.length;
+      if (total > limit) { reader.cancel(); throw new Error('the archive is too large once unpacked'); }
+      chunks.push(r.value);
+      return next();
+    });
+  })();
+}
+function cleanEntryPath(name) {   // no absolute path, no ".." : the names only serve to display and to rebuild a ZIP
+  return name.replace(/\\/g, '/').split('/').filter(function (p) { return p && p !== '.' && p !== '..'; }).join('/');
+}
+function isArchiveNoise(path) { return /(^|\/)(__MACOSX|\.DS_Store|Thumbs\.db|\._[^\/]*)(\/|$)/.test(path); }   // system leftovers, incl. macOS "._name" files
+// Result: { entries: [{ path, data: Uint8Array }], skipped: [{ path, why }] }
+function readZip(u8) {
+  var dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength), end = -1, dec = new TextDecoder();
+  for (var i = u8.length - 22; i >= Math.max(0, u8.length - 22 - 65535); i--) if (dv.getUint32(i, true) === 0x06054b50) { end = i; break; }
+  if (end < 0) return Promise.reject(new Error('not a zip file'));
+  var count = dv.getUint16(end + 10, true), off = dv.getUint32(end + 16, true), jobs = [], skipped = [], total = 0;
+  if (count === 0xffff || off === 0xffffffff) return Promise.reject(new Error('ZIP64 archives are not supported'));
+  for (var k = 0; k < count; k++) {
+    if (off + 46 > u8.length || dv.getUint32(off, true) !== 0x02014b50) break;
+    var flags = dv.getUint16(off + 8, true), method = dv.getUint16(off + 10, true), csize = dv.getUint32(off + 20, true), usize = dv.getUint32(off + 24, true),
+        nl = dv.getUint16(off + 28, true), xl = dv.getUint16(off + 30, true), cl = dv.getUint16(off + 32, true), lho = dv.getUint32(off + 42, true),
+        name = dec.decode(u8.subarray(off + 46, off + 46 + nl));
+    off += 46 + nl + xl + cl;
+    if (name.slice(-1) === '/') continue;
+    var path = cleanEntryPath(name);
+    if (!path || isArchiveNoise(path)) continue;
+    if (flags & 1) { skipped.push({ path: path, why: 'password-protected' }); continue; }
+    if (csize === 0xffffffff || usize === 0xffffffff || lho === 0xffffffff) { skipped.push({ path: path, why: 'ZIP64' }); continue; }
+    if (method !== 0 && method !== 8) { skipped.push({ path: path, why: 'compression method ' + method }); continue; }
+    total += usize;
+    if (total > ARCHIVE_MAX_BYTES || jobs.length >= ARCHIVE_MAX_FILES) return Promise.reject(new Error('the archive is too large (limit: ' + ARCHIVE_MAX_FILES + ' files, ' + (ARCHIVE_MAX_BYTES >> 20) + ' MB)'));
+    jobs.push({ path: path, method: method, csize: csize, usize: usize, lho: lho });
+  }
+  var entries = [];
+  return jobs.reduce(function (chain, j) {
+    return chain.then(function () {
+      if (j.lho + 30 > u8.length || dv.getUint32(j.lho, true) !== 0x04034b50) { skipped.push({ path: j.path, why: 'damaged' }); return; }
+      var ds = j.lho + 30 + dv.getUint16(j.lho + 26, true) + dv.getUint16(j.lho + 28, true), raw = u8.subarray(ds, ds + j.csize);
+      return (j.method === 0 ? Promise.resolve(raw) : inflate(raw, 'deflate-raw', j.usize + 1024))
+        .then(function (data) { entries.push({ path: j.path, data: data }); }, function () { skipped.push({ path: j.path, why: 'cannot be unpacked' }); });
+    });
+  }, Promise.resolve()).then(function () { return { entries: entries, skipped: skipped }; });
+}
+function readTar(u8) {
+  var entries = [], skipped = [], pos = 0, longName = null, paxPath = null, total = 0, dec = new TextDecoder();
+  var str = function (a, n) { var e = a; while (e < a + n && u8[e] !== 0) e++; return dec.decode(u8.subarray(a, e)); };
+  while (pos + 512 <= u8.length && u8[pos] !== 0) {
+    var name = str(pos, 100), type = u8[pos + 156] ? String.fromCharCode(u8[pos + 156]) : '0';
+    if (u8[pos + 124] & 0x80) throw new Error('tar entry too large');
+    var size = parseInt(str(pos + 124, 12).trim() || '0', 8);
+    if (isNaN(size) || pos + 512 + size > u8.length) throw new Error('damaged tar archive');
+    var prefix = str(pos + 257, 5) === 'ustar' ? str(pos + 345, 155) : '', data = u8.subarray(pos + 512, pos + 512 + size);
+    pos += 512 + Math.ceil(size / 512) * 512;
+    if (type === 'L') { longName = dec.decode(data).replace(/\0[\s\S]*$/, ''); continue; }
+    if (type === 'x') { var pm = /(?:^|\n)\d+ path=([^\n]*)\n/.exec(dec.decode(data)); if (pm) paxPath = pm[1]; continue; }
+    if (type === 'g') continue;
+    var path = cleanEntryPath(paxPath || longName || (prefix ? prefix + '/' + name : name));
+    longName = paxPath = null;
+    if (type === '5' || !path || isArchiveNoise(path)) continue;   // folders
+    if (type !== '0' && type !== '7') { skipped.push({ path: path, why: 'link or special file' }); continue; }
+    total += size;
+    if (total > ARCHIVE_MAX_BYTES || entries.length >= ARCHIVE_MAX_FILES) throw new Error('the archive is too large (limit: ' + ARCHIVE_MAX_FILES + ' files, ' + (ARCHIVE_MAX_BYTES >> 20) + ' MB)');
+    entries.push({ path: path, data: data });
+  }
+  return { entries: entries, skipped: skipped };
+}
+function readArchive(name, u8) {
+  var n = name.toLowerCase();
+  var tarLike = function (b) { return b.length > 262 && String.fromCharCode.apply(null, b.subarray(257, 262)) === 'ustar'; };
+  if (/\.zip$/.test(n)) return readZip(u8);
+  if (/\.tar$/.test(n) || tarLike(u8)) { try { return Promise.resolve(readTar(u8)); } catch (e) { return Promise.reject(e); } }
+  if (/\.(tar\.gz|tgz|gz)$/.test(n)) return inflate(u8, 'gzip', ARCHIVE_MAX_BYTES).then(function (raw) {
+    if (/\.(tar\.gz|tgz)$/.test(n) || tarLike(raw)) return readTar(raw);
+    return { entries: [{ path: cleanEntryPath(name.replace(/\.gz$/i, '')), data: raw }], skipped: [] };   // a compressed log: app.log.gz
+  });
+  return Promise.reject(new Error('unsupported archive'));
 }
 
 // A given value always gets the same placeholder; different values stay distinguishable
@@ -709,7 +991,15 @@ function makeSampleHar() {
 <script>
 (function () {
   var $ = function (id) { return document.getElementById(id); };
-  var IMG_RE = /\.(png|jpe?g|webp|gif|bmp)$/i, TXT_RE = /\.(log|txt|har|json)$/i;
+  var IMG_RE = /\.(png|jpe?g|webp|gif|bmp)$/i;
+  // Text formats that can hold secrets: logs, HAR, configuration, scripts, shell history, SQL, CSV, e-mails, notebooks…
+  var TXT_RE = /\.(log|txt|har|jsonl?|ndjson|env|ya?ml|toml|ini|cfg|conf|config|properties|tf|tfvars|tfstate|pem|key|crt|cer|sh|bash|zsh|ps1|bat|patch|diff|sql|csv|tsv|eml|xml|ipynb|md|history|out|err|trace)$|\.log\.(?:\d+|\d{4}-\d\d-\d\d)$/i;
+  // Files known by name (many have no extension, or start with a dot)
+  var TXT_NAMES = /^(?:\.env(?:\..+)?|\.npmrc|\.netrc|_netrc|\.pypirc|\.git-credentials|\.gitconfig|\.bash_history|\.zsh_history|\.zhistory|\.history|\.psql_history|\.mysql_history|credentials|config|kubeconfig|known_hosts|authorized_keys|id_rsa|id_ed25519|id_ecdsa|shadow|passwd|docker-compose(?:\..+)?|Dockerfile|Makefile)$/i;
+  var ARCH_RE = /\.(zip|tar|tgz|tar\.gz|gz)$/i;
+  function baseName(p) { return p.slice(p.lastIndexOf('/') + 1); }
+  function isText(name) { return TXT_RE.test(name) || TXT_NAMES.test(baseName(name)); }
+  var MIME = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif', bmp: 'image/bmp' };
   var files = [], cur = -1, F = null;   // F: the file being shown
   var manualSeq = 0, pastedSeq = 0, LEVEL = 'secret';
   // Customer domains found so far in any file: they are masked in every file of the session
@@ -735,7 +1025,11 @@ function makeSampleHar() {
     { type: 'Email address', label: 'Email addresses' },
     { type: 'Person name', label: 'Person names' },
     { type: 'User login', label: 'Logins (name@machine)' },
-    { type: 'Public IP', label: 'Public IP addresses' },
+    { type: 'Public IP', label: 'Public IP addresses (IPv4, IPv6)' },
+    { type: 'Phone number', label: 'Phone numbers' },
+    { type: 'Bank or card number', label: 'IBAN and card numbers' },
+    { type: 'Device or location', label: 'Devices and locations (MAC, serial, GPS)' },
+    { type: 'Username in a path', label: 'User names in paths' },
     { type: 'Customer domain', label: 'Customer domain' },
     { type: 'Other domain', label: 'Other domains' }
   ];
@@ -796,7 +1090,12 @@ function makeSampleHar() {
     var f = { kind: 'text', name: file.name, path: path, text: '', dets: [], status: 'loading' };
     files.push(f);
     var r = new FileReader();
-    r.onload = function () { f.text = String(r.result); f.dets = detect(f.text, f.name, opts()); f.status = 'ok'; applyChoices(f); learnCustomers(f); refresh(f); };
+    r.onload = function () {
+      var t = String(r.result);
+      // A binary file with a text extension (a Keynote .key is a zip): it cannot be cleaned as text, so it is not exported
+      if (t.indexOf('\u0000') >= 0 || (t.match(/\uFFFD/g) || []).length > 20) { f.status = 'unreadable'; refresh(f); return; }
+      f.text = t; f.dets = detect(f.text, f.name, opts()); f.status = 'ok'; applyChoices(f); learnCustomers(f); refresh(f);
+    };
     r.readAsText(file);
     return f;
   }
@@ -812,25 +1111,59 @@ function makeSampleHar() {
 
   // list: File objects, or { file, path } pairs from a dropped folder.
   // From a folder, only images are taken: it is a screenshot folder (notes and other files are left out).
+  // An archive (.zip, .tar.gz, .gz) is opened: its text files and images are added, the rest is reported.
   function readFiles(list, fromFolder) {
     var all = Array.prototype.slice.call(list).map(function (x) {
       return x.file ? x : { file: x, path: x.webkitRelativePath || x.name };
     });
     fromFolder = fromFolder || all.some(function (x) { return x.path.indexOf('/') >= 0; });
-    var hidden = function (x) { return /(^|\/)\./.test(x.path); };
-    var ok = all.filter(function (x) {
-      return !hidden(x) && (IMG_RE.test(x.file.name) || !fromFolder && TXT_RE.test(x.file.name));
+    // A dot file is hidden, except the ones known by name (.env, .npmrc…)
+    var hidden = function (x) {
+      var segs = x.path.split('/'), last = segs.pop();
+      return segs.some(function (g) { return g.charAt(0) === '.'; }) || (last.charAt(0) === '.' && !TXT_NAMES.test(last));
+    };
+    var visible = all.filter(function (x) { return !hidden(x); });
+    var ok = visible.filter(function (x) {
+      return IMG_RE.test(x.file.name) || !fromFolder && (isText(x.file.name) || ARCH_RE.test(x.file.name));
     });
     ok.sort(function (a, b) { return a.path.localeCompare(b.path); });
-    var skipped = all.filter(function (x) { return !hidden(x); }).length - ok.length;
-    $('msg').textContent = !ok.length && fromFolder ? 'No image found in this folder.'
-      : skipped ? skipped + ' file' + (skipped > 1 ? 's' : '') + ' skipped (' + (fromFolder ? 'not an image' : 'unsupported format') + ').' : '';
+    var skipped = visible.length - ok.length;
+    var notes = [];
+    var say = function () { $('msg').textContent = notes.join(' '); };
+    if (!ok.length && fromFolder) notes.push('No image found in this folder.');
+    else if (skipped) notes.push(skipped + ' file' + (skipped > 1 ? 's' : '') + ' skipped (' + (fromFolder ? 'not an image' : 'unsupported format') + ').');
+    say();
     if (!ok.length) return;
-    var first = files.length;
+    var first = files.length, arcs = [];
     ok.forEach(function (x) {
-      if (IMG_RE.test(x.file.name)) addImage(x.file, x.file.name, x.path); else addTextFile(x.file, x.path);
+      if (IMG_RE.test(x.file.name)) addImage(x.file, x.file.name, x.path);
+      else if (!fromFolder && ARCH_RE.test(x.file.name)) arcs.push(x);
+      else addTextFile(x.file, x.path);
     });
-    select(first);
+    if (files.length > first) select(first);
+    arcs.reduce(function (chain, x) { return chain.then(function () { return openArchive(x, notes, say); }); }, Promise.resolve());
+  }
+  function openArchive(x, notes, say) {
+    notes.push(x.file.name + ': opening…'); say();
+    var mine = notes.length - 1;
+    return x.file.arrayBuffer().then(function (buf) { return readArchive(x.file.name, new Uint8Array(buf)); }).then(function (res) {
+      // single: app.log.gz holds one file, which needs no folder
+      var base = x.file.name.replace(/\.(tar\.gz|tgz|tar|zip|gz)$/i, ''), first = files.length,
+          single = res.entries.length === 1 && /\.gz$/i.test(x.file.name) && !/\.(tar\.gz|tgz)$/i.test(x.file.name), left = res.skipped.map(function (k) { return k.path + ' (' + k.why + ')'; }), read = 0;
+      res.entries.sort(function (a, b) { return a.path.localeCompare(b.path); }).forEach(function (e) {
+        var nm = baseName(e.path), full = single || e.path.indexOf(base + '/') === 0 ? e.path : base + '/' + e.path, f;
+        if (IMG_RE.test(nm)) f = addImage(new File([e.data], nm, { type: MIME[nm.split('.').pop().toLowerCase()] }), nm, full);
+        else if (isText(nm)) f = addTextFile(new File([e.data], nm), full);
+        else { left.push(e.path); return; }
+        if (!single) { f.fromArchive = true; f.label = full.slice(base.length + 1).replace(/(?<=[^\/])\.[^./]+$/, ''); }   // the path inside the archive tells apart the many "config.yaml"
+        read++;
+      });
+      notes[mine] = x.file.name + ': ' + read + ' file' + (read === 1 ? '' : 's') + ' opened' +
+        (left.length ? ', ' + left.length + ' left out (not text or image, or unreadable): ' + left.slice(0, 5).join(', ') + (left.length > 5 ? ' and ' + (left.length - 5) + ' more' : '') +
+          '. They are NOT in the cleaned ZIP.' : '.');
+      say();
+      if (files.length > first) select(first);
+    }, function (err) { notes[mine] = x.file.name + ': ' + (err && err.message || err) + '.'; say(); });
   }
 
   // ---------- Reading text in images (loaded on demand, once) ----------
@@ -1023,7 +1356,7 @@ function makeSampleHar() {
         f.row = document.createElement('button');
         f.row.className = 'frow'; f.row.title = f.path;
         f.row.innerHTML = '<span class="fn"></span><span class="st"></span>';
-        f.row.firstChild.textContent = f.name.replace(/\.[^.]+$/, "");   // full path in the tooltip
+        f.row.firstChild.textContent = f.label || f.name.replace(/\.[^.]+$/, "");   // full path in the tooltip
         f.row.onclick = function () { select(files.indexOf(f)); };
         list.appendChild(f.row);
       }
@@ -1348,8 +1681,10 @@ function makeSampleHar() {
   // { blob, single: name for a single download, zip: path inside the archive }
   function output(f) {
     if (f.kind === 'text') {
+      if (f.status === 'unreadable') return Promise.resolve(null);
       var blob = new Blob([sanitize(f.text, f.dets)], { type: 'text/plain;charset=utf-8' });
-      return Promise.resolve({ blob: blob, single: cleanName(f.name), zip: cleanName(f.path) });
+      var cut = f.path.indexOf('/');
+      return Promise.resolve({ blob: blob, single: cleanName(f.name), zip: f.fromArchive && cut > 0 ? f.path.slice(0, cut) + '-clean' + f.path.slice(cut) : cleanName(f.path) });
     }
     if (!f.img) return Promise.resolve(null);
     return maskedImage(f).then(function (b) {
@@ -1454,6 +1789,19 @@ function makeSampleHar() {
     if (t) { e.preventDefault(); addPasted(t); }
   });
   $('gopaste').onclick = function () { addPasted($('paste').value); $('paste').value = ''; };
+  // A screenshot pasted anywhere on the page (⌘V / Ctrl+V), or files copied in the file manager.
+  // Text goes to the text box above; when it already took the paste, the image is left alone.
+  var pastedImgSeq = 0;
+  document.addEventListener('paste', function (e) {
+    var fl = e.clipboardData && e.clipboardData.files;
+    if (e.defaultPrevented || !fl || !fl.length) return;
+    e.preventDefault();
+    readFiles(Array.prototype.slice.call(fl).map(function (f) {
+      if (!/^image\.\w+$/i.test(f.name)) return f;   // the browser names a pasted screenshot "image.png"
+      var ext = (f.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
+      return new File([f], 'pasted-screenshot-' + (++pastedImgSeq) + '.' + ext, { type: f.type });
+    }));
+  });
 
   // ---------- Masking level: recompute detections, keeping the user's decisions ----------
   function applyLevel() {
