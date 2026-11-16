@@ -220,7 +220,7 @@ The `ocr/` folder contains [Tesseract.js](https://github.com/naptha/tesseract.js
 
 ## The logo
 
-`assets/logo.svg` is an original drawing made for this project: a fox hiding its eyes behind a black bar. It has the same license as the code. It is shown in the header and used as the page icon; replace the file to change it.
+`assets/logo.svg` is an original drawing made for this project: a fox hiding its eyes with its paws. It has the same license as the code. It is shown in the header and used as the page icon; replace the file to change it.
 
 ## License
 

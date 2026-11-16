@@ -14,59 +14,55 @@
 <style>
   /* Palette: cream page, white cards, violet for actions and selection, a dark purple gradient for the header,
      and a violet-to-coral line under it */
-  :root { --bg:#fcf5f0; --card:#fff; --ink:#15141a; --muted:#625c6e; --line:#e8dfe3; --accent:#7543e3; --on-accent:#fff; --hit:#ffd9d6; --hit-line:#d9433b; --off:#f1e7f8; --brand1:#8b37c1; --brand2:#210340; --flame:linear-gradient(90deg,#7543e3,#c13fd6 55%,#ff7a59); }
-  @media (prefers-color-scheme: dark) { :root { --bg:#15141a; --card:#201e29; --ink:#f4eef6; --muted:#a8a1b4; --line:#38354a; --accent:#a98bff; --on-accent:#210340; --hit:#5a2420; --hit-line:#ff7b72; --off:#2b2838; --brand1:#3a0f6e; --brand2:#210340; } }
+  :root { --bg:#fcf5f0; --card:#fff; --ink:#15141a; --muted:#625c6e; --line:#e8dfe3; --accent:#6d3be0; --on-accent:#fff; --hit:#ffd9d6; --hit-line:#d9433b; --off:#f1e7f8; --hero-bg:linear-gradient(120deg,#ece4fb 0%,#f7e8f3 55%,#fde4d8 100%); --hero-line:#e0d4f3; --hero-title:#3b1a78; --hero-ink:#1d1830; --hero-muted:#4a4560; --hero-muted2:#5b5670; --glass:rgb(255 255 255 / .78); --panel:linear-gradient(165deg,#4d1580 0%,#2e0f55 100%); }
+  @media (prefers-color-scheme: dark) { :root { --bg:#15141a; --card:#201e29; --ink:#f4eef6; --muted:#a8a1b4; --line:#38354a; --accent:#a98bff; --on-accent:#210340; --hit:#5a2420; --hit-line:#ff7b72; --off:#2b2838; --hero-bg:linear-gradient(120deg,#231c38 0%,#2a2040 55%,#33203a 100%); --hero-line:#3a3352; --hero-title:#f0e6ff; --hero-ink:#f1ecf8; --hero-muted:#cfc8e0; --hero-muted2:#b9b1cc; --glass:rgb(255 255 255 / .06); --panel:linear-gradient(165deg,#3a1166 0%,#220a42 100%); } }
   * { box-sizing:border-box; }
   html { scrollbar-gutter:stable; }   /* the page does not shift when the scrollbar appears */
   body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui, sans-serif; }
-  header { background:linear-gradient(135deg, var(--brand1), var(--brand2)); color:#fff; }
-  header::after { content:''; display:block; height:4px; background:var(--flame); }
-  .hwrap { max-width:1440px; margin:0 auto; padding:22px 16px 18px; display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:18px 32px; align-items:stretch; }
-  .hmain { min-width:0; }
-  .brand { display:flex; align-items:center; gap:14px; }
-  .logo { width:96px; height:auto; flex:none; filter:drop-shadow(0 4px 10px rgb(0 0 0 / .35)); }
-  h1 { margin:0; font-size:26px; line-height:1.15; letter-spacing:-.01em; }
-  header p { margin:0; color:rgb(255 255 255 / .85); }
-  .tag { margin-top:3px !important; font-size:16px; }
-  .intro { margin-top:18px; }
-  .steps { list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; align-items:center; gap:10px 8px; }
-  .steps li { display:flex; gap:10px; align-items:center; flex:1; min-width:240px; }
-  .steps li:not(:last-child)::after { content:'›'; margin-left:auto; padding-left:6px; font-size:26px; line-height:1; color:rgb(255 255 255 / .4); }
-  .sico { flex:none; width:38px; height:38px; border-radius:10px; background:rgb(255 255 255 / .16); color:#fff; display:grid; place-items:center; }
-  .sico svg { width:20px; height:20px; }
-  .steps b { display:block; font-size:14px; line-height:1.25; }
-  .sdesc { display:block; font-size:12.5px; color:rgb(255 255 255 / .78); line-height:1.3; }
-  @media (max-width: 800px) { .steps li:not(:last-child)::after { display:none; } }
-  /* The privacy promise: a translucent card as tall as the header, aligned on the right edge of the steps */
-  .trust { display:flex; flex-direction:column; justify-content:center; gap:10px; padding:18px 22px; border-radius:16px; background:rgb(255 255 255 / .1); border:1px solid rgb(255 255 255 / .3); backdrop-filter:blur(6px); }
-  .tbadge { flex:none; width:46px; height:46px; border-radius:50%; background:linear-gradient(135deg,#c13fd6,#ff7a59); display:grid; place-items:center; box-shadow:0 2px 8px rgb(0 0 0 / .3); }
-  .tbadge svg { width:23px; height:23px; color:#fff; }
-  .trust b { display:block; font-size:16px; line-height:1.25; margin-bottom:3px; }
-  .tsub { display:block; font-size:13px; color:rgb(255 255 255 / .84); line-height:1.4; }
+  /* Header: a light gradient with the fox, the title and the steps; the privacy promise in a dark panel as tall as the header */
+  header { display:grid; grid-template-columns:minmax(0,1fr) clamp(300px,26vw,520px); background:var(--hero-bg); color:var(--hero-ink); border-bottom:1px solid var(--hero-line); }
+  .hmain { min-width:0; padding:28px 40px 28px max(16px, calc((100vw - 1440px) / 2 + 16px)); display:flex; flex-direction:column; justify-content:space-between; gap:20px; }
+  .brand { display:flex; align-items:center; gap:20px; }
+  .logo { width:104px; height:auto; flex:none; }
+  h1 { margin:0; font-size:38px; line-height:1.1; font-weight:800; letter-spacing:-.5px; color:var(--hero-title); }
+  header p { margin:0; color:var(--hero-muted); }
+  .tag { margin-top:6px !important; font-size:17px; line-height:1.45; }
+  .steps { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; counter-reset:step; }
+  .steps li { counter-increment:step; display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:14px; background:var(--glass); border:1px solid var(--hero-line); }
+  .steps li::before { content:counter(step); flex:none; width:30px; height:30px; border-radius:50%; background:var(--accent); color:var(--on-accent); font-weight:800; font-size:14px; display:grid; place-items:center; }
+  .steps b { display:block; font-size:15px; font-weight:700; line-height:1.25; }
+  .sdesc { display:block; font-size:13px; line-height:1.35; color:var(--hero-muted2); }
+  .trust { display:flex; flex-direction:column; justify-content:center; gap:14px; padding:32px 36px; background:var(--panel); color:#fff; }
+  .tbadge { width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,#f0589a,#8a3ee0); display:grid; place-items:center; flex:none; }
+  .tbadge svg { width:28px; height:28px; }
+  .trust b { display:block; font-size:clamp(20px,1.7vw,28px); font-weight:800; line-height:1.2; }
+  .tsub { display:block; font-size:15px; line-height:1.5; color:rgb(255 255 255 / .88); }
+  @media (max-width: 1100px) { .steps { grid-template-columns:1fr; } }
   @media (max-width: 900px) {
-    .hwrap { grid-template-columns:1fr; }
-    .trust { flex-direction:row; align-items:center; text-align:left; }
+    header { grid-template-columns:1fr; }
+    .hmain { padding:22px 16px; }
+    .trust { flex-direction:row; align-items:center; padding:16px; }
+    .trust b { font-size:17px; }
+    .tsub { font-size:13px; }
   }
   @media (max-width: 600px) {
     .brand { align-items:flex-start; gap:12px; }
-    .logo { width:58px; }
-    h1 { font-size:23px; }
+    .logo { width:68px; }
+    h1 { font-size:28px; }
     .tag { font-size:14.5px; }
-    body.working .trust b { display:none; }
   }
   /* Once files are loaded: a compact bar that stays on screen */
-  body.working header { position:sticky; top:0; z-index:20; box-shadow:0 1px 6px rgb(0 0 0 / .25); }
-  body.working header::after { height:3px; }
-  body.working .hwrap { height:56px; padding-top:0; padding-bottom:0; display:flex; align-items:center; }
-  body.working .logo { width:38px; filter:none; }
-  body.working h1 { font-size:19px; }
-  body.working .tag, body.working .intro { display:none; }
-  body.working .hwrap { display:flex; justify-content:space-between; gap:12px; }
-  body.working .trust { flex-direction:row; align-items:center; padding:4px 14px 4px 5px; border-radius:999px; gap:8px; }
-  body.working .tbadge { width:26px; height:26px; box-shadow:none; }
-  body.working .tbadge svg { width:14px; height:14px; }
-  body.working .trust b { font-size:13px; margin:0; }
+  body.working header { position:sticky; top:0; z-index:20; grid-template-columns:minmax(0,1fr) auto; height:56px; box-shadow:0 1px 6px rgb(0 0 0 / .12); }
+  body.working .hmain { padding-top:0; padding-bottom:0; flex-direction:row; align-items:center; }
+  body.working .logo { width:40px; }
+  body.working h1 { font-size:20px; }
+  body.working .tag, body.working .steps { display:none; }
+  body.working .trust { flex-direction:row; align-items:center; gap:10px; padding:0 22px; }
+  body.working .tbadge { width:28px; height:28px; }
+  body.working .tbadge svg { width:15px; height:15px; }
+  body.working .trust b { font-size:14px; }
   body.working .tsub { display:none; }
+  @media (max-width: 600px) { body.working .trust b { display:none; } body.working .trust { padding:0 14px; } }
   body.working #work { height:calc(100vh - 88px); scroll-margin-top:60px; }
   @media (max-width:800px) { body.working #work { height:auto; } }
   main { max-width:1440px; margin:0 auto; padding:12px 16px 40px; }
@@ -151,28 +147,24 @@
 </head>
 <body>
 <header>
- <div class="hwrap">
   <div class="hmain">
     <div class="brand">
-      <img class="logo" src="assets/logo.svg" alt="" width="96" height="96">
+      <img class="logo" src="assets/logo.svg" alt="" width="104" height="104">
       <div>
         <h1>HideSecrets</h1>
         <p class="tag">Mask secrets and personal data before you share a log, a network capture, a screenshot or a support bundle.</p>
       </div>
     </div>
-    <div class="intro">
-      <ol class="steps">
-      <li><span class="sico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3v9m0 0-3.5-3.5M10 12l3.5-3.5M4 14v2h12v-2"/></svg></span><div><b>Drop or paste</b><span class="sdesc">logs, configuration, archives, screenshots</span></div></li>
-      <li><span class="sico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 6l1.5 1.5L7.5 4.5M3.5 13l1.5 1.5 2.5-3M10.5 6h6M10.5 13h6"/></svg></span><div><b>Review what was found</b><span class="sdesc">uncheck whatever can stay readable</span></div></li>
-      <li><span class="sico"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h6l3 3v11H6zM12 3v3h3M8.5 12.5 10 14l2.5-3.5"/></svg></span><div><b>Download the clean copy</b><span class="sdesc">the original is never changed</span></div></li>
+    <ol class="steps">
+      <li><div><b>Drop or paste</b><span class="sdesc">logs, configuration, archives, screenshots</span></div></li>
+      <li><div><b>Review what was found</b><span class="sdesc">uncheck whatever can stay readable</span></div></li>
+      <li><div><b>Download the clean copy</b><span class="sdesc">the original is never changed</span></div></li>
     </ol>
-    </div>
   </div>
-  <div class="trust" role="note">
-    <span class="tbadge"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg></span>
+  <aside class="trust" role="note">
+    <span class="tbadge"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
     <div><b>Nothing leaves your browser</b><span class="tsub">A security rule stops this page from contacting any site.</span></div>
-  </div>
- </div>
+  </aside>
 </header>
 <main>
   <div id="level" class="bar" role="radiogroup" aria-label="Masking level">
