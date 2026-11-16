@@ -198,7 +198,8 @@ var RULES = [
   { type: 'Private key data', g: 1, re: /\b(?:client-key-data|private[_-]?key[_-]?data|tls\.key|ssh-privatekey)(?:\\?["'])?[ \t]*[:=][ \t]*(?:\\?["'])?([A-Za-z0-9+\/=_-]{16,})/gid },
   { type: 'SAML message', g: 1, re: /\bSAML(?:Response|Request)(?:\\?["'])?[ \t]*[:=][ \t]*(?:\\?["'])?([A-Za-z0-9%+\/=_-]{40,})/gid },
   // Command lines: curl -u user:PASSWORD, --password PASSWORD, mysql -pPASSWORD, sshpass -p PASSWORD
-  { type: 'Command-line password', g: 1, re: /(?<![\w-])(?:-u|--user|--proxy-user)[ \t]+["']?[^\s:"']+:([^\s"']{3,})/gid },
+  // user:password after -u / --user, only for the tools that use that form (docker run --user 10001:10001 is an id, not a password)
+  { type: 'Command-line password', g: 1, re: /\b(?:curl|wget|http|https|httpie|xh|svn)\b[^\n|;&]*?[ \t](?:-u|--user|--proxy-user)[ \t]+["']?[^\s:"']+:([^\s"']{3,})/gid },
   { type: 'Command-line password', g: 1, re: /(?<![\w-])--(?:password|passwd|pass|token|secret|api-key|apikey|auth-token|access-token)[ \t]+["']?([^\s"'-][^\s"']{3,})/gid },
   { type: 'Command-line password', g: 1, re: /\b(?:mysql|mysqldump|mysqladmin|mariadb)\b[^\n|;&]*?[ \t]-p([^\s"'-][^\s"']{2,})/gid },
   { type: 'Command-line password', g: 1, re: /\bsshpass[ \t]+-p[ \t]*["']?([^\s"']{3,})/gid },

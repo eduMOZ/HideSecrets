@@ -6,4 +6,5 @@ nimbusctl login --user ops --password [SECRET_3]
 mysql -h db.internal.example.test -u console -p[SECRET_4] console
 sshpass -p '[SECRET_5]' ssh deploy@10.20.0.7
 export NIMBUS_TOKEN=[SECRET_6]
+docker run --rm --user 10001:10001 --name nimbus-hub-backend nimbus/hub-backend:main
 cd /srv/nimbus && ls -la
