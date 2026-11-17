@@ -1,0 +1,169 @@
+# SYNTHETIC TEST FIXTURE — fictional identities and nonfunctional credentials
+
+[LOGIN_1]:~/infra/customer-orion$ ./collect-diagnostics.sh
+
+[21:06:01] Starting deployment diagnostics
+[21:06:01] Workspace: /home/[USERNAME_1]/projects/customer-orion
+[21:06:01] Requested by: [PERSON_1] <[EMAIL_1]>
+[21:06:01] Environment: staging
+[21:06:01] Build: 2026.11.16-rc3
+
+--- Git remote configuration ---
+
+origin  https://ci-bot:[SECRET_1]@git.example.net/platform/terraform.git (fetch)
+origin  https://ci-bot:[SECRET_1]@git.example.net/platform/terraform.git (push)
+
+--- Container registry authentication ---
+
+$ cat /home/[USERNAME_1]/.docker/config.json
+{
+  "auths": {
+    "registry.eu.example.net:5443": {
+      "auth": "[SECRET_2]"
+    }
+  }
+}
+
+--- Deployment environment ---
+
+TF_VAR_customer_domain=workspace.customer-orion.example.com
+TF_VAR_admin_email=[EMAIL_2]
+TF_VAR_db_password='[SECRET_3]'
+TF_VAR_webhook_secret="[SECRET_4]"
+TF_VAR_allowed_origin=https://console.customer-orion.example.com
+TF_VAR_support_contact="[PERSON_2]"
+TF_VAR_support_phone="+1 [PHONE_1]"
+
+HTTPS_PROXY=http://svc_ci:[SECRET_5]@egress.example.net:8080
+NO_PROXY=localhost,127.0.0.1,.svc,.cluster.local
+
+--- Terraform backend configuration ---
+
+$ cat backend.hcl
+address        = "https://state.example.net/api/v1/state/orion-staging"
+lock_address   = "https://state.example.net/api/v1/state/orion-staging/lock"
+unlock_address = "https://state.example.net/api/v1/state/orion-staging/lock"
+username       = "terraform-runner"
+password       = "[SECRET_6]"
+retry_wait_min = 5
+
+--- Terraform outputs ---
+
+$ terraform output -json
+{
+  "admin_console": {
+    "sensitive": false,
+    "type": "string",
+    "value": "https://admin.customer-orion.example.com"
+  },
+  "bootstrap_password": {
+    "sensitive": true,
+    "type": "string",
+    "value": "[SECRET_7]"
+  },
+  "database_connection": {
+    "sensitive": true,
+    "type": "string",
+    "value": "[SECRET_8]"
+  }
+}
+
+--- Application configuration ---
+
+$ sed -n '1,40p' config/application.yaml
+identity:
+  issuer: https://sso.customer-orion.example.com/realms/workforce
+  clientId: customer-portal
+  clientSecret: >-
+    [SECRET_9]
+
+directory:
+  url: ldaps://directory.example.net:636
+  bindDn: "uid=svc-sync,ou=services,dc=example,dc=org"
+  bindPassword: '[SECRET_10]'
+
+mail:
+  url: "smtp://svc-notify:[SECRET_11]@smtp.example.net:587"
+  from: '"[PERSON_3]" <[EMAIL_3]>'
+
+--- DNS checks ---
+
+$ dig +short CNAME portal.customer-orion.example.com
+edge-eu-07.cdn.example.net.
+
+$ dig +short A edge-eu-07.cdn.example.net
+[PUBLIC_IP_1]
+
+$ dig +short AAAA edge-eu-07.cdn.example.net
+[PUBLIC_IP_2]
+
+$ dig +short TXT _acme-challenge.portal.customer-orion.example.com
+"demo_AcmeProof_9xQ2m7R4k8"
+
+--- Reverse proxy access log ---
+
+[PUBLIC_IP_3] - [EMAIL_2] [16/Nov/2026:21:06:12 +0100]
+"GET /auth/callback?code=[SECRET_12]&state=[SECRET_13] HTTP/2.0" 302 0
+host="portal.customer-orion.example.com"
+referer="https://sso.customer-orion.example.com/"
+request_id="a9b4d207-6f83-4c1e-9a25-7d0e823b614f"
+
+--- Outgoing webhook inspection ---
+
+POST https://hooks.partner.example.org/events/deployment
+X-Webhook-Secret: [SECRET_14]
+Authorization: Bearer [SECRET_15]
+Content-Type: application/json
+
+{
+  "actor": {
+    "displayName": "[PERSON_1]",
+    "email": "[EMAIL_2]"
+  },
+  "customer": "[PERSON_4] Démonstration",
+  "dashboard": "https:\/\/console.customer-orion.example.com\/deployments\/4821",
+  "recoveryLink": "https://accounts.example.org/recover?token=[SECRET_16]&email=[EMAIL_2]"
+}
+
+--- Temporary download link ---
+
+https://artifacts.example.net/backups/orion.sql.gz?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=[SECRET_17]&X-Amz-Expires=900&X-Amz-Signature=[SECRET_18]
+
+--- Local credential helper ---
+
+$ cat ~/.netrc
+machine artifacts.example.net
+  login svc-backup
+  password [SECRET_19]
+
+machine api.partner.example.org
+  login [EMAIL_2]
+  password "[SECRET_20]"
+
+--- MFA bootstrap ---
+
+Account: [EMAIL_2]
+Provisioning URI:
+otpauth:[SECRET_21]&issuer=[PERSON_4]
+
+Recovery codes:
+  8391-2746
+  5028-6193
+  7460-1835
+
+--- Additional diagnostic values ---
+
+service_version=4.12.3
+tls_version=TLSv1.3
+http_status=200
+retry_count=3
+listen_port=8443
+file_mode=0600
+certificate_fingerprint=SHA256:DEMO_NOT_A_REAL_CERTIFICATE
+public_documentation=https://docs.example.org/deployment
+example_placeholder=${DATABASE_PASSWORD}
+masked_password=********
+elapsed_ms=4821
+
+[21:06:14] Diagnostics complete.
+[LOGIN_1]:~/infra/customer-orion$

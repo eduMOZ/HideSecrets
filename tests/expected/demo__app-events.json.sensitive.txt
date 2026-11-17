@@ -1,0 +1,13 @@
+{"ts":"2026-11-17T07:42:01Z","level":"INFO","event":"support.opened","actor":"[PERSON_1]","email":"[EMAIL_1]"}
+{"ts":"2026-11-17T07:42:02Z","level":"DEBUG","event":"config.loaded","api\u005fkey":"[SECRET_1]","client\u005fsecret":"[SECRET_2]"}
+{"ts":"2026-11-17T07:42:03Z","level":"TRACE","event":"request.headers","headers":{"authorization":"Basic [SECRET_3]","x-api-key":"[SECRET_4]"}}
+{"ts":"2026-11-17T07:42:04Z","level":"DEBUG","event":"secret.loaded","encoding":"base64","value":"[SECRET_5]"}
+{"ts":"2026-11-17T07:42:05Z","level":"TRACE","event":"callback","url":"https:\/\/portal.example.net\/callback?token=[SECRET_6]&email=[EMAIL_2]"}
+{"ts":"2026-11-17T07:42:06Z","level":"DEBUG","event":"nested.payload","payload":"{\"user\":\"[EMAIL_1]\",\"password\":\"[SECRET_7]\"}"}
+{"ts":"2026-11-17T07:42:07Z","level":"WARN","event":"credential.exposed","message":"Temporary password:[SECRET_8]"}
+{"ts":"2026-11-17T07:42:08Z","level":"INFO","event":"device.seen","login":"[LOGIN_1]","mac":"[DEVICE_1]","serial":"[DEVICE_2]"}
+{"ts":"2026-11-17T07:42:09Z","level":"INFO","event":"network.peer","ipv4":"[PUBLIC_IP_1]","ipv6":"[PUBLIC_IP_2]","hostname":"workstation-09.customer.example.org."}
+{"ts":"2026-11-17T07:42:10Z","level":"DEBUG","event":"contact.imported","email":"[EMAIL_2]","phone":"[PHONE_1]"}
+{"ts":"2026-11-17T07:42:11Z","level":"DEBUG","event":"recovery.configured","question":"Nom du premier animal","answer":"[SECRET_9]","backupCodes":[[SECRET_10]]}
+{"ts":"2026-11-17T07:42:12Z","level":"INFO","event":"metrics","version":"2.8.1","status":200,"port":443,"duration_ms":3817,"ratio":0.9264}
+{"ts":"2026-11-17T07:42:13Z","level":"INFO","event":"config.template","password":"${APP_PASSWORD}","token":"<REDACTED>","secret":null}

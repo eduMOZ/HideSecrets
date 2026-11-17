@@ -1,4 +1,4 @@
-# SYNTHETIC LAB - all credentials and identities are fictional
+# SYNTHETIC LAB — all credentials and identities are fictional
 
 [LOGIN_1]:~/platform$ ./deploy.sh --namespace identity-lab
 [INFO] runner=ci-deploy uid=1001 build=20261116.42
@@ -55,8 +55,10 @@ TRACE claims={"sub":"test-user-0042","email":"[EMAIL_1]",
 TRACE refresh_token=[SECRET_13]
 TRACE Set-Cookie: idp_session=[SECRET_14]; Secure; HttpOnly
 WARN  Forwarded: for=[PUBLIC_IP_3];proto=https
-ERROR login failed user=[EMAIL_1] reason="claim mail missing; expected email"
+ERROR login failed user="[PERSON_1]" reason="claim mail missing; expected email"
 
 [LOGIN_1]:~/platform$ curl -H 'X-API-Key: [SECRET_15]' https://hooks.example.net/deploy
 HTTP/2 200
 {"deployment":"ready","replicas":3,"port":8443,"duration_ms":4242}
+
+[LOGIN_1]:~/platform$

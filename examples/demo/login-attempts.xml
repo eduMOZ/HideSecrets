@@ -1,0 +1,13 @@
+2026-11-17T08:14:02.081+01:00 INFO gateway request_id=lab-00041 method=POST path=/login status=302 duration_ms=37
+2026-11-17T08:14:02.082+01:00 DEBUG request.headers={"Host":"portal.client-aster.example.com","X-Forwarded-For":"198.51.100.46, 10.42.0.8","X-Real-IP":"198.51.100.46"}
+2026-11-17T08:14:02.083+01:00 DEBUG request.body={"username":"salome.roux@example.org","password":"Fiction!82:bleu#19"}
+2026-11-17T08:14:02.084+01:00 TRACE upstream=https://auth.eu.example.net:9443/realms/aster
+2026-11-17T08:14:02.085+01:00 TRACE Authorization: bEaReR demo_tkn_8Nq4R7m2W9x5
+2026-11-17T08:14:02.086+01:00 TRACE Cookie: theme=dark; session=demo_sess_6Qp9L2x4; locale=fr
+2026-11-17T08:14:02.087+01:00 TRACE Set-Cookie: refresh=demo_refresh_7Kx3P8m2; Path=/auth; HttpOnly; Secure; SameSite=Lax
+2026-11-17T08:14:02.088+01:00 DEBUG Location: https://portal.client-aster.example.com/callback?code=demo_code_4Rk8M2&state=demo_state_9Xq3
+2026-11-17T08:14:02.089+01:00 INFO authenticated display_name="Salomé Roux" subject="lab-user-0087"
+2026-11-17T08:14:03.110+01:00 WARN rejected_login email="salome.roux+admin@example.org" source="[2001:db8:8::46]:53128"
+2026-11-17T08:14:03.111+01:00 DEBUG recovery_url=https://accounts.example.org/reset?email=salome%2Eroux%40example%2Eorg&token=demo_reset_3Wn7Q9
+2026-11-17T08:14:03.112+01:00 INFO healthcheck path=/ready status=200 duration_ms=4
+2026-11-17T08:14:03.113+01:00 INFO runtime version=3.12.4 workers=4 listen_port=8443

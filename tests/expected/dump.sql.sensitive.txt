@@ -2,6 +2,6 @@
 CREATE USER 'console'@'%' IDENTIFIED BY '[SECRET_1]';
 ALTER ROLE reporting WITH PASSWORD '[SECRET_2]';
 INSERT INTO users (id, email, password_hash, api_token, name) VALUES
-  (1, '[EMAIL_1]', '[SECRET_3]', '[SECRET_4]', 'Jane'),
-  (2, '[EMAIL_2]', '[SECRET_5]', '[SECRET_6]', 'John');
+  (1, '[EMAIL_1]', '[SECRET_3]', '[SECRET_4]', '[PERSON_1]'),
+  (2, '[EMAIL_2]', '[SECRET_5]', '[SECRET_6]', '[PERSON_2]');
 INSERT INTO settings (key, value) VALUES ('theme', 'dark');
