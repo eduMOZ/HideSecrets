@@ -63,6 +63,16 @@ At the second level, a list lets you leave a whole category visible, for example
 
 The level and the categories are remembered in your browser.
 
+### Words to always mask
+
+Nothing in a log says that `Orion` is a customer or `project-aurora` a code name, so the tool cannot guess them. List them in the box **Words to always mask** on the home page and every occurrence is masked as `[CUSTOMER_n]`.
+
+- One entry per line, or separated by commas or semicolons. Case does not matter, and an entry can be several words (`Beispielbetrieb Nord`).
+- An entry matches whole words only: `Orion` is masked in `Orion-staging-48213` and in `orion.log`, not inside `Orionis`. Entries shorter than two characters are ignored, and the first 200 are used.
+- The list applies at the level **Secrets and sensitive data** (see above), and it is not affected by the people categories; only unchecking **Customer domain and listed terms** (group Network and company) turns it off. It wins over a detection of the same length, so a listed name is not relabeled as something else.
+- It is remembered in this browser only (local storage), never sent anywhere. To share a list with a team or a customer, put it in `terms` of [`config.local.js`](#product-settings-optional) instead.
+- It is the way to hide company and customer names in any language: they carry no label, so nothing else finds them.
+
 ### Reviewing many files
 
 - **File list**: on the left, with the number of items found in each file and a ✓ once you have viewed it.
