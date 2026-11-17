@@ -128,6 +128,9 @@ async function archiveTests() {
     ];
     cases.forEach(([t, want]) => eq('language: ' + t.split('\n')[0].slice(0, 28), ctx.sanitize(t, ctx.detect(t, 'x.txt', { sensitive: true })), want));
   }
+  {   // the sharp s, misread by the OCR as B or R, is restored for the detection
+    eq('ocr: sharp s', ['WeiB', 'GroR', 'StraBe', 'GrüBen', 'heiBt', 'Bob', 'demoBxyz', 'WEB'].map(ctx.fixSharpS), ['Wei\u00df', 'Gro\u00df', 'Stra\u00dfe', 'Grü\u00dfen', 'hei\u00dft', 'Bob', 'demoBxyz', 'WEB']);
+  }
   const view = (r) => ({ entries: r.entries.map((e) => [e.path, Buffer.from(e.data).toString()]).sort(), skipped: r.skipped.map((k) => k.path + ' ' + k.why).sort() });
   const longName = 'deep/' + 'd'.repeat(60) + '/' + 'f'.repeat(50) + '.log';
   const zip = makeZip([

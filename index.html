@@ -286,6 +286,7 @@ var LANGS = {
     greeting: ['Hello', 'Hi', 'Hey', 'Dear'],
     closing: ['Best regards', 'Kind regards', 'Regards', 'Sincerely', 'Yours sincerely', 'Yours faithfully', 'Thanks', 'Thank you', 'Cheers'],
     alias: ['alias', 'aka', 'also known as', 'nickname'],
+    userLabel: ['user[ _-]?name', 'login(?:[ _-]?name)?', 'user[ _-]?id', 'account[ _-]?name'],
     accessCode: ['digicode', 'passcode', '(?:door|access|entry|gate|wi-?fi) (?:code|password)'],
     is: ['is'],
     securityQ: ['(?:security|secret|recovery)[ ]question'],
@@ -317,6 +318,7 @@ var LANGS = {
     greeting: ['Bonjour', 'Salut', 'Cher', 'Chère'],
     closing: ['Cordialement', 'Bien cordialement', 'Bien à vous', 'Bien a vous', 'Très cordialement', 'Salutations distinguées'],
     alias: ['pseudonym', 'pseudo', 'surnom'],
+    userLabel: ['nom d[\'’]utilisateur', 'identifiant', 'nom de connexion'],
     accessCode: ['code (?:d[\'’](?:acc[èe]s|entr[ée]e)|pour entrer|de la porte|porte|du portail|wifi)'],
     is: ['est'],
     securityQ: ['question[ ](?:de[ ])?(?:s[ée]curit[ée]|r[ée]cup[ée]ration|secr[èe]te)'],
@@ -339,7 +341,7 @@ var LANGS = {
     idDoc: ['personalausweis(?:nummer)?', 'ausweis(?:nummer)?', 'reisepass(?:nummer)?', 'f(?:ü|ue|u)hrerschein(?:nummer)?', 'kunden(?:nummer|-?nr\\.?)', 'mitarbeiter(?:nummer|-?id)', 'personalnummer', 'buchungs(?:nummer|code)', 'vorgangsnummer', 'aktenzeichen', 'ticket(?:nummer)?', 'bestellnummer', 'mandantennummer', 'vertragsnummer', 'matrikelnummer'],
     idSpaced: ['steuer-?id(?:entifikationsnummer)?', 'steuernummer', 'sozialversicherungs(?:nummer|ausweis)', 'rentenversicherungsnummer', 'versicherungsnummer', 'sv-?nummer', 'krankenversichertennummer'],
     idSuffix: ['nummer', 'nr\\.?'],
-    serial: ['seriennummer', 'ger(?:ä|ae|a)tenummer'],
+    serial: ['serien?[ -]?nummer', 'ger(?:ä|ae|a)te[ -]?(?:serien?[ -]?)?nummer'],
     cvv: ['kartenpr(?:ü|ue|u)fnummer', 'pr(?:ü|ue|u)fnummer', 'sicherheitscode'],
     expiry: ['g(?:ü|ue|u)ltig[ ]bis', 'ablaufdatum', 'verfallsdatum'],
     personLabel: ['ansprechpartner(?:in)?', 'name', 'vorname', 'nachname', 'familienname', 'vollst(?:ä|ae|a)ndiger[ ]name', 'mein name ist', 'ich hei(?:ß|ss)e', 'kunde', 'kundin', 'absender(?:in)?', 'empf(?:ä|ae|a)nger(?:in)?', 'erstellt von', 'bearbeiter(?:in)?', 'verantwortlich', 'besitzer(?:in)?', 'autor(?:in)?', 'notfallkontakt', 'angemeldet als', 'eingeloggt als', 'zust(?:ä|ae|a)ndig', 'benutzer'],
@@ -348,6 +350,7 @@ var LANGS = {
     greeting: ['Hallo', 'Hi', 'Hey', 'Liebe', 'Lieber', 'Liebes', 'Guten Tag', 'Guten Morgen', 'Guten Abend', 'Sehr geehrte', 'Sehr geehrter', 'Sehr geehrte Frau', 'Sehr geehrter Herr', 'Moin', 'Servus', 'Gr(?:ü|ue|u)(?:ß|ss) Gott'],
     closing: ['Mit freundlichen Gr(?:ü|ue|u)(?:ß|ss)en', 'Freundliche Gr(?:ü|ue|u)(?:ß|ss)e', 'Viele Gr(?:ü|ue|u)(?:ß|ss)e', 'Beste Gr(?:ü|ue|u)(?:ß|ss)e', 'Herzliche Gr(?:ü|ue|u)(?:ß|ss)e', 'Liebe Gr(?:ü|ue|u)(?:ß|ss)e', 'Gr(?:ü|ue|u)(?:ß|ss)e', 'Hochachtungsvoll', 'Mit besten Gr(?:ü|ue|u)(?:ß|ss)en', 'Danke und Gr(?:ü|ue|u)(?:ß|ss)e'],
     alias: ['spitzname', 'kosename', 'künstlername'],
+    userLabel: ['benutzer[ -]?name', 'nutzer[ -]?name', 'anmelde[ -]?name', 'benutzerkennung', 'benutzer-?id'],
     accessCode: ['t(?:ü|ue|u)rcode', 'code f(?:ü|ue|u)r (?:die |das |den )?(?:t(?:ü|ue|u)r|haust(?:ü|ue|u)r|eingang|tor|garage|alarmanlage|wlan|w-lan|wifi)', '(?:t(?:ü|ue|u)r|zugangs|eingangs|garagen|tor|alarm)[ -]?(?:code|passwort|kennwort)', '(?:wlan|w-lan|wifi)[ -]?(?:passwort|kennwort|schl(?:ü|ue|u)ssel)'],
     is: ['ist', 'lautet'],
     securityQ: ['sicherheitsfrage', 'geheimfrage', 'wiederherstellungsfrage'],
@@ -356,10 +359,15 @@ var LANGS = {
     firstNames: 'alexander andreas anja annette antje bernd birgit bjorn christoph claudia dagmar dieter dirk elke erik franziska frank friedrich gabriele georg gerhard gisela gunter hannah hans-peter heike heinz helga helmut herbert holger ingrid jan jens joachim johannes jorg jurgen juergen jutta karin karl katharina kerstin kurt lars lena leon lisa lukas manfred manuela markus matthias maximilian monika nadine nicole niklas norbert olaf oliver petra ralf reinhard renate rolf sandra sebastian silke simone stefan susanne sven thorsten tim tobias torsten ulrich ulla uwe ursula volker walter werner wolfgang'
   }
 };
+// Words between a label and its value: "Geburtsdatum zur Testzuordnung: 07.12.1988", "Kennwort für Dienstkonto svc_x: …"
+var GAP = '(?:[ \\t]+[\\w\u00c0-\u00ff.-]{1,24}){0,4}?';
 // The fragments of one kind, over every language: lang('secret') -> 'password|passwd|…|passwort|…'
 function lang(kind) {
-  return Object.keys(LANGS).reduce(function (acc, k) { return acc.concat(LANGS[k][kind] || []); }, []).join('|');
+  // longest first, so that "ist" is not cut to "is"
+  return Object.keys(LANGS).reduce(function (acc, k) { return acc.concat(LANGS[k][kind] || []); }, []).sort(function (a, b) { return b.length - a.length; }).join('|');
 }
+// "is" as a link between a label and its value, with the small words that follow it: "ist der", "is on"
+var LINK = '(?:[ \\t]+(?:' + lang('is') + ')(?:[ \\t]+(?:der|am|den|le|the|on))?)?';
 
 // ---------- Detection ----------
 // Sensitive field names. Generic keys ("key" alone) do not count: too many false positives (sort_key, primary_key…).
@@ -402,6 +410,10 @@ var RULES = [
   // A code sent to the user: "Your verification code is 482913", "OTP: 771204"
   { type: 'One-time code', g: 1, re: new RegExp('(?:' + lang('codeWords') + ')(?:[ \\t]+(?:' + lang('codeIs') + '|:|=))*[ \\t]*[:=]?[ \\t]*["\']?(\\d{4,8})(?!\\d)', 'gid') },
   { type: 'Recovery codes', g: 1, re: new RegExp('(?:' + lang('recovery') + ')(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*((?:[A-Za-z0-9]{4,}(?:-[A-Za-z0-9]{3,})*)(?:[ \\t]*[,;][ \\t]*[A-Za-z0-9]{4,}(?:-[A-Za-z0-9]{3,})*)*)', 'gid') },
+  // "Der Wiederherstellungscode lautet 4826-1937"
+  { type: 'Recovery codes', g: 1, re: new RegExp('(?:' + lang('recovery') + ')[ \\t]+(?:' + lang('is') + ')[ \\t]*[:=]?[ \\t]*["\']?([A-Za-z0-9]{4,}(?:-[A-Za-z0-9]{3,})+)', 'gid') },
+  // "Kennwort für das Konto svc_x: Demo!Wald72#Blau"
+  { type: 'Password (with words before the colon)', g: 1, words: true, re: new RegExp('(?<![A-Za-z0-9])(?:' + lang('secretLabel') + ')[ \\t]+(?:für|fuer|for|de|du|pour|of|to|zu|zum|zur)(?:[ \\t]+[\\w\u00c0-\u00ff.-]{1,30}){1,4}?[ \\t]*[:=][ \\t]*["\']?([^\\s"\'<>,;]{5,60})', 'gid') },
   // A token in the path of a link: /reset/<token>, /invite/<token>, /verify/<token>
   { type: 'Token in a link', g: 1, mixed: true, re: new RegExp('\\\\?\\/(?:' + lang('linkWords') + ')\\\\?\\/([A-Za-z0-9_~-]{16,})(?![A-Za-z0-9_~-])', 'gid') },
   { type: 'PIN code', g: 1, re: new RegExp('(?<![A-Za-z0-9])(?:code[ ]+)?(?:' + lang('pin') + ')(?:[ ]+(?:de|du|of|for|test|carte|card))*[ \\t]*[:=][ \\t]*["\']?(\\d{4,8})(?!\\d)', 'gid') },
@@ -409,6 +421,10 @@ var RULES = [
   { type: 'Security answer', g: 1, re: new RegExp('(?:' + lang('securityQ') + ')[^\\n]*\\n[ \\t]*(?:' + lang('answer') + ')[ \\t]*[:=][ \\t]*([^\\n]{2,80})', 'gid') },
   // the answer on the same line as the question: "Sicherheitsfrage: Name des ersten Haustiers? Antwort: Bello"
   { type: 'Security answer', g: 1, re: new RegExp('(?:' + lang('securityQ') + ')[^\\n]*?\\?[ \\t]*(?:' + lang('answer') + ')[ \\t]*[:=][ \\t]*([^\\n]{2,80})', 'gid') },
+  // "Antwort auf die Sicherheitsfrage: Gänseblümchen"
+  { type: 'Security answer', g: 1, re: new RegExp('(?:' + lang('answer') + ')[ \\t]+(?:auf|to|à|a)[ \\t]+(?:die |das |the |la |les )?(?:' + lang('securityQ') + ')[ \\t]*[:=][ \\t]*([^\\n]{2,80})', 'gid') },
+  // the question, then the answer in a sentence: "Meine Antwort ist Schneeflöckchen."
+  { type: 'Security answer', g: 1, re: new RegExp('(?:' + lang('securityQ') + ')[^\\n]*\\n[ \\t]*(?:[A-Za-z\u00c0-\u00ff]+[ \\t]+){0,2}(?:' + lang('answer') + ')[ \\t]+(?:' + lang('is') + ')[ \\t]*[:=]?[ \\t]*["«]?([^\\n.!"»]{2,60})', 'gid') },
   { type: 'Private key (PGP)', g: 0, re: /-----BEGIN PGP PRIVATE KEY BLOCK-----[\s\S]*?-----END PGP PRIVATE KEY BLOCK-----/gd },
   // Hashes of passwords: /etc/shadow, database dumps (bcrypt, argon2, crypt)
   { type: 'Password hash', g: 0, re: /\$2[aby]\$\d\d\$[.\/A-Za-z0-9]{53}|\$argon2(?:id|i|d)\$[^\s'"]{20,}|\$[156y]\$[.\/A-Za-z0-9$,=-]{20,}/gd },
@@ -987,7 +1003,16 @@ function directoryPass(text, out) {
   SAM_RE.lastIndex = 0;
   while ((m = SAM_RE.exec(text))) out.push({ start: m.indices[1][0], end: m.indices[1][1], type: 'User login', prefix: 'LOGIN', sens: true });
 }
+// A login given by its label ("Benutzername lautet j.weiss") or in a link ("?user=j.weiss"): a structured name, not a generic account
+var USER_LABEL_RE = new RegExp('(?<![A-Za-z0-9])(?:' + lang('userLabel') + '|user|benutzer)\\b(?:\\\\?["\'])?(?:[ \\t]*[:=]|[ \\t]+(?:' + lang('is') + '))[ \\t]*(?:\\\\?["\'])?([A-Za-z][A-Za-z0-9._-]{2,39})(?![A-Za-z0-9._-]*@)', 'gid');
 function loginPass(text, out) {
+  var lm;
+  USER_LABEL_RE.lastIndex = 0;
+  while ((lm = USER_LABEL_RE.exec(text))) {
+    var lv = lm[1].replace(/[.\-_]+$/, '');
+    if (!/[.0-9]/.test(lv) || GENERIC_USERS.has(lv.toLowerCase()) || IGNORE.test(lv)) continue;   // "username: required" is no login; a dot or a digit tells a person (j.weiss), not a service account (svc_deploy)
+    out.push({ start: lm.indices[1][0], end: lm.indices[1][0] + lv.length, type: 'User login', prefix: 'LOGIN', sens: true });
+  }
   LOGIN_RE.lastIndex = 0;
   var m;
   while ((m = LOGIN_RE.exec(text))) {
@@ -1051,20 +1076,20 @@ var SERIAL_RE = new RegExp('(?<![A-Za-z0-9])(?:' + lang('serial') + ')\\b(?:\\\\
 var CVV_RE = new RegExp('(?<![A-Za-z0-9])(?:' + lang('cvv') + ')\\b(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*(?:\\\\?["\'])?(\\d{3,4})(?!\\d)', 'gid');
 var EXPIRY_RE = new RegExp('(?<![A-Za-z0-9])(?:' + lang('expiry') + ')\\b(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*(?:\\\\?["\'])?(\\d{2}[ \\t]*\\/[ \\t]*(?:\\d{2}|\\d{4}))(?!\\d)', 'gid');
 var MONTHS = lang('months');
-var DOB_RE = new RegExp('(?<![A-Za-z0-9])(?:' + lang('dob') + ')\\b\\.?(?:\\\\?["\'])?[ \\t]*[:=]?[ \\t]*(?:\\\\?["\'])?' +
+var DOB_RE = new RegExp('(?<![A-Za-z0-9])(?:' + lang('dob') + ')\\b\\.?' + GAP + '(?:\\\\?["\'])?[ \\t]*[:=]?' + LINK + '[ \\t]*(?:\\\\?["\'])?' +
   '(\\d{4}-\\d{2}-\\d{2}|\\d{1,2}[\\/.-]\\d{1,2}[\\/.-]\\d{2,4}|\\d{1,2}(?:st|nd|rd|th|er|\\.)?[ ]+(?:' + MONTHS + ')[ ]+\\d{4}|(?:' + MONTHS + ')[ ]+\\d{1,2}(?:st|nd|rd|th)?,?[ ]+\\d{4})(?!\\d)', 'gid');
-var ADDRESS_RE = new RegExp('(?<![A-Za-z0-9])(?:(?:' + lang('addressKind') + ')[ _-]?)?(?:' + lang('address') + ')\\b(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*(?:\\\\"([^"\\\\\\n]{8,160})\\\\"|"([^"\\n]{8,160})"|\'([^\'\\n]{8,160})\'|([^\\n"\'\\\\]{8,160}))', 'gid');
+var ADDRESS_RE = new RegExp('(?<![A-Za-z0-9])(?:(?:' + lang('addressKind') + ')[ _-]?)?(?:' + lang('address') + ')\\b' + GAP + '(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*(?:\\\\"([^"\\\\\\n]{8,160})\\\\"|"([^"\\n]{8,160})"|\'([^\'\\n]{8,160})\'|([^\\n"\'\\\\]{8,160}))', 'gid');
 var NOT_POSTAL = /(?:ip|mac|e-?mail|mail|remote|client|server|host|bind|listen|url|web|wallet|public|private|memory|contract)[ _-]*$/i;   // ip_address, email address…
 // A phone number spelled out: "zéro six, douze, trente-quatre, cinquante-six, soixante-dix-huit"
 var NUMW = 'z[ée]ro|un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingts?|trente|quarante|cinquante|soixante|cent';
 var SPOKEN_PHONE_FR = new RegExp('(?<![\\p{L}])z[ée]ro[ -](?:un|deux|trois|quatre|cinq|six|sept|huit|neuf)(?:[ ,]+(?:' + NUMW + ')(?:-(?:' + NUMW + '))*){4,6}(?![\\p{L}])', 'giu');
 var SPOKEN_PHONE_EN = /(?<![A-Za-z])(?:zero|oh|one|two|three|four|five|six|seven|eight|nine)(?:[ ,-]+(?:zero|oh|one|two|three|four|five|six|seven|eight|nine|double|triple)){7,}(?![A-Za-z])/gi;
 // Identity documents, tickets and booking references, when a label names them: "Passeport de test : 00AA00000"
-var ID_RE = new RegExp('(?<![A-Za-z0-9])(?:' + lang('idDoc') + ')(?:[ \\t]+(?:' + lang('idSuffix') + '))*["\']?[ \\t]*[:=#]?[ \\t]*["\']?([A-Za-z0-9][A-Za-z0-9-]{4,24})(?![A-Za-z0-9-])', 'gid');
+var ID_RE = new RegExp('(?<![A-Za-z0-9])(?:' + lang('idDoc') + ')(?:[ \\t]+(?:' + lang('idSuffix') + '))*' + LINK + '["\']?[ \\t]*[:=#]?[ \\t]*["\']?([A-Za-z0-9][A-Za-z0-9-]{4,24})(?![A-Za-z0-9-])', 'gid');
 // Numbers written in groups after a label: "Steuer-ID: 12 345 678 901", "Sozialversicherungsnummer: 12 150988 K 123"
-var ID_SPACED_RE = new RegExp('(?<![A-Za-z0-9])(?:' + lang('idSpaced') + ')(?:[ \\t]+(?:' + lang('idSuffix') + '))*["\']?[ \\t]*[:=#]?[ \\t]*["\']?(\\d[\\dA-Za-z ./-]{7,26}[\\dA-Za-z])(?![A-Za-z0-9])', 'gid');
+var ID_SPACED_RE = new RegExp('(?<![A-Za-z0-9])(?:' + lang('idSpaced') + ')(?:[ \\t]+(?:' + lang('idSuffix') + '))*' + LINK + '["\']?[ \\t]*[:=#]?[ \\t]*["\']?(\\d[\\dA-Za-z ./-]{7,26}[\\dA-Za-z])(?![A-Za-z0-9])', 'gid');
 // An address whose label stands alone on its line, the street and town on the next ones
-var ADDRESS_NEXT_RE = new RegExp('(?<![A-Za-z0-9])(?:(?:' + lang('addressKind') + ')[ _-]?)?(?:' + lang('address') + ')(?:[ ]+(?:de|du)[ ]+(?:livraison|facturation|secours|domicile))?[ \\t]*:?[ \\t]*\\r?\\n[ \\t]*(\\d{1,4}[^\\n]{4,80}(?:\\r?\\n[ \\t]*\\d{4,5}[^\\n]{2,50})?)', 'gid');
+var ADDRESS_NEXT_RE = new RegExp('(?<![A-Za-z0-9])(?:(?:' + lang('addressKind') + ')[ _-]?)?(?:' + lang('address') + ')(?:[ ]+(?:de|du)[ ]+(?:livraison|facturation|secours|domicile))?' + GAP + '[ \\t]*:?[ \\t]*\\r?\\n[ \\t]*(?:[^\\n\\d]{3,40}\\r?\\n[ \\t]*)?((?:\\d{1,4}[^\\n]{4,80}|[A-Za-z\u00c4-\u00ff][A-Za-z\u00c4-\u00ff. -]{2,40}[ ]\\d{1,4}[a-z]?(?:[ ,][^\\n]{0,40})?)(?:\\r?\\n[ \\t]*\\d{4,5}[^\\n]{2,50})?)', 'gid');
 // Cloud accounts: tenant_id=<guid>, subscription_id, account_id=123456789012, project_id=my-project-42, org_id=org_…; and the account inside an ARN.
 // client_id stays visible (it is no secret and helps diagnosis).
 var CLOUD_ID_RE = /(?<![A-Za-z0-9])(?:tenant[ _-]?id|subscription[ _-]?id|account[ _-]?id|aws[ _-]?account(?:[ _-]?(?:id|number))?|project[ _-]?id|org(?:anization|anisation)?[ _-]?id|directory[ _-]?id)(?:\\?["'])?[ \t]*[:=][ \t]*(?:\\?["'])?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|\d{12}|(?=[^\s"',;]*\d)[A-Za-z][A-Za-z0-9_-]{5,60})/gid;
@@ -1406,6 +1431,13 @@ function ocrSplitSecret(p, w) {
   var cw = (p.bbox.x1 - p.bbox.x0) / Math.max(1, p.text.length), gap = w.bbox.x0 - p.bbox.x1;
   return gap < cw * 1.6 && SECRET_ASSIGN_TAIL.test(p.text) && /^[A-Za-z0-9_+\/-]{6,}$/.test(w.text) && /\d/.test(w.text) && /[A-Za-z]/.test(w.text);
 }
+// OCR often reads the German sharp s as a B or an R: "WeiB", "GroR", "StraBe". Fixed for the detection only (same length).
+function fixSharpS(t) {
+  return t.replace(/[A-Za-z\u00c4\u00d6\u00dc\u00e4\u00f6\u00fc]{3,24}/g, function (w) {
+    if (/^[A-Z][a-z]*[aeiou][BR]$/.test(w) || /[aeiou\u00e4\u00f6\u00fc]B(?:e|en|er|es|t)$/.test(w)) return w.replace(/[BR](?=(?:e|en|er|es|t)?$)/, '\u00df');
+    return w;
+  });
+}
 function regionsFromOcr(lines, opts) {
   var text = '', spans = [];
   lines.forEach(function (ws, li) {
@@ -1418,7 +1450,7 @@ function regionsFromOcr(lines, opts) {
     });
     text += '\n';
   });
-  var dets = detect(text, 'capture.txt', opts);
+  var dets = detect(fixSharpS(text), 'capture.txt', opts);
   spans.forEach(function (sp) {
     var raw = text.slice(sp.s, sp.e), lead = raw.match(/^[^A-Za-z0-9]*/)[0].length;
     var tok = raw.slice(lead).replace(/[^A-Za-z0-9=]+$/, '');
