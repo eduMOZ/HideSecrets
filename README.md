@@ -208,7 +208,7 @@ The tool helps you review; it does not guarantee that nothing is left. Always ch
 ```text
 index.html          the page: interface, detection engine and archive reader (inside <script id="engine">)
 config.example.js   example product settings (copy to config.local.js, which is not published)
-assets/logo.svg     the logo shown in the header and used as the page icon
+assets/               the logo (header) and the page icons
 ocr/                Tesseract.js OCR engine and language data (English, French), with their licenses
 examples/           invented test data
 tests/verify.js     checks the engine against the test data
@@ -223,7 +223,7 @@ The `ocr/` folder contains [Tesseract.js](https://github.com/naptha/tesseract.js
 
 ## The logo
 
-`assets/logo.svg` is an original drawing made for this project: a fox hiding its eyes with its paws. It has the same license as the code. It is shown in the header and used as the page icon; replace the file to change it.
+`assets/logo.png` is the logo of the project, shown in the header. The page icon (`assets/favicon.svg`, `assets/favicon-48.png`, `assets/apple-touch-icon.png`) is the same drawing on a soft background. Replace these files to change them.
 
 ## License
 
