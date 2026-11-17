@@ -22,9 +22,13 @@ A screenshot of an invented support session: secrets, names, contact details, ba
 
 ![A screenshot under review: masked values on the image, detections listed on the right](docs/screenshot-image.webp)
 
-A large batch being read: the file list with its search box, and the Reading speed panel (here paused).
+A batch of files and images: the file list with its search box (matches are highlighted), the reading time, and the current image on the right.
 
-![A batch of 352 screenshots: the file list, the reading speed panel and an image being read](docs/screenshot-batch.webp)
+![A batch of 26 files and screenshots: the file list, its search box and an image under review](docs/screenshot-batch.webp)
+
+A word to always mask: type a project, customer or site name in **Words to always mask**, and every occurrence is masked, whatever the other categories do (here the people categories are off, the listed domain is still masked).
+
+![Words to always mask: a listed domain masked in every occurrence while the people categories are off](docs/screenshot-terms.webp)
 
 All the screenshots use invented data.
 
