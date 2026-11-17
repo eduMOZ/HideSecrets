@@ -286,6 +286,8 @@ var LANGS = {
     greeting: ['Hello', 'Hi', 'Hey', 'Dear'],
     closing: ['Best regards', 'Kind regards', 'Regards', 'Sincerely', 'Yours sincerely', 'Yours faithfully', 'Thanks', 'Thank you', 'Cheers'],
     alias: ['alias', 'aka', 'also known as', 'nickname'],
+    cookieHeader: ['(?:set-)?cookie'],
+    cookieName: [],
     userLabel: ['user[ _-]?name', 'login(?:[ _-]?name)?', 'user[ _-]?id', 'account[ _-]?name'],
     accessCode: ['digicode', 'passcode', '(?:door|access|entry|gate|wi-?fi) (?:code|password)'],
     is: ['is'],
@@ -318,6 +320,8 @@ var LANGS = {
     greeting: ['Bonjour', 'Salut', 'Cher', 'Chère'],
     closing: ['Cordialement', 'Bien cordialement', 'Bien à vous', 'Bien a vous', 'Très cordialement', 'Salutations distinguées'],
     alias: ['pseudonym', 'pseudo', 'surnom'],
+    cookieHeader: [],
+    cookieName: ['jeton', 'identifiant'],
     userLabel: ['nom d[\'’]utilisateur', 'identifiant', 'nom de connexion'],
     accessCode: ['code (?:d[\'’](?:acc[èe]s|entr[ée]e)|pour entrer|de la porte|porte|du portail|wifi)'],
     is: ['est'],
@@ -350,6 +354,8 @@ var LANGS = {
     greeting: ['Hallo', 'Hi', 'Hey', 'Liebe', 'Lieber', 'Liebes', 'Guten Tag', 'Guten Morgen', 'Guten Abend', 'Sehr geehrte', 'Sehr geehrter', 'Sehr geehrte Frau', 'Sehr geehrter Herr', 'Moin', 'Servus', 'Gr(?:ü|ue|u)(?:ß|ss) Gott'],
     closing: ['Mit freundlichen Gr(?:ü|ue|u)(?:ß|ss)en', 'Freundliche Gr(?:ü|ue|u)(?:ß|ss)e', 'Viele Gr(?:ü|ue|u)(?:ß|ss)e', 'Beste Gr(?:ü|ue|u)(?:ß|ss)e', 'Herzliche Gr(?:ü|ue|u)(?:ß|ss)e', 'Liebe Gr(?:ü|ue|u)(?:ß|ss)e', 'Gr(?:ü|ue|u)(?:ß|ss)e', 'Hochachtungsvoll', 'Mit besten Gr(?:ü|ue|u)(?:ß|ss)en', 'Danke und Gr(?:ü|ue|u)(?:ß|ss)e'],
     alias: ['spitzname', 'kosename', 'künstlername'],
+    cookieHeader: ['sitzungs?-?cookie', 'anmelde-?cookie'],
+    cookieName: ['sitzung', 'anmeld', 'zugang', 'schl(?:ü|ue|u)ssel'],
     userLabel: ['benutzer[ -]?name', 'nutzer[ -]?name', 'anmelde[ -]?name', 'benutzerkennung', 'benutzer-?id'],
     accessCode: ['t(?:ü|ue|u)rcode', 'code f(?:ü|ue|u)r (?:die |das |den )?(?:t(?:ü|ue|u)r|haust(?:ü|ue|u)r|eingang|tor|garage|alarmanlage|wlan|w-lan|wifi)', '(?:t(?:ü|ue|u)r|zugangs|eingangs|garagen|tor|alarm)[ -]?(?:code|passwort|kennwort)', '(?:wlan|w-lan|wifi)[ -]?(?:passwort|kennwort|schl(?:ü|ue|u)ssel)'],
     is: ['ist', 'lautet'],
@@ -382,7 +388,7 @@ var RULES = [
   { type: 'JWT', g: 0, re: /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/gd },
   { type: 'Known API key', g: 0, re: /(?<![\w-])(?:AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{30,}|sk-[A-Za-z0-9_-]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|AIza[0-9A-Za-z_-]{35})\b/gd },
   { type: 'Authorization header', g: 1, re: /authorization(?:\\?["'])?[ \t]*[:=][ \t]*(?:\\?["'])?(?:(?:Bearer|Basic|Token|Digest|Negotiate)\s+)?([^\s"'\\,;]{4,})/gid },
-  { type: 'Cookie header', g: 1, needsEq: true, cookie: true, re: /\b(?:set-)?cookie(?:\\?["'])?[ \t]*[:=][ \t]*(?:\\?["'])?([^\r\n"\\]{4,})/gid },
+  { type: 'Cookie header', g: 1, needsEq: true, cookie: true, re: new RegExp('(?:\\b|(?<=[a-z]))(?:' + lang('cookieHeader') + ')(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*(?:\\\\?["\'])?([^\\r\\n"\\\\]{4,})', 'gid') },
   { type: 'client_secret', g: 1, re: /client[ _-]?secret(?:\\?["'])?[ \t]*[:=][ \t]*(?:\\?["'])?((?:[^\s"'&,;}\\<>]|\\u[0-9a-fA-F]{4}|\\[\\\/bfnrt])+)/gid },
   // Password embedded in a URL: postgres://user:PASSWORD@host, redis://:PASSWORD@host
   { type: 'Password in a URL', g: 1, re: /\b[a-z][a-z0-9+.-]*:\/\/[^\s:\/@"']*:([^\s@\/"']+)@/gid },
@@ -446,7 +452,7 @@ var RULES = [
   { type: 'Password / token / key', g: 2, words: true, re: new RegExp('([A-Za-z0-9_.-]*' + NAME + '[0-9_-]*(?![A-Za-z]))(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*(?:\\\\?["\'])?((?:[^\\s"\'&,;}\\\\<>]|\\\\u[0-9a-fA-F]{4}|\\\\[\\\\\\/bfnrt])+)', 'gid') }
 ];
 // A cookie is secret if its name says so, or if its value is long and is not a word (theme=dark is not)
-var COOKIE_NAME = /(sess|auth|token|sid|jwt|key|secret|login|csrf|xsrf|^_ga|^_gid|^_gat|^_gcl|^_fb[pc]$|_hj|^ajs_|amplitude|^mp_|^__utm|^_pk_|^_uet|visitor|anonymous|device[_-]?id|tracking)/i;   // tracking cookies identify a person too
+var COOKIE_NAME = new RegExp('(sess|auth|token|sid|jwt|key|secret|login|csrf|xsrf|^_ga|^_gid|^_gat|^_gcl|^_fb[pc]$|_hj|^ajs_|amplitude|^mp_|^__utm|^_pk_|^_uet|visitor|anonymous|device[_-]?id|tracking|' + lang('cookieName') + ')', 'i');   // tracking cookies identify a person too
 function cookieIsSecret(name, val) { return COOKIE_NAME.test(name) || (val.length >= 16 && !looksLikeWords(val)); }
 // A value that looks like code or plain text is not a secret
 function strictOk(v) { return plausible(v) && !/\s/.test(v) && !looksLikeWords(v); }

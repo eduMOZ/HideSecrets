@@ -49,6 +49,9 @@ Jörg Weiß
 Geräteseriennummer: DEMO-SN-DE-8Q31-7M42
 Rücksetzlink: https://konto.example.org/reset?token=dexxxxxxxxxxxxxx12&user=j.weiss
 
+[TRACE] Sitzungscookie: portal_sitzung=demo_Sitzung9pK3; Secure; HttpOnly
+  verbindung: "postgresql://svc_portal:Demo%23Datenbank72@db.example.net:5432/portal"
+
 # Dies bleibt sichtbar (stays visible):
 Das Passwort muss mindestens acht Zeichen lang sein.
 Bitte geben Sie Ihr Passwort ein.

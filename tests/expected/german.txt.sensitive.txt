@@ -48,6 +48,9 @@ Lieferanschrift:
 Geräteseriennummer: [DEVICE_1]
 Rücksetzlink: https://konto.example.org/reset?token=[SECRET_15]&user=[LOGIN_1]
 
+[TRACE] Sitzungscookie: portal_sitzung=[SECRET_16]; Secure; HttpOnly
+  verbindung: "postgresql://svc_portal:[SECRET_17]@db.example.net:5432/portal"
+
 # Dies bleibt sichtbar (stays visible):
 Das Passwort muss mindestens acht Zeichen lang sein.
 Bitte geben Sie Ihr Passwort ein.
