@@ -1,0 +1,8 @@
+Internal network of an invented site
+gateway 10.20.0.1 and 192.168.1.254, app on 172.16.4.8:8443, then [PUBLIC_IP_1] (not private)
+IPv6: fe80::1ff:fe23:4567:890a and fd12:3456:789a::1, loopback ::1
+carrier-grade NAT 100.64.12.9, link-local 169.254.10.20
+loopback 127.0.0.1, any 0.0.0.0, netmask 255.255.255.0, broadcast 255.255.255.255, multicast 224.0.0.251
+subnet 10.30.0.0/16
+public [PUBLIC_IP_2] and [PUBLIC_IP_3]
+version 10.2.3 build 1.84

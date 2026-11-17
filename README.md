@@ -46,7 +46,7 @@ The "a fake .log", "a fake .har" and "a fake screenshot" buttons let you try it 
 ## How to use it
 
 1. **Choose what to mask**: "Secrets only", or "Secrets and sensitive data" (see below).
-2. **Give it some content**: paste text into the text box, **paste a screenshot** (⌘V / Ctrl+V anywhere on the page), drop one or more files or archives (see [Accepted files](#accepted-files)), or choose or drop a folder of screenshots.
+2. **Give it some content**: paste text into the text box, **paste a screenshot** (⌘V / Ctrl+V anywhere on the page), drop one or more files or archives (see [Accepted files](#accepted-files)), or choose or drop a folder.
 3. **Review.** Each detected value is highlighted in the text or blacked out on the image, and listed on the right. Uncheck what should stay readable; a decision applies to every occurrence of the same value in that file. On an image, draw a rectangle to mask an area by hand, or click an area to turn it on or off.
 4. **Get the result**: "Copy clean text" for pasted text, "Download clean version" for a file, or "Download all (ZIP)" when there are several. The originals are never changed.
 
@@ -57,9 +57,9 @@ The "a fake .log", "a fake .har" and "a fake screenshot" buttons let you try it 
 
 At the second level, a list lets you leave a whole category visible, for example the public IPs when you debug a proxy, or the domains for a certificate problem:
 
-- the categories are grouped (people, network and company, devices and money), every one is checked by default, and **All** / **None** change them all at once;
+- the categories are grouped (people, network and company, devices and money), every one is checked by default except the optional **Private IP addresses**, and **All** / **None** change them all at once (All includes the option);
 - a change applies to every file of the batch, including those already reviewed, and replaces the boxes you clicked earlier for that category. A box you click afterwards stays as an exception;
-- while a category is unchecked, a red "Not masked: …" reminder stays on screen, and its values stay listed, unchecked, so you can still mask a single one.
+- while a category is unchecked, a red "Not masked: …" reminder stays on screen, and its values stay listed, unchecked, so you can still mask a single one. The optional box is the exception: while it is off, private addresses are neither detected nor listed, and there is no reminder.
 
 The level and the categories are remembered in your browser.
 
@@ -81,11 +81,11 @@ The level and the categories are remembered in your browser.
 
 The cleaned ZIP of an archive keeps the layout and file names: `<archive>-clean/…`.
 
-### A folder of screenshots
+### A folder
 
-Use "Choose a screenshot folder…" or drop the folder on the page. Every image in the folder and its subfolders is read; other files (notes, documents) and hidden files are left out.
+Use "Choose a folder…" or drop the folder on the page. Everything the folder and its subfolders hold is read: images, text files (logs, XML, JSON, configuration, scripts… see [Accepted files](#accepted-files)) and archives. Hidden files are left out, except the ones known by name (`.env`, `.npmrc`…). Any other file (a PDF, a database, a binary) is **listed under the drop zone and left out of the cleaned ZIP**: look at that list, such files may hold secrets.
 
-"Download all (ZIP)" then gives `<folder>-clean.zip`, holding a `<folder>-clean/` folder with the same layout and the **same file names** as the original, so each masked image can replace its original by hand. Images in GIF or BMP format come back as PNG, so their extension changes.
+"Download all (ZIP)" then gives `<folder>-clean.zip`, holding a `<folder>-clean/` folder with the same layout and the **same file names** as the original, so each cleaned file can replace its original by hand. Images in GIF or BMP format come back as PNG, so their extension changes.
 
 Files dropped one by one go into the ZIP as `masked-screenshots/<name>` for images and `<name>-clean.<ext>` for text files. Pasted text is copied, not zipped.
 
@@ -119,6 +119,7 @@ Doubling the workers made the batch 1.8 times faster. Reading the same folder wi
 | | person names, with the user ID shown next to them (`Jane DOE`, `JANE DOE 1234567`, `Author: Jane Doe`, a chat header (`Jane Doe 09:41` alone on a line), `From:` / `To:` / `À :` headers, `my name is …`, particles such as `d'Aubigné`; once a name is found, its words are masked everywhere in the same file, even alone, `Jane's screen` in a video call; the value of `Alias:` or `Nickname:` in any script) | `[PERSON_n]` |
 | | logins shown as `account@machine` in shell prompts and terminal tabs, and Windows accounts (`ATELIER\jdoe`) (`jdoe@WS-0042`, `localadmin@WS-0042`); only a generic account on a generic machine (`admin@ubuntu-server`) stays visible | `[LOGIN_n]` |
 | | public IP addresses, IPv4 and IPv6 (loopback, link-local and private addresses stay visible) | `[PUBLIC_IP_n]` |
+| | private IP addresses (`10.x`, `172.16–31.x`, `192.168.x`, `100.64.x`, `169.254.x`, IPv6 `fe80::` and `fd…`), **only if you tick the optional "Private IP addresses" box** (off by default); loopback, `0.0.0.0`, netmasks and multicast are never masked | `[PRIVATE_IP_n]` |
 | | phone numbers, also spelled out (`zéro six, douze, trente-quatre…`): international (`+44 7700 900123`), French (`01 99 00 12 34`, `0612345678`), North American (`(555) 010-0199`) | `[PHONE_n]` |
 | | IBANs (checksum verified), bank card numbers (known card prefix and Luhn checksum), and the security code and expiry date of a card when a label names them (`card_cvv=…`, `expiry: 12/30`) | `[BANK_n]` |
 | | devices and locations: MAC addresses, labeled serial numbers (`Serial number: …`, `device_serial=…`, `S/N`, `service tag`, IMEI), GPS coordinates, decimal or degrees-minutes-seconds | `[DEVICE_n]` |
@@ -139,7 +140,7 @@ HideSecrets works without any settings. To make it recognize the product you ins
 
 ## What stays visible
 
-- Private, local and reserved IP addresses (`10.x`, `172.16–31.x`, `192.168.x`, `127.x`…)
+- Private, local and reserved IP addresses (`10.x`, `172.16–31.x`, `192.168.x`, `127.x`…), unless you tick the optional "Private IP addresses" box
 - Ports, paths, versions, error messages, HTTP status codes
 - Host names without a public domain (`srv-payment-01`, `postgres.fx.svc.cluster.local`) and well-known third-party domains (image registry, GitHub, Docker…)
 - Identifiers that are not secret: `client_id`, service account names, UUIDs (`crontab_id=…`), Kubernetes pod names, container image names (`owner/image`), commit hashes
@@ -173,6 +174,8 @@ The [`examples/`](examples/) folder holds realistic files in which **every value
 | [`proxy.pac`](examples/proxy.pac) | A proxy auto-config file: domains written as suffixes (`.example.test`, `*.corp.example.test`), an internal ending, a listed project name; a public service and a private address stay visible |
 | [`lab-session.txt`](examples/lab-session.txt) | A terminal session of an invented identity lab: shell prompts, a kubeconfig, a Kubernetes `Secret`, a proxy and database URLs with passwords, OIDC logs (client secret, state, code, nonce, tokens, cookie), an IPv6 server, an API key; and the identifiers that stay visible |
 | [`chat-export.txt`](examples/chat-export.txt) | A chat and a contact card: names with particles found from chat headers and mail headers then masked everywhere, a phone number spelled out, an e-mail cut over two lines and encoded in a link, a door code, a security answer, a password on two lines, a passport and a booking number, an address under its label, a Windows account; and look-alikes that stay visible |
+| [`app.env`](examples/app.env) | A settings file with `SECRET_KEY`, `JWT_SECRET_KEY`, `SECRET_KEY_BASE` and a session secret; `PRIMARY_KEY=id` and `SORT_KEY=created_at` stay readable |
+| [`network-private.txt`](examples/network-private.txt) | Private, loopback, CGNAT and link-local addresses, IPv4 and IPv6, netmasks and a version number: visible by default, masked with the private IP option (checked in `tests/expected/` as the `.private.txt` result) |
 | [`personal-data.txt`](examples/personal-data.txt) | Phone numbers, IBAN, cards, serial number, MAC, IPv6, GPS, paths with a user name, a license key, and values that must stay visible |
 
 For each example, [`tests/expected/`](tests/expected/) holds the expected result at both levels. To check that the engine still produces them:
@@ -189,7 +192,7 @@ The same script also builds small archives in memory (zip, tar.gz, gz) and check
 
 The tool helps you review; it does not guarantee that nothing is left. Always check the result before sharing it.
 
-- **Screenshots**: detection depends on how well the OCR reads the image (small text, low contrast). Each image is read twice, the second time to catch light text on colored panels, which takes one to two seconds per image. Several images are read at the same time (see [Reading speed](#reading-speed)), and the one on screen is read first. Text smaller than about 12 pixels is read badly (a lost `@`, `_` or `&`): take the capture larger, or zoom in before capturing. Draw a rectangle over anything that was missed.
+- **Screenshots**: detection depends on how well the OCR reads the image (small text, low contrast). Each image is read twice, the second time to catch light text on colored panels, which takes one to two seconds per image; a picture that mixes light text on dark and dark text on light (a line selected in a terminal) is read a third time on a copy where those bands are inverted. Several images are read at the same time (see [Reading speed](#reading-speed)), and the one on screen is read first. Text smaller than about 12 pixels is read badly (a lost `@`, `_` or `&`): take the capture larger, or zoom in before capturing. Draw a rectangle over anything that was missed.
 - **Person names**: found from a list of common first names, from words in capitals followed by an identifier, or after a label such as `Author:`. A name with an unusual first name and no such clue is missed. A street named after a person (`Victor Hugo Avenue`) is masked too.
 - **Other domains**: a public service missing from the built-in list is masked by default; uncheck it. A domain without a usual ending (`.com`, `.fr`, `.de`…) is not detected: list its ending in `extraTlds` of your product settings. Domains written as a suffix (`.example.com`, `*.example.com`, as in proxy auto-config files) are detected like the others.
 - **Decisions on single values** count for one file and are lost when the page is reloaded.

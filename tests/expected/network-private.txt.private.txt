@@ -1,0 +1,8 @@
+Internal network of an invented site
+gateway [PRIVATE_IP_1] and [PRIVATE_IP_2], app on [PRIVATE_IP_3]:8443, then [PUBLIC_IP_1] (not private)
+IPv6: [PRIVATE_IP_4] and [PRIVATE_IP_5], loopback ::1
+carrier-grade NAT [PRIVATE_IP_6], link-local [PRIVATE_IP_7]
+loopback 127.0.0.1, any 0.0.0.0, netmask 255.255.255.0, broadcast 255.255.255.255, multicast 224.0.0.251
+subnet [PRIVATE_IP_8]/16
+public [PUBLIC_IP_2] and [PUBLIC_IP_3]
+version 10.2.3 build 1.84

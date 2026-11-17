@@ -181,10 +181,10 @@
   </div>
   <div id="drop">
     <svg class="dropico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4m0 0L8 8m4-4 4 4M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
-    <p style="margin:0 0 10px">Drop logs, <b>.har</b>, configuration and other text files, archives (<b>.zip</b>, <b>.tar.gz</b>), screenshots, or a screenshot folder, here</p>
+    <p style="margin:0 0 10px">Drop logs, <b>.har</b>, configuration and other text files, archives (<b>.zip</b>, <b>.tar.gz</b>), screenshots, or a folder, here</p>
     <div class="bar" style="justify-content:center">
       <button class="primary" id="pick">Choose files…</button>
-      <button class="primary" id="pickdir">Choose a screenshot folder…</button>
+      <button class="primary" id="pickdir">Choose a folder…</button>
     </div>
     <div class="bar small" style="justify-content:center;margin-top:10px">Try with:
       <button id="s-log">a fake .log</button><button id="s-har">a fake .har</button><button id="s-img">a fake screenshot</button>
@@ -253,7 +253,7 @@ function reEscape(v) { return v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 // "mot de passe" and "mdp" are French for "password": they catch French input.
 // The separator inside a name may be a space: OCR sometimes loses the "_" ("cookie key:").
 // "kek" is a key encryption key.
-var NAME = '(?:password|passwd|pwd|mot[ _-]?de[ _-]?passe|mdp|secret|api[ _-]?key|apikey|token|access[ _-]?key(?:[ _-]?id)?|credential|kek|(?:crypto|auth|cookie|base|signing|private|encryption|master|session|vapid)[ _-]?keys?)';
+var NAME = '(?:password|passwd|pwd|mot[ _-]?de[ _-]?passe|mdp|secret(?:[ _-]?key(?:[ _-]?base)?)?|api[ _-]?key|apikey|token|access[ _-]?key(?:[ _-]?id)?|credential|kek|(?:crypto|auth|cookie|base|signing|private|encryption|master|session|vapid)[ _-]?keys?)';
 // Separators are matched with [ \t]* rather than \s*: a value never starts on the next line
 // ("Password:" alone at the end of a line, then "WARNING!" below it).
 var RULES = [
@@ -321,7 +321,7 @@ function plausible(v) {
   return true;
 }
 function looksLikeWords(v) { return /^\p{L}+(?:[-_.\u2019']\p{L}+)*$/u.test(v); }   // "policy-description-X", "this.accessKey"
-var IGNORE = /^(true|false|null|undefined|nil|none|\*+|x+|\[?redacted\]?|\[(?:secret|email|public_ip|customer|domain|person|login|phone|bank|device|username|personal)_\d+\])$/i;
+var IGNORE = /^(true|false|null|undefined|nil|none|\*+|x+|\[?redacted\]?|\[(?:secret|email|public_ip|customer|domain|person|login|phone|bank|device|username|personal|private_ip)_\d+\])$/i;
 
 function regexPass(text, out) {
   for (var r of RULES) {
@@ -581,7 +581,9 @@ var SENS_RULES = [
   // An address cut by the end of a line ("jane.doe@" then "example.com"), or encoded in a link (jane%2Edoe%40example%2Ecom)
   { type: 'Email address', prefix: 'EMAIL', g: 0, re: /(?<![\w.%+\/-])[A-Za-z0-9][A-Za-z0-9._%+-]*@[ \t]*\r?\n[ \t]*[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}\b/gd },
   { type: 'Email address', prefix: 'EMAIL', g: 0, re: /(?<![\w.%+\/-])(?:[A-Za-z0-9_+-]|%2[Ee])(?:[A-Za-z0-9_+-]|%2[Ee]|\.)*%40(?:[A-Za-z0-9-]+(?:\.|%2[Ee]))+[A-Za-z]{2,}\b/gd },
-  { type: 'Public IP', prefix: 'PUBLIC_IP', g: 0, ip: true, re: /(?<![\w.])(?:\d{1,3}\.){3}\d{1,3}(?![\w]|\.\d)/gd }
+  { type: 'Public IP', prefix: 'PUBLIC_IP', g: 0, ip: true, re: /(?<![\w.])(?:\d{1,3}\.){3}\d{1,3}(?![\w]|\.\d)/gd },
+  // Private addresses stay visible unless the option is on (opts.privateIps): they help diagnosis, but they can name a site
+  { type: 'Private IP', prefix: 'PRIVATE_IP', g: 0, ipPrivate: true, re: /(?<![\w.])(?:\d{1,3}\.){3}\d{1,3}(?![\w]|\.\d)/gd }
 ].concat(customerRule() || [], termsRule() || []);
 // Private, local and reserved addresses stay visible: they help diagnosis
 function isPublicIp(s) {
@@ -594,6 +596,13 @@ function isPublicIp(s) {
   if (a === 192 && b === 168) return false;
   if (a === 100 && b >= 64 && b <= 127) return false;
   return true;
+}
+// Private ranges (10/8, 172.16/12, 192.168/16, carrier-grade NAT, link-local): not loopback, 0.0.0.0, netmasks or multicast
+function isPrivateIp(s) {
+  var o = s.split('.').map(Number);
+  if (o.some(function (n) { return n > 255; })) return false;
+  var a = o[0], b = o[1];
+  return a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127) || (a === 169 && b === 254);
 }
 // ---------- Other domains ----------
 // Any domain that is not a known public service may belong to the customer (identity provider,
@@ -805,6 +814,12 @@ function isPublicIpv6(s) {
   if ((f & 0xffc0) === 0xfe80 || (f & 0xfe00) === 0xfc00 || (f >> 8) === 0xff) return false;
   return true;
 }
+// fe80::/10 (link-local) and fc00::/7 (unique local); loopback and multicast are not worth masking
+function isPrivateIpv6(s) {
+  if (s.indexOf('::') === 0 || /^0*:/.test(s)) return false;
+  var f = parseInt(s.split(':')[0], 16);
+  return (f & 0xffc0) === 0xfe80 || (f & 0xfe00) === 0xfc00;
+}
 var PHONE_RES = [
   /(?<![\w+.\/-])\+\d{1,3}(?:[ .-]?\(0\))?(?:[ .-]?\d{1,4}){2,5}(?![\w-]|\.\d)/g,   // +33 1 99 00 12 34, +44 7700 900123
   /(?<![\w.+\/-])(?:0[1-9](?:[ .-]\d{2}){4}|0[67]\d{8})(?![\w-]|\.\d)/g,           // 01 99 00 12 34, 0612345678
@@ -838,7 +853,7 @@ var GPS_RE = /(?<![\d.])-?(?:[1-8]?\d|90)\.\d{4,}[ \t]*,[ \t]*-?(?:1[0-7]\d|[1-9
 var PATH_USER_RE = /(?:\/Users\/|\/home\/|[A-Za-z]:(?:\\{1,2}|\/)Users(?:\\{1,2}|\/))([^\/\\\s"'<>:*?|$%{}`~]{1,40})/gid;
 var GENERIC_PATH_USERS = new Set(('shared public default all guest user users administrator admin root runner ubuntu ' +
   'debian ec2-user azureuser vagrant jenkins git postgres www-data nobody deploy').split(' '));
-function piiPass(text, out) {
+function piiPass(text, out, privateIps) {
   var m, add = function (s, e, type, prefix) { out.push({ start: s, end: e, type: type, prefix: prefix, sens: true }); };
   PHONE_RES.forEach(function (re, k) {
     re.lastIndex = 0;
@@ -895,7 +910,11 @@ function piiPass(text, out) {
   UNC_USER_RE.lastIndex = 0;
   while ((m = UNC_USER_RE.exec(text))) if (!GENERIC_PATH_USERS.has(m[1].toLowerCase())) add(m.indices[1][0], m.indices[1][1], 'Username in a path', 'USERNAME');
   IPV6_RE.lastIndex = 0;
-  while ((m = IPV6_RE.exec(text))) if (isPublicIpv6(m[0].toLowerCase())) add(m.index, m.index + m[0].length, 'Public IP', 'PUBLIC_IP');
+  while ((m = IPV6_RE.exec(text))) {
+    var v6 = m[0].toLowerCase();
+    if (isPublicIpv6(v6)) add(m.index, m.index + m[0].length, 'Public IP', 'PUBLIC_IP');
+    else if (privateIps && isPrivateIpv6(v6)) add(m.index, m.index + m[0].length, 'Private IP', 'PRIVATE_IP');
+  }
   PATH_USER_RE.lastIndex = 0;
   while ((m = PATH_USER_RE.exec(text))) {
     var u = m[1].toLowerCase();
@@ -904,10 +923,10 @@ function piiPass(text, out) {
 }
 
 // customers: customer domains already known (from this text or from other files of the session)
-function sensitivePass(text, out, customers) {
+function sensitivePass(text, out, customers, privateIps) {
   personPass(text, out);
   loginPass(text, out);
-  piiPass(text, out);
+  piiPass(text, out, privateIps);
   for (var r of SENS_RULES) {
     r.re.lastIndex = 0;
     var m;
@@ -917,6 +936,7 @@ function sensitivePass(text, out, customers) {
       var v = text.slice(ix[0], ix[1]);
       if (IGNORE.test(v)) continue;
       if (r.ip && !isPublicIp(v)) continue;
+      if (r.ipPrivate && !(privateIps && isPrivateIp(v))) continue;
       out.push({ start: ix[0], end: ix[1], type: r.type, prefix: r.prefix, sens: true });
     }
   }
@@ -966,7 +986,7 @@ function detect(text, filename, opts) {
   var res = keepLongest(raw);
   if (opts && opts.sensitive) {   // a secret always wins over sensitive data that overlaps it
     var sens = [];
-    sensitivePass(text, sens, opts.customers);
+    sensitivePass(text, sens, opts.customers, opts.privateIps);
     sens = keepLongest(sens.filter(function (s) { return !res.some(function (d) { return d.start < s.end && s.start < d.end; }); }));
     res = res.concat(sens).sort(function (a, b) { return a.start - b.start; });
   }
@@ -1246,7 +1266,7 @@ function makeSampleHar() {
   var manualSeq = 0, pastedSeq = 0, LEVEL = 'secret';
   // Customer domains found so far in any file: they are masked in every file of the session
   var customers = {}, relearn = null;
-  function opts() { return { sensitive: LEVEL === 'sensitive', customers: Object.keys(customers) }; }
+  function opts() { return { sensitive: LEVEL === 'sensitive', customers: Object.keys(customers), privateIps: !catOff.has('Private IP') }; }
   function learnCustomers(f) {
     var its = f.kind === 'image' ? f.regions : f.dets, fresh = false;
     its.forEach(function (d) {
@@ -1271,16 +1291,21 @@ function makeSampleHar() {
     { type: 'Username in a path', label: 'User names in paths', group: 'People' },
     { type: 'Personal detail', label: 'Labeled details (birth date, address, ID, booking)', group: 'People' },
     { type: 'Public IP', label: 'Public IP addresses (IPv4, IPv6)', group: 'Network and company' },
+    // An option: off by default (private addresses help diagnosis); when off they are not detected, listed or reminded
+    { type: 'Private IP', label: 'Private IP addresses (10.x, 192.168.x…), optional', group: 'Network and company', optIn: true, short: 'private IPs' },
     { type: 'Customer domain', label: 'Customer domain and listed terms', group: 'Network and company' },
     { type: 'Other domain', label: 'Other domains', group: 'Network and company' },
     { type: 'Bank or card number', label: 'IBAN and card numbers', group: 'Devices and money' },
     { type: 'Device or location', label: 'Devices and locations (MAC, serial, GPS)', group: 'Devices and money' }
   ];
-  var CAT_KEY = 'hidesecrets.categoriesOff', catOff = new Set();
+  var CAT_KEY = 'hidesecrets.categoriesOff', OPT_KEY = 'hidesecrets.categoriesOn', catOff = new Set(), optOn = [];
   try {
+    var savedOn = JSON.parse(localStorage.getItem(OPT_KEY) || '[]');
+    if (Array.isArray(savedOn)) optOn = savedOn;
     var savedOff = JSON.parse(localStorage.getItem(CAT_KEY) || '[]');
     if (Array.isArray(savedOff)) savedOff.forEach(function (t) { if (CATS.some(function (c) { return c.type === t; })) catOff.add(t); });
   } catch (e) { /* storage unavailable or unreadable: everything is masked */ }
+  CATS.forEach(function (c) { if (c.optIn && optOn.indexOf(c.type) < 0) catOff.add(c.type); });   // an option is off until the user turns it on
   // A value's box: the user's own decision for that value in this file if there is one, else its category.
   // A click made after the category was changed is an exception; changing the category again replaces it.
   function applyChoices(f) {
@@ -1292,9 +1317,9 @@ function makeSampleHar() {
     });
   }
   function catWarning() {
-    if (LEVEL !== 'sensitive' || !catOff.size) return '';
-    var names = CATS.filter(function (c) { return catOff.has(c.type); }).map(function (c) { return c.label; });
-    return '⚠ Not masked: ' + names.join(', ');
+    if (LEVEL !== 'sensitive') return '';
+    var names = CATS.filter(function (c) { return catOff.has(c.type) && !c.optIn; }).map(function (c) { return c.label; });   // an option left off is no oversight
+    return names.length ? '⚠ Not masked: ' + names.join(', ') : '';
   }
   // Turning a category on or off replaces the earlier clicks on its values, in every file
   function setCat(type, on) {
@@ -1304,13 +1329,18 @@ function makeSampleHar() {
       applyChoices(f);
     });
   }
-  function catsChanged() {
-    try { localStorage.setItem(CAT_KEY, JSON.stringify(Array.from(catOff))); } catch (e) { /* storage unavailable */ }
+  // redetect: an option changes what is detected at all, so every file is analyzed again
+  function catsChanged(redetect) {
+    try {
+      localStorage.setItem(CAT_KEY, JSON.stringify(Array.from(catOff)));
+      localStorage.setItem(OPT_KEY, JSON.stringify(CATS.filter(function (c) { return c.optIn && !catOff.has(c.type); }).map(function (c) { return c.type; })));
+    } catch (e) { /* storage unavailable */ }
+    if (redetect) { applyLevel(); return; }
     renderCats();
     if (F) render();
   }
-  $('catall').onclick = function () { CATS.forEach(function (c) { setCat(c.type, true); }); catsChanged(); };
-  $('catnone').onclick = function () { CATS.forEach(function (c) { setCat(c.type, false); }); catsChanged(); };
+  $('catall').onclick = function () { CATS.forEach(function (c) { setCat(c.type, true); }); catsChanged(true); };
+  $('catnone').onclick = function () { CATS.forEach(function (c) { setCat(c.type, false); }); catsChanged(true); };
   function renderCats() {
     var bar = $('cats'), grid = $('cgrid');
     bar.style.display = LEVEL === 'sensitive' ? '' : 'none';
@@ -1326,13 +1356,15 @@ function makeSampleHar() {
         }
         var lab = document.createElement('label'), cb = document.createElement('input');
         cb.type = 'checkbox'; cb.dataset.type = c.type;
-        cb.onchange = function () { setCat(c.type, cb.checked); catsChanged(); };
+        cb.onchange = function () { setCat(c.type, cb.checked); catsChanged(c.optIn); };
         lab.appendChild(cb); lab.appendChild(document.createTextNode(c.label));
         g.appendChild(lab);
       });
     }
     bar.querySelectorAll('input').forEach(function (cb) { cb.checked = !catOff.has(cb.dataset.type); });
-    $('catcount').textContent = (CATS.length - catOff.size) + ' of ' + CATS.length + ' masked';
+    var base = CATS.filter(function (c) { return !c.optIn; }), extra = CATS.filter(function (c) { return c.optIn && !catOff.has(c.type); });
+    $('catcount').textContent = base.filter(function (c) { return !catOff.has(c.type); }).length + ' of ' + base.length + ' masked' +
+      (extra.length ? ' + ' + extra.map(function (c) { return c.short; }).join(', ') : '');
     $('catwarn').textContent = $('catwarn2').textContent = catWarning();
   }
   function refresh(f) { if (f === F) render(); else renderFiles(); }
@@ -1366,7 +1398,7 @@ function makeSampleHar() {
   }
 
   // list: File objects, or { file, path } pairs from a dropped folder.
-  // From a folder, only images are taken: it is a screenshot folder (notes and other files are left out).
+  // A folder is read like several dropped files: images, text files and archives; whatever else it holds is listed and left out.
   // An archive (.zip, .tar.gz, .gz) is opened: its text files and images are added, the rest is reported.
   function readFiles(list, fromFolder) {
     var all = Array.prototype.slice.call(list).map(function (x) {
@@ -1379,22 +1411,25 @@ function makeSampleHar() {
       return segs.some(function (g) { return g.charAt(0) === '.'; }) || (last.charAt(0) === '.' && !TXT_NAMES.test(last));
     };
     var visible = all.filter(function (x) { return !hidden(x); });
-    var ok = visible.filter(function (x) {
-      return IMG_RE.test(x.file.name) || !fromFolder && (isText(x.file.name) || ARCH_RE.test(x.file.name));
-    });
+    var supported = function (x) { return IMG_RE.test(x.file.name) || isText(x.file.name) || ARCH_RE.test(x.file.name); };
+    var ok = visible.filter(supported);
     ok.sort(function (a, b) { return a.path.localeCompare(b.path); });
-    var skipped = visible.length - ok.length;
+    var left = visible.filter(function (x) { return !supported(x); });
     var notes = [];
     var say = function () { $('msg').textContent = notes.join(' '); };
-    if (!ok.length && fromFolder) notes.push('No image found in this folder.');
-    else if (skipped) notes.push(skipped + ' file' + (skipped > 1 ? 's' : '') + ' skipped (' + (fromFolder ? 'not an image' : 'unsupported format') + ').');
+    if (!ok.length && fromFolder) notes.push('Nothing to read in this folder: no image, text file or archive.');
+    if (left.length) notes.push(left.length + ' file' + (left.length > 1 ? 's' : '') + ' left out (unsupported format): ' +
+      left.slice(0, 5).map(function (x) { return x.path; }).join(', ') + (left.length > 5 ? ' and ' + (left.length - 5) + ' more' : '') + '. They are NOT in the cleaned ZIP.');
     say();
     if (!ok.length) return;
     var first = files.length, arcs = [];
     ok.forEach(function (x) {
-      if (IMG_RE.test(x.file.name)) addImage(x.file, x.file.name, x.path);
-      else if (!fromFolder && ARCH_RE.test(x.file.name)) arcs.push(x);
-      else addTextFile(x.file, x.path);
+      var f;
+      if (IMG_RE.test(x.file.name)) f = addImage(x.file, x.file.name, x.path);
+      else if (ARCH_RE.test(x.file.name)) { arcs.push(x); return; }
+      else f = addTextFile(x.file, x.path);
+      // From a folder: the same layout and names come back in "<folder>-clean/", and the path tells apart the many "config.yaml"
+      if (x.path.indexOf('/') > 0) { f.fromFolder = true; f.label = x.path.slice(x.path.indexOf('/') + 1).replace(/(?<=[^\/])\.[^./]+$/, ''); }
     });
     if (files.length > first) select(first);
     arcs.reduce(function (chain, x) { return chain.then(function () { return openArchive(x, notes, say); }); }, Promise.resolve());
@@ -1512,6 +1547,54 @@ function makeSampleHar() {
     f.status = 'error';
     f.error = location.protocol === 'file:' ? 'open the page through its web address instead of double-clicking the file' : String(e && e.message || e);
   }
+  // Mixed polarity: light text on a dark page with a selected line in dark on light, or a dark panel on a light page.
+  // Tesseract then loses lines. A copy of the image where the minority bands are inverted (so the whole picture has one
+  // polarity) is read a third time. Returns that copy, or null when the image has a single polarity (no extra reading).
+  function unifiedPolarityCopy(img) {
+    var w = img.naturalWidth, h = img.naturalHeight;
+    if (!w || !h || w * h > 14e6) return Promise.resolve(null);
+    var c = document.createElement('canvas'); c.width = w; c.height = h;
+    var x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(img, 0, 0);
+    var im = x.getImageData(0, 0, w, h), d = im.data, n = w * h, lum = new Uint8Array(n), p, i, y, xx;
+    for (i = 0, p = 0; p < n; i += 4, p++) lum[p] = (d[i] * 77 + d[i + 1] * 150 + d[i + 2] * 29) >> 8;
+    // Flat pixels (same brightness as both horizontal neighbours) give the background colours: the page, and the opposite one
+    var cnt = new Uint32Array(16), sum = new Float64Array(16);
+    for (y = 0; y < h; y++) for (xx = 1, p = y * w + 1; xx < w - 1; xx++, p++) {
+      var l = lum[p];
+      if (Math.abs(l - lum[p - 1]) < 4 && Math.abs(l - lum[p + 1]) < 4) { cnt[l >> 4]++; sum[l >> 4] += l; }
+    }
+    var page = 0, k;
+    for (k = 1; k < 16; k++) if (cnt[k] > cnt[page]) page = k;
+    var other = -1;
+    for (k = 0; k < 16; k++) if (Math.abs(k - page) >= 6 && (other < 0 || cnt[k] > cnt[other])) other = k;
+    if (other < 0 || cnt[other] < n * 0.0015) return Promise.resolve(null);   // one polarity: nothing to gain
+    var target = sum[other] / cnt[other], mask = new Uint8Array(n);
+    for (p = 0; p < n; p++) mask[p] = Math.abs(lum[p] - target) <= 10 ? 1 : 0;
+    // Close the gaps between letters inside a bar (13 px each side), keep the runs that are mostly background, invert them
+    var R = 13, pre = new Uint32Array(w + 1), dil = new Uint8Array(w), pre2 = new Uint32Array(w + 1), flipped = 0;
+    for (y = 0; y < h; y++) {
+      var row = y * w;
+      for (xx = 0; xx < w; xx++) pre[xx + 1] = pre[xx] + mask[row + xx];
+      for (xx = 0; xx < w; xx++) dil[xx] = pre[Math.min(w, xx + R + 1)] - pre[Math.max(0, xx - R)] > 0 ? 1 : 0;
+      for (xx = 0; xx < w; xx++) pre2[xx + 1] = pre2[xx] + dil[xx];
+      var runStart = -1;
+      for (xx = 0; xx <= w; xx++) {
+        var lo = Math.max(0, xx - R), hi = Math.min(w, xx + R + 1);   // beyond the image edge counts as background: a bar may reach it
+        var inside = xx < w && pre2[hi] - pre2[lo] === hi - lo;
+        if (inside && runStart < 0) runStart = xx;
+        if (!inside && runStart >= 0) {
+          var len = xx - runStart;
+          if (len >= 40 && pre[xx] - pre[runStart] >= len * 0.12) {   // text covers much of a bar: a low share is enough, plain text on the page has none
+            for (var q = runStart; q < xx; q++) { var j = (row + q) * 4; d[j] = 255 - d[j]; d[j + 1] = 255 - d[j + 1]; d[j + 2] = 255 - d[j + 2]; flipped++; }
+          }
+          runStart = -1;
+        }
+      }
+    }
+    if (flipped < n * 0.001) return Promise.resolve(null);
+    x.putImageData(im, 0, 0);
+    return new Promise(function (ok) { c.toBlob(ok, 'image/png'); });
+  }
   // Never rejects: a failure is recorded on the file
   function readImage(w, f) {
     // Two readings: the usual one, then one with an adaptive threshold that adds only the words the first missed.
@@ -1523,6 +1606,13 @@ function makeSampleHar() {
       return w.setParameters({ thresholding_method: '1' })
         .then(function () { return w.recognize(f.img, {}, { blocks: true }); })
         .then(function (r2) { return [r1, r2]; }, function () { return [r1, null]; });
+    }).then(function (rs) {
+      // Third reading, only for an image that mixes light-on-dark and dark-on-light text
+      return unifiedPolarityCopy(f.img).then(function (copy) {
+        if (!copy) return rs;
+        return w.setParameters({ thresholding_method: '0' }).then(function () { return w.recognize(copy, {}, { blocks: true }); })
+          .then(function (r3) { return rs.concat([r3]); }, function () { return rs; });
+      }, function () { return rs; });
     }).then(function (rs) {
       var toLines = function (r) {
         var out = [];
@@ -1536,10 +1626,10 @@ function makeSampleHar() {
         var w = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0), h = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
         return w > 0 && h > 0 && w * h > 0.3 * Math.min((a.x1 - a.x0) * (a.y1 - a.y0), (b.x1 - b.x0) * (b.y1 - b.y0));
       };
-      toLines(rs[1]).forEach(function (l) {
+      rs.slice(1).forEach(function (r) { toLines(r).forEach(function (l) {
         var extra = l.filter(function (w) { return w.text.trim() && !seen.some(function (s) { return overlaps(s.bbox, w.bbox); }); });
-        if (extra.length) lines.push(extra);
-      });
+        if (extra.length) { lines.push(extra); extra.forEach(function (w) { seen.push(w); }); }   // later readings do not add them twice
+      }); });
       f.lines = lines;   // kept to recompute when the level changes
       f.regions = regionsFromOcr(lines, opts()).concat(f.regions.filter(function (r) { return r.manual; }));
       f.status = 'ok';
@@ -1940,7 +2030,7 @@ function makeSampleHar() {
       if (f.status === 'unreadable') return Promise.resolve(null);
       var blob = new Blob([sanitize(f.text, f.dets)], { type: 'text/plain;charset=utf-8' });
       var cut = f.path.indexOf('/');
-      return Promise.resolve({ blob: blob, single: cleanName(f.name), zip: f.fromArchive && cut > 0 ? f.path.slice(0, cut) + '-clean' + f.path.slice(cut) : cleanName(f.path) });
+      return Promise.resolve({ blob: blob, single: cleanName(f.name), zip: (f.fromArchive || f.fromFolder) && cut > 0 ? f.path.slice(0, cut) + '-clean' + f.path.slice(cut) : cleanName(f.path) });
     }
     if (!f.img) return Promise.resolve(null);
     return maskedImage(f).then(function (b) {
@@ -2091,7 +2181,7 @@ function makeSampleHar() {
   var drop = $('drop');
   ['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('over'); }); });
   ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('over'); }); });
-  // A dropped folder is read with everything inside it, like "Choose a screenshot folder"
+  // A dropped folder is read with everything inside it, like "Choose a folder"
   function walk(entry, out) {
     if (entry.isFile) return new Promise(function (ok) {
       entry.file(function (f) { out.push({ file: f, path: entry.fullPath.replace(/^\//, '') }); ok(); }, function () { ok(); });

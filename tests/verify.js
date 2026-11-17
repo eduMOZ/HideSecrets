@@ -28,13 +28,15 @@ vm.runInContext(engine[1] + ';this.detect = detect; this.sanitize = sanitize; th
 const update = process.argv.includes('--update');
 const examplesDir = path.join(root, 'examples');
 const expectedDir = path.join(__dirname, 'expected');
-const LEVELS = { secret: false, sensitive: true };
+// "private" = the sensitive level with the Private IP option on; it is only checked on the examples that need it
+const LEVELS = { secret: {}, sensitive: { sensitive: true }, private: { sensitive: true, privateIps: true } };
+const PRIVATE_EXAMPLES = new Set(['network-private.txt']);
 let mismatches = 0;
 
 for (const name of fs.readdirSync(examplesDir).sort()) {
   const text = fs.readFileSync(path.join(examplesDir, name), 'utf8');
-  for (const level of Object.keys(LEVELS)) {
-    const actual = ctx.sanitize(text, ctx.detect(text, name, { sensitive: LEVELS[level] }));
+  for (const level of Object.keys(LEVELS).filter((l) => l !== 'private' || PRIVATE_EXAMPLES.has(name))) {
+    const actual = ctx.sanitize(text, ctx.detect(text, name, LEVELS[level]));
     const file = path.join(expectedDir, name + '.' + level + '.txt');
     const label = (name + ' (' + level + ')').padEnd(42);
     if (update) {
