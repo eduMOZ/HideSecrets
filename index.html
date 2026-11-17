@@ -1912,6 +1912,53 @@ function makeSampleHar() {
     x.putImageData(im, 0, 0);
     return new Promise(function (ok) { c.toBlob(ok, 'image/png'); });
   }
+  // ---- Pages with columns ----
+  // The usual reading runs the columns of a page together into one line ("Die Lieferanschrift für das Ersatzgerät:  MAC-Adresse: 02:11…"),
+  // so a label no longer sits above its value. The sparse reading finds the words wherever they are; here its fragments are
+  // joined into rows, then stacked column by column, each from top to bottom.
+  var charWidth = function (ws) {
+    var cw = ws.filter(function (x) { return x.text.length > 2; }).map(function (x) { return (x.bbox.x1 - x.bbox.x0) / x.text.length; }).sort(function (a, b) { return a - b; });
+    return cw.length ? cw[cw.length >> 1] : 8;
+  };
+  var isColumnar = function (lines) {   // a gutter: the same wide empty band inside several lines (two columns read as one)
+    var gaps = [];
+    lines.forEach(function (l) {
+      var cw = charWidth(l), g = null;
+      for (var i = 1; i < l.length; i++) {
+        var d = l[i].bbox.x0 - l[i - 1].bbox.x1;
+        if (d > 12 * cw && l[i - 1].text.length > 1 && l[i].text.length > 1 && (!g || d > g.b - g.a)) g = { a: l[i - 1].bbox.x1, b: l[i].bbox.x0 };
+      }
+      if (g) gaps.push(g);
+    });
+    return gaps.some(function (g) {
+      return gaps.filter(function (h) { var ov = Math.min(g.b, h.b) - Math.max(g.a, h.a); return ov > 0.7 * Math.min(g.b - g.a, h.b - h.a); }).length >= 4;
+    });
+  };
+  var inColumns = function (frags) {
+    var bb = function (l) { return { x0: Math.min.apply(null, l.map(function (x) { return x.bbox.x0; })), x1: Math.max.apply(null, l.map(function (x) { return x.bbox.x1; })), y0: Math.min.apply(null, l.map(function (x) { return x.bbox.y0; })), y1: Math.max.apply(null, l.map(function (x) { return x.bbox.y1; })) }; };
+    // fragments of the same row, close to each other, become one line
+    var rows = frags.map(function (l) { return l.slice(); }).sort(function (a, b) { return bb(a).y0 - bb(b).y0 || bb(a).x0 - bb(b).x0; });
+    var joined = [];
+    rows.forEach(function (l) {
+      var b = bb(l), cw = charWidth(l), h = b.y1 - b.y0, hit = null;
+      joined.forEach(function (j) {
+        var jb = bb(j);
+        if (Math.abs((jb.y0 + jb.y1) / 2 - (b.y0 + b.y1) / 2) < 0.5 * h && b.x0 - jb.x1 > -2 * cw && b.x0 - jb.x1 < 3 * cw) hit = j;
+      });
+      if (hit) Array.prototype.push.apply(hit, l); else joined.push(l);
+    });
+    var cols = [];
+    joined.forEach(function (l) {
+      var b = bb(l), best = null;
+      cols.forEach(function (c) {
+        var cb = bb(c[c.length - 1]), ov = Math.min(b.x1, cb.x1) - Math.max(b.x0, cb.x0);
+        if (ov > 0.25 * Math.min(b.x1 - b.x0, cb.x1 - cb.x0) && cb.y1 <= b.y1 + 2 && (!best || ov > best.ov)) best = { c: c, ov: ov };
+      });
+      if (best) best.c.push(l); else cols.push([l]);
+    });
+    cols.sort(function (a, b) { return bb(a[0]).x0 - bb(b[0]).x0; });
+    return [].concat.apply([], cols);
+  };
   // Never rejects: a failure is recorded on the file
   function readImage(w, f) {
     // Two readings: the usual one, then one with an adaptive threshold that adds only the words the first missed.
@@ -1931,22 +1978,58 @@ function makeSampleHar() {
           .then(function (r3) { return rs.concat([r3]); }, function () { return rs; });
       }, function () { return rs; });
     }).then(function (rs) {
+      // A page with columns (a ticket and its side panel, a chat and its profile) confuses the usual reading: some lines come out
+      // garbled, with words of low confidence. A last reading in "sparse text" mode, which looks for words wherever they are
+      // without assuming columns, then replaces those words. Only when the first reading left several of them: it costs one more pass.
+      var weak = 0;
+      ((rs[0] && rs[0].data.blocks) || []).forEach(function (b) { b.paragraphs.forEach(function (p) { p.lines.forEach(function (l) {
+        l.words.forEach(function (w) { if (w.confidence < 55 && /[A-Za-z\u00c0-\u00ff]{3,}/.test(w.text)) weak++; });
+      }); }); });
+      if (weak < 3) return rs;
+      return w.setParameters({ thresholding_method: '0', tessedit_pageseg_mode: '11' })
+        .then(function () { return w.recognize(f.img, {}, { blocks: true }); })
+        .then(function (r4) { r4.sparse = true; return w.setParameters({ tessedit_pageseg_mode: '3' }).then(function () { return rs.concat([r4]); }); },
+              function () { return w.setParameters({ tessedit_pageseg_mode: '3' }).then(function () { return rs; }, function () { return rs; }); });
+    }).then(function (rs) {
       var toLines = function (r) {
         var out = [];
         if (r) (r.data.blocks || []).forEach(function (b) { b.paragraphs.forEach(function (p) { p.lines.forEach(function (l) {
-          out.push(l.words.map(function (w) { return { text: w.text, bbox: w.bbox }; }));
+          out.push(l.words.map(function (w) { return { text: w.text, bbox: w.bbox, conf: w.confidence }; }));
         }); }); });
         return out;
       };
-      var lines = toLines(rs[0]), seen = [].concat.apply([], lines);
+      var lines = toLines(rs[0]);
+      var sparse = rs.filter(function (r) { return r && r.sparse; })[0];
+      // A page with columns: the sparse reading, stacked by column, is the base; the other readings only add what it lacks
+      if (sparse && isColumnar(lines)) { rs = [sparse].concat(rs.filter(function (r) { return r !== sparse; })); lines = inColumns(toLines(sparse).filter(function (l) {   // the sparse reading also "finds" box borders and corners: junk of low confidence
+          var c = l.reduce(function (acc, x) { return acc + x.conf; }, 0) / l.length;
+          return c >= 50;
+        })); }
+      var seen = [].concat.apply([], lines);
       var overlaps = function (a, b) {
         var w = Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0), h = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
         return w > 0 && h > 0 && w * h > 0.3 * Math.min((a.x1 - a.x0) * (a.y1 - a.y0), (b.x1 - b.x0) * (b.y1 - b.y0));
       };
+      var cyOf = function (l) { return l.reduce(function (a, w) { return a + (w.bbox.y0 + w.bbox.y1) / 2; }, 0) / l.length; };
       rs.slice(1).forEach(function (r) { toLines(r).forEach(function (l) {
-        var extra = l.filter(function (w) { return w.text.trim() && !seen.some(function (s) { return overlaps(s.bbox, w.bbox); }); });
-        if (extra.length) { lines.push(extra); extra.forEach(function (w) { seen.push(w); }); }   // later readings do not add them twice
+        var extra = [];
+        l.forEach(function (w) {
+          if (!w.text.trim()) return;
+          var hit = seen.filter(function (s) { return !s.dropped && overlaps(s.bbox, w.bbox); });
+          if (!hit.length) extra.push(w);
+          // the sparse reading replaces the words of the usual one that came out garbled
+          else if (r.sparse && hit.every(function (s) { return s.conf < 55 && w.conf > s.conf + 20; })) { hit.forEach(function (s) { s.dropped = true; }); extra.push(w); }
+        });
+        if (!extra.length) return;
+        extra.forEach(function (w) { seen.push(w); });   // later readings do not add them twice
+        // placed after the line just above it, so that a label and its value stay one under the other
+        var conf = extra.reduce(function (acc, x) { return acc + x.conf; }, 0) / extra.length;
+        if (conf < 50 || !extra.some(function (x) { return /[A-Za-z0-9\u00c0-\u00ff]{3,}/.test(x.text); })) { lines.push(extra); return; }   // junk goes last, where it breaks nothing
+        var cy = cyOf(extra), h = extra[0].bbox.y1 - extra[0].bbox.y0, at = -1, best = -1;
+        lines.forEach(function (ln, i) { if (!ln.length) return; var c = cyOf(ln); if (c <= cy + 0.35 * h && c > best) { best = c; at = i; } });
+        lines.splice(at + 1, 0, extra);
       }); });
+      lines = lines.map(function (ln) { return ln.filter(function (w) { return !w.dropped; }); }).filter(function (ln) { return ln.length; });
       f.lines = lines;   // kept to recompute when the level changes
       f.regions = regionsFromOcr(lines, opts()).concat(f.regions.filter(function (r) { return r.manual; }));
       f.status = 'ok';
