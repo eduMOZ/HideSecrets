@@ -120,11 +120,11 @@ HideSecrets reads **English, French and German**, all at once: a file that mixes
 | Birth date, address, identity documents, labeled numbers | yes | yes | yes |
 | Names after a label, a title, a greeting or a closing | yes | yes | yes |
 | Phone numbers in national format | North American | French | German |
-| Screenshots (OCR) | yes | yes | needs `ocr/deu.traineddata.gz` |
+| Screenshots (OCR) | yes | yes | yes |
 
-**Reading German in screenshots.** The OCR engine ships with English and French. For German, download `deu.traineddata.gz` from the [tessdata_fast](https://github.com/tesseract-ocr/tessdata_fast) project (Apache License 2.0), put it in `ocr/`, and add `ocrLanguages: ['eng', 'fra', 'deu']` to `config.local.js`. Text files need nothing.
+**Reading screenshots.** The OCR engine ships with the language data of the three languages (`ocr/*.traineddata.gz`, about 4.5 MB in all) and loads them together. With German added, `ß`, `ä`, `ö` and `ü` are read correctly (without it, `Grüßen` came out as `GrüBen`), and English and French are read exactly as before, at the same speed. To read fewer languages, or others, list them in `config.local.js`: `ocrLanguages: ['eng', 'fra']`.
 
-**Adding a language.** All the words live in one block, `LANGS`, at the top of the engine in `index.html`: one entry per language, each a list of short regular-expression fragments. Copy the `de` entry, translate the lists (the comment above it says what each one is for), add a few first names, and add a fixture such as [`examples/german.txt`](examples/german.txt) with the values that must be masked and the look-alikes that must stay visible. `node tests/verify.js --update` writes the expected result, and you read it once to check it. No other code changes. A language that writes with another alphabet (Greek, Cyrillic, Arabic, Chinese…) also needs its OCR file, and its names are only found after a label, because the "capital letter" clue does not exist in those scripts.
+**Adding a language.** All the words live in one block, `LANGS`, at the top of the engine in `index.html`: one entry per language, each a list of short regular-expression fragments. Copy the `de` entry, translate the lists (the comment above it says what each one is for), add a few first names, and add a fixture such as [`examples/german.txt`](examples/german.txt) with the values that must be masked and the look-alikes that must stay visible. `node tests/verify.js --update` writes the expected result, and you read it once to check it. No other code changes. For the screenshots, also drop the language's file from [tessdata_fast](https://github.com/tesseract-ocr/tessdata_fast) (`xxx.traineddata`, gzipped) in `ocr/` and add its code to `ocrLanguages`. A language that writes with another alphabet (Greek, Cyrillic, Arabic, Chinese…) and its names are only found after a label, because the "capital letter" clue does not exist in those scripts.
 
 ## What gets masked
 
@@ -227,7 +227,7 @@ The tool helps you review; it does not guarantee that nothing is left. Always ch
 index.html          the page: interface, detection engine and archive reader (inside <script id="engine">)
 config.example.js   example product settings (copy to config.local.js, which is not published)
 assets/               the logo (header) and the page icons
-ocr/                Tesseract.js OCR engine and language data (English, French; add German here), with their licenses
+ocr/                Tesseract.js OCR engine and language data (English, French, German), with their licenses
 examples/           invented test data
 tests/verify.js     checks the engine against the test data
 tests/expected/     expected results, per example and per level
@@ -237,7 +237,7 @@ LICENSE             Mozilla Public License 2.0
 
 ## Third-party components
 
-The `ocr/` folder contains [Tesseract.js](https://github.com/naptha/tesseract.js) and [tesseract.js-core](https://github.com/naptha/tesseract.js-core) 7.0.0, plus the English and French language data from [tessdata](https://github.com/tesseract-ocr/tessdata). They are redistributed unchanged under the [Apache License 2.0](ocr/LICENSE). See [`ocr/NOTICE.md`](ocr/NOTICE.md) for the details and the notices of the small libraries they bundle.
+The `ocr/` folder contains [Tesseract.js](https://github.com/naptha/tesseract.js) and [tesseract.js-core](https://github.com/naptha/tesseract.js-core) 7.0.0, plus the English, French and German language data from [tessdata_fast](https://github.com/tesseract-ocr/tessdata). They are redistributed unchanged under the [Apache License 2.0](ocr/LICENSE). See [`ocr/NOTICE.md`](ocr/NOTICE.md) for the details and the notices of the small libraries they bundle.
 
 ## The logo
 

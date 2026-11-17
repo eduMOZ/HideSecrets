@@ -22,7 +22,7 @@ var HIDESECRETS_CONFIG = {
   extraTlds: ['intranet'],
   // Words to mask wherever they appear: project, customer or site names in comments and free text
   terms: ['project-aurora'],
-  // Languages the screenshots are read in (default: English and French). Each one needs its file in ocr/,
-  // for example ocr/deu.traineddata.gz for German: see "Languages" in the README
+  // Languages the screenshots are read in (default: English, French and German). Each one needs its file in ocr/:
+  // see "Languages" in the README
   // ocrLanguages: ['eng', 'fra', 'deu']
 };

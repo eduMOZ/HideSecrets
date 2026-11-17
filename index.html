@@ -1757,7 +1757,7 @@ function makeSampleHar() {
       document.head.appendChild(s);
     }).then(function () {
       var base = new URL('ocr/', location.href).href;
-      var make = makeWorker = function () { return Tesseract.createWorker((Array.isArray(CFG.ocrLanguages) && CFG.ocrLanguages.length ? CFG.ocrLanguages : ['eng', 'fra']).join('+'), 1, { workerPath: base + 'worker.min.js', corePath: base, langPath: base, gzip: true }); };
+      var make = makeWorker = function () { return Tesseract.createWorker((Array.isArray(CFG.ocrLanguages) && CFG.ocrLanguages.length ? CFG.ocrLanguages : ['eng', 'fra', 'deu']).join('+'), 1, { workerPath: base + 'worker.min.js', corePath: base, langPath: base, gzip: true }); };
       // The first worker must start; the others are a bonus (a failure just means a smaller pool)
       return make().then(function (first) {
         var rest = [];
