@@ -101,6 +101,12 @@
   #fsearch { display:flex; gap:8px; align-items:center; padding:8px 12px; border-bottom:1px solid var(--line); }
   #fq { flex:1; min-width:0; padding:5px 8px; font:inherit; font-size:13px; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--ink); }
   #fqn { white-space:nowrap; }
+  #fqw { position:relative; flex:1; min-width:0; display:flex; }
+  #fqw #fq { padding-right:26px; }
+  #fq::-webkit-search-cancel-button { display:none; }
+  #fqx { position:absolute; right:3px; top:50%; transform:translateY(-50%); width:20px; height:20px; padding:0; border:0; border-radius:50%; background:transparent; color:var(--muted, #888); font-size:15px; line-height:20px; cursor:pointer; display:none; }
+  #fqx:hover { background:color-mix(in srgb, currentColor 15%, transparent); }
+  #fqw.has #fqx { display:block; }
   .frow.match { background:color-mix(in srgb, #f5c400 30%, transparent); }
   .frow.match.cur { background:var(--accent); box-shadow:inset 4px 0 0 #f5c400; }
   .frow.nomatch { opacity:.45; }
@@ -219,7 +225,7 @@
         </div>
         <div class="small" id="speedhint"></div>
       </div>
-      <div id="fsearch"><input type="search" id="fq" placeholder="Search a file name…" aria-label="Search a file name">
+      <div id="fsearch"><span id="fqw"><input type="search" id="fq" placeholder="Search a file name…" aria-label="Search a file name"><button type="button" id="fqx" aria-label="Clear the search" title="Clear the search">×</button></span>
         <span class="small" id="fqn"></span></div>
       <div id="flist"></div>
     </div>
@@ -2063,7 +2069,7 @@ function makeSampleHar() {
   $('clear').onclick = function () {
     files.forEach(function (f) { if (f.url) URL.revokeObjectURL(f.url); });
     files = []; cur = -1; F = null; queue.length = 0; customers = {}; ocrStat = ''; ocrT0 = null; paused = false;
-    $('flist').textContent = ''; $('fq').value = ''; query = ''; $('fqn').textContent = '';
+    $('flist').textContent = ''; $('fq').value = ''; query = ''; $('fqn').textContent = ''; $('fqw').classList.remove('has');
     $('work').style.display = 'none'; $('msg').textContent = '';
     document.body.classList.remove('working');
   };
@@ -2079,9 +2085,11 @@ function makeSampleHar() {
     var first = matches()[0];
     if (first && first.row) first.row.scrollIntoView({ block: 'nearest' });
   }
-  $('fq').addEventListener('input', function () { query = $('fq').value.trim().toLowerCase(); updateSearch(); });
+  function searchChanged() { query = $('fq').value.trim().toLowerCase(); $('fqw').classList.toggle('has', !!$('fq').value); updateSearch(); }
+  $('fq').addEventListener('input', searchChanged);
+  $('fqx').onclick = function () { $('fq').value = ''; searchChanged(); $('fq').focus(); };
   $('fq').addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') { $('fq').value = ''; query = ''; updateSearch(); return; }
+    if (e.key === 'Escape') { $('fq').value = ''; searchChanged(); return; }
     if (e.key !== 'Enter') return;
     e.preventDefault();
     var m = matches();
