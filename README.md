@@ -121,10 +121,24 @@ HideSecrets reads **English, French and German**, all at once: a file that mixes
 | Names after a label, a title, a greeting or a closing | yes | yes | yes |
 | Phone numbers in national format | North American | French | German |
 | Screenshots (OCR) | yes | yes | yes |
+| How much it has been tested | most of the examples and screenshots | most of the examples and screenshots | one dedicated fixture ([`german.txt`](examples/german.txt)) and two screenshots |
+
+"Yes" means the rule exists, not that the three languages have the same depth. English and French have been exercised the longest, on the whole example set. German is newer: expect more misses and more look-alikes taken for values, and report them.
 
 **Reading screenshots.** The OCR engine ships with the language data of the three languages (`ocr/*.traineddata.gz`, about 4.5 MB in all) and loads them together. With German added, `ß`, `ä`, `ö` and `ü` are read correctly (without it, `Grüßen` came out as `GrüBen`), and English and French are read exactly as before, at the same speed. To read fewer languages, or others, list them in `config.local.js`: `ocrLanguages: ['eng', 'fra']`.
 
 **Adding a language.** All the words live in one block, `LANGS`, at the top of the engine in `index.html`: one entry per language, each a list of short regular-expression fragments. Copy the `de` entry, translate the lists (the comment above it says what each one is for), add a few first names, and add a fixture such as [`examples/german.txt`](examples/german.txt) with the values that must be masked and the look-alikes that must stay visible. `node tests/verify.js --update` writes the expected result, and you read it once to check it. No other code changes. For the screenshots, also drop the language's file from [tessdata_fast](https://github.com/tesseract-ocr/tessdata_fast) (`xxx.traineddata`, gzipped) in `ocr/` and add its code to `ocrLanguages`. A language that writes with another alphabet (Greek, Cyrillic, Arabic, Chinese…) and its names are only found after a label, because the "capital letter" clue does not exist in those scripts.
+
+A new language is ready to publish when: its fixture masks every value it lists and keeps the look-alikes visible (read the expected files once, line by line); the existing English, French and German fixtures are unchanged by `node tests/verify.js`; a screenshot in that language (invented data) has been read in the page with its OCR data loaded; the table above says how much it was tested.
+
+**Limits of the multilingual design.**
+- **All languages are always on.** There is no language choice: a word that is a label, a title or a first name in one language is also read as such in the others, so a word can be taken for a value in a language you did not expect. Uncheck the detection, or turn the category off.
+- **The interface is in English only.** Only the data being read is multilingual.
+- **Without a clue, nothing is masked.** National identity numbers, postal addresses and birth dates are found only after a label in one of the three languages. Company and customer names stay visible in every language unless you list them in **Words to always mask**.
+- **Names are found from a list of first names**, built mainly from English and French names, with about a hundred German ones added; an unusual first name needs a label, a title, a greeting or a closing before it.
+- **Phone formats** are North American, French and German, plus the international form. Another national format is found only as an international number or after a label.
+- **Screenshots**: a language whose data is not loaded in the OCR engine is read badly (accents and `ß` come out wrong, and the labels are then not recognized). Pages with columns are read less reliably than single-column pages, in any language.
+- **Other languages and scripts** are not covered until someone adds them (see below). Another alphabet (Greek, Cyrillic, Arabic, Chinese…) only gets names after a label, because the "capital letter" clue does not exist there.
 
 ## What gets masked
 
