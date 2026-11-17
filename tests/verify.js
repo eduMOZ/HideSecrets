@@ -109,6 +109,11 @@ async function archiveTests() {
     const out = ctx.sanitize(t, ctx.detect(t, 'x.txt', { sensitive: true, terms: ['orion', 'Project-Aurora'] }));
     eq('terms: whole word, any case', out, '[CUSTOMER_1] and [CUSTOMER_1]-2 and Orionis; [CUSTOMER_2] ok');
   }
+  {   // a listed word wins over a labeled detail with the very same span
+    const t = 'project_id: orion-staging-48213';
+    const out = ctx.sanitize(t, ctx.detect(t, 'x.txt', { sensitive: true, terms: ['orion-staging-48213'] }));
+    eq('terms: win a tie with a labeled detail', out, 'project_id: [CUSTOMER_1]');
+  }
   const view = (r) => ({ entries: r.entries.map((e) => [e.path, Buffer.from(e.data).toString()]).sort(), skipped: r.skipped.map((k) => k.path + ' ' + k.why).sort() });
   const longName = 'deep/' + 'd'.repeat(60) + '/' + 'f'.repeat(50) + '.log';
   const zip = makeZip([

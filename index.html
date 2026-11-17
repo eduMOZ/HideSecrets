@@ -1063,7 +1063,9 @@ function sensitivePass(text, out, customers, privateIps, terms) {
 
 // Overlaps: keep the longest
 function keepLongest(raw) {
-  raw.sort(function (a, b) { return a.start - b.start || (b.end - b.start) - (a.end - a.start); });
+  // on an exact tie, a customer domain or listed word wins: it is what the user asked for by name
+  var own = function (d) { return d.type === 'Customer domain' ? 0 : 1; };
+  raw.sort(function (a, b) { return a.start - b.start || (b.end - b.start) - (a.end - a.start) || own(a) - own(b); });
   var res = [], end = -1;
   raw.forEach(function (d) { if (d.start >= end) { res.push(d); end = d.end; } });
   return res;
