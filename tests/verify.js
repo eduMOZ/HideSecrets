@@ -103,6 +103,12 @@ async function archiveTests() {
     console.log((ok ? 'ok        ' : 'MISMATCH  ') + label.padEnd(42));
     if (!ok) { mismatches++; console.log('   expected: ' + JSON.stringify(want)); console.log('   actual:   ' + JSON.stringify(got)); }
   };
+  // Words typed in the page are masked whole-word, any case, longest first
+  {
+    const t = 'Orion and ORION-2 and Orionis; project-aurora ok';
+    const out = ctx.sanitize(t, ctx.detect(t, 'x.txt', { sensitive: true, terms: ['orion', 'Project-Aurora'] }));
+    eq('terms: whole word, any case', out, '[CUSTOMER_1] and [CUSTOMER_1]-2 and Orionis; [CUSTOMER_2] ok');
+  }
   const view = (r) => ({ entries: r.entries.map((e) => [e.path, Buffer.from(e.data).toString()]).sort(), skipped: r.skipped.map((k) => k.path + ' ' + k.why).sort() });
   const longName = 'deep/' + 'd'.repeat(60) + '/' + 'f'.repeat(50) + '.log';
   const zip = makeZip([

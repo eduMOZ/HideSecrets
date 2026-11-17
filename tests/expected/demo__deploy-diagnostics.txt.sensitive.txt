@@ -79,7 +79,7 @@ identity:
 
 directory:
   url: ldaps://directory.example.net:636
-  bindDn: "uid=svc-sync,ou=services,dc=example,dc=org"
+  bindDn: "uid=[LOGIN_2],ou=services,dc=example,dc=org"
   bindPassword: '[SECRET_10]'
 
 mail:

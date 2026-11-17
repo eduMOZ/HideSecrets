@@ -1,0 +1,25 @@
+# Invented sample: directory entries, cloud accounts, one-time codes, links
+dn: uid=[LOGIN_1],ou=people,dc=[DOMAIN_1]
+bindDN: CN=Svc Backup,OU=Services,DC=[DOMAIN_1]
+objectSid: [LOGIN_2]
+sAMAccountName: [LOGIN_1]
+uidNumber: 1001
+namespace: default
+
+tenant_id = [PERSONAL_1]
+subscription_id: [PERSONAL_2]
+client_id: 6c1d2e3f-4a5b-4c6d-8e7f-9a0b1c2d3e4f
+account_id=[PERSONAL_3]
+project_id: [PERSONAL_4]
+arn:aws:iam::[PERSONAL_3]:role/deploy-role
+
+Your verification code is [SECRET_1]
+OTP: [SECRET_2]
+recovery codes: [SECRET_3]
+Reset link: https://app.example.com/reset/[SECRET_4]
+Reset link (escaped): https:\/\/app.example.com\/invite\/[SECRET_5]
+Set-Cookie: _ga=[SECRET_6]; Path=/
+Set-Cookie: theme=dark; Path=/
+
+git clone git@[DOMAIN_2]:platform/tools.git
+git clone git@github.com:example/public-repo.git

@@ -141,6 +141,9 @@
   #cats .cgroup h4 { margin:0 0 4px; font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); }
   #cats label { display:flex; gap:8px; align-items:center; cursor:pointer; font-size:13.5px; padding:3px 0; }
   #cats .catwarn { margin-top:10px; }
+  #cats .cterms { margin-top:14px; }
+  #cats .cterms label { display:block; padding:0; cursor:default; font-size:13px; }
+  #cats .cterms textarea { display:block; width:100%; margin-top:6px; font:13px/1.45 ui-monospace, Menlo, monospace; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink); resize:vertical; }
   .catwarn { color:var(--hit-line); font-size:13px; font-weight:600; }
   .catwarn:empty { display:none; }
   #catwarn2 { padding:8px 14px; border-bottom:1px solid var(--line); background:color-mix(in srgb, var(--hit) 45%, transparent); }
@@ -178,6 +181,10 @@
     <div class="chead"><b>Sensitive data to mask</b><span class="small" id="catcount"></span>
       <span class="cbtns"><button id="catall" class="del">All</button><button id="catnone" class="del">None</button></span></div>
     <div class="cgrid" id="cgrid"></div>
+    <div class="cterms">
+      <label for="terms"><b>Words to always mask</b> <span class="small">a project, customer or site name that shows in comments and free text; one per line or separated by commas, any case</span></label>
+      <textarea id="terms" rows="2" placeholder="Orion, project-aurora" spellcheck="false" autocomplete="off"></textarea>
+    </div>
     <div class="catwarn" id="catwarn"></div>
   </div>
   <div id="drop">
@@ -285,6 +292,11 @@ var RULES = [
   { type: 'Recovery codes', g: 1, re: /(?:backup|recovery)[ _-]?codes?(?:\\?["'])?[ \t]*[:=][ \t]*\[([^\]\n]{4,300})\]/gid },
   { type: 'Recovery codes', g: 2, re: /(?:backup|recovery)[ _-]?codes?(?:\\?["'])?[ \t]*[:=][ \t]*(["'])([^"'\n]{4,300})\1/gid },
   { type: 'Secret (YAML block)', g: 1, re: /[A-Za-z0-9_.-]*(?:secret|password|passphrase|token|api[ _-]?key|credential)[A-Za-z0-9_-]*:[ \t]*[>|][-+]?[ \t]*\r?\n[ \t]+(\S[^\n]*(?:\r?\n[ \t]+\S[^\n]*)*)/gid },
+  // A code sent to the user: "Your verification code is 482913", "OTP: 771204"
+  { type: 'One-time code', g: 1, re: /(?:(?:verification|security|confirmation|one[- ]time|login|sign[- ]?in|authentication|2fa|mfa|sms)[ _-]?(?:code|pin|passcode)|\botp\b|\btotp\b|code de (?:v[ée]rification|confirmation|s[ée]curit[ée])|code (?:otp|sms))(?:[ \t]+(?:is|est|was|sent|:|=))*[ \t]*[:=]?[ \t]*["']?(\d{4,8})(?!\d)/gid },
+  { type: 'Recovery codes', g: 1, re: /(?:backup|recovery)[ _-]?codes?(?:\\?["'])?[ \t]*[:=][ \t]*((?:[A-Za-z0-9]{4,}(?:-[A-Za-z0-9]{3,})*)(?:[ \t]*[,;][ \t]*[A-Za-z0-9]{4,}(?:-[A-Za-z0-9]{3,})*)*)/gid },
+  // A token in the path of a link: /reset/<token>, /invite/<token>, /verify/<token>
+  { type: 'Token in a link', g: 1, mixed: true, re: /\\?\/(?:reset|verify|verification|confirm|confirmation|activate|activation|invite|invitation|magic|unsubscribe|share|accept|join|recover|recovery|password-reset|forgot)\\?\/([A-Za-z0-9_~-]{16,})(?![A-Za-z0-9_~-])/gid },
   { type: 'PIN code', g: 1, re: /(?<![A-Za-z0-9])(?:code[ ]+)?pin(?:[ _-]?code)?(?:[ ]+(?:de|du|of|for|test|carte|card))*[ \t]*[:=][ \t]*["']?(\d{4,8})(?!\d)/gid },
   // The answer to a security question, on the line after the question
   { type: 'Security answer', g: 1, re: /(?:(?:security|secret|recovery)[ ]question|question[ ](?:de[ ])?(?:s[ée]curit[ée]|r[ée]cup[ée]ration|secr[èe]te))[^\n]*\n[ \t]*(?:r[ée]ponse|answer)[ \t]*[:=][ \t]*([^\n]{2,80})/gid },
@@ -309,7 +321,7 @@ var RULES = [
   { type: 'Password / token / key', g: 2, words: true, re: new RegExp('([A-Za-z0-9_.-]*' + NAME + '[0-9_-]*(?![A-Za-z]))(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*(?:\\\\?["\'])?((?:[^\\s"\'&,;}\\\\<>]|\\\\u[0-9a-fA-F]{4}|\\\\[\\\\\\/bfnrt])+)', 'gid') }
 ];
 // A cookie is secret if its name says so, or if its value is long and is not a word (theme=dark is not)
-var COOKIE_NAME = /(sess|auth|token|sid|jwt|key|secret|login|csrf|xsrf)/i;
+var COOKIE_NAME = /(sess|auth|token|sid|jwt|key|secret|login|csrf|xsrf|^_ga|^_gid|^_gat|^_gcl|^_fb[pc]$|_hj|^ajs_|amplitude|^mp_|^__utm|^_pk_|^_uet|visitor|anonymous|device[_-]?id|tracking)/i;   // tracking cookies identify a person too
 function cookieIsSecret(name, val) { return COOKIE_NAME.test(name) || (val.length >= 16 && !looksLikeWords(val)); }
 // A value that looks like code or plain text is not a secret
 function strictOk(v) { return plausible(v) && !/\s/.test(v) && !looksLikeWords(v); }
@@ -590,12 +602,6 @@ function customerRule() {
   return { type: 'Customer domain', prefix: 'CUSTOMER', g: 1,
     re: new RegExp('(?:' + alts.join('|') + ')' + reEscape(vendor) + '\\.((?:[A-Za-z0-9-]+\\.)+[A-Za-z]{2,})\\b', 'gid') };
 }
-// Words to always mask (project, customer or site names in free text), listed in the product settings
-function termsRule() {
-  var t = cfgList('terms');
-  if (!t.length) return null;
-  return { type: 'Customer domain', prefix: 'CUSTOMER', g: 0, re: new RegExp('(?<![A-Za-z0-9])(?:' + t.map(reEscape).join('|') + ')(?![A-Za-z0-9])', 'gid') };
-}
 var SENS_RULES = [
   { type: 'Email address', prefix: 'EMAIL', g: 0, re: /(?<![\w.%+\/-])[A-Za-z0-9][A-Za-z0-9._%+-]*@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}\b/gd },
   // An address written to dodge robots: anais [at] example [dot] org
@@ -606,7 +612,7 @@ var SENS_RULES = [
   { type: 'Public IP', prefix: 'PUBLIC_IP', g: 0, ip: true, re: /(?<![\w.])(?:\d{1,3}\.){3}\d{1,3}(?![\w]|\.\d)/gd },
   // Private addresses stay visible unless the option is on (opts.privateIps): they help diagnosis, but they can name a site
   { type: 'Private IP', prefix: 'PRIVATE_IP', g: 0, ipPrivate: true, re: /(?<![\w.])(?:\d{1,3}\.){3}\d{1,3}(?![\w]|\.\d)/gd }
-].concat(customerRule() || [], termsRule() || []);
+].concat(customerRule() || []);
 // Private, local and reserved addresses stay visible: they help diagnosis
 function isPublicIp(s) {
   var o = s.split('.').map(Number);
@@ -822,6 +828,28 @@ var GENERIC_USERS = new Set(('root admin administrator localadmin sysadmin ubunt
 var GENERIC_HOSTS = new Set(('localhost ubuntu ubuntu-server debian centos fedora rocky alma server host vm ' +
   'vagrant raspberrypi docker container kali node master worker').split(' ')
   .concat(cfgList('genericNames').map(function (n) { return n.toLowerCase(); })));
+// Directory (LDAP / Active Directory): DC=corp,DC=acme,DC=com names a domain, uid= a login; S-1-5-21-… is an account's SID
+var DN_RE = /(?<![\w=-])(?:(?:CN|OU|DC|UID|O|L|ST|C)=(?:\\.|[^,;\n\\])+[,;][ \t]*)+(?:CN|OU|DC|UID|O|L|ST|C)=(?:\\.|[^,;\n\\\s"'<>])+/gi;
+var SID_RE = /(?<![\w-])S-1-(?:5|12)-(?:\d+-){1,5}\d+(?![\w-])/g;
+var SAM_RE = /(?<![A-Za-z0-9])(?:sAMAccountName|logonName|logon[ _-]?name)(?:\\?["'])?[ \t]*[:=][ \t]*(?:\\?["'])?([A-Za-z0-9._-]{3,64})/gid;
+function directoryPass(text, out) {
+  var m;
+  DN_RE.lastIndex = 0;
+  while ((m = DN_RE.exec(text))) {
+    var parts = [], pr = /(CN|OU|DC|UID|O|L|ST|C)=((?:\\.|[^,;\n\\])+)/gi, q;
+    while ((q = pr.exec(m[0]))) parts.push({ k: q[1].toUpperCase(), v: q[2], s: m.index + q.index + q[1].length + 1 });
+    var dcs = parts.filter(function (x) { return x.k === 'DC'; });
+    if (dcs.length >= 2) {
+      var last = dcs[dcs.length - 1];
+      if (isOtherDomain(dcs.map(function (x) { return x.v; }).join('.').toLowerCase(), last.v)) out.push({ start: dcs[0].s, end: last.s + last.v.length, type: 'Other domain', prefix: 'DOMAIN', sens: true });
+    }
+    parts.filter(function (x) { return x.k === 'UID' && !/^\d+$/.test(x.v); }).forEach(function (x) { out.push({ start: x.s, end: x.s + x.v.length, type: 'User login', prefix: 'LOGIN', sens: true }); });
+  }
+  SID_RE.lastIndex = 0;
+  while ((m = SID_RE.exec(text))) out.push({ start: m.index, end: m.index + m[0].length, type: 'User login', prefix: 'LOGIN', sens: true });
+  SAM_RE.lastIndex = 0;
+  while ((m = SAM_RE.exec(text))) out.push({ start: m.indices[1][0], end: m.indices[1][1], type: 'User login', prefix: 'LOGIN', sens: true });
+}
 function loginPass(text, out) {
   LOGIN_RE.lastIndex = 0;
   var m;
@@ -897,6 +925,10 @@ var SPOKEN_PHONE_EN = /(?<![A-Za-z])(?:zero|oh|one|two|three|four|five|six|seven
 var ID_RE = /(?<![A-Za-z0-9])(?:passport|passeport|id[ _-]?card|carte[ ]d['’]identit[ée]|cni|driver'?s?[ ]licen[cs]e|permis(?:[ ]de[ ]conduire)?|social[ ]security|s[ée]curit[ée][ ]sociale|ssn|ticket|billet|booking|r[ée]servation|dossier|pnr|reference|r[ée]f[ée]rence|employee[ _-]?(?:number|id|no)|matricule|staff[ _-]?id)(?:[ \t]+(?:number|no\.?|n°|num[ée]ro|code|de[ ]test|test))*["']?[ \t]*[:=#]?[ \t]*["']?([A-Za-z0-9][A-Za-z0-9-]{4,24})(?![A-Za-z0-9-])/gid;
 // An address whose label stands alone on its line, the street and town on the next ones
 var ADDRESS_NEXT_RE = /(?<![A-Za-z0-9])(?:(?:home|postal|billing|shipping|mailing|delivery|secours|emergency)[ _-]?)?(?:adresse|address)(?:[ ]+(?:de|du)[ ]+(?:livraison|facturation|secours|domicile))?[ \t]*:?[ \t]*\r?\n[ \t]*(\d{1,4}[^\n]{4,80}(?:\r?\n[ \t]*\d{4,5}[^\n]{2,50})?)/gid;
+// Cloud accounts: tenant_id=<guid>, subscription_id, account_id=123456789012, project_id=my-project-42, org_id=org_…; and the account inside an ARN.
+// client_id stays visible (it is no secret and helps diagnosis).
+var CLOUD_ID_RE = /(?<![A-Za-z0-9])(?:tenant[ _-]?id|subscription[ _-]?id|account[ _-]?id|aws[ _-]?account(?:[ _-]?(?:id|number))?|project[ _-]?id|org(?:anization|anisation)?[ _-]?id|directory[ _-]?id)(?:\\?["'])?[ \t]*[:=][ \t]*(?:\\?["'])?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|\d{12}|(?=[^\s"',;]*\d)[A-Za-z][A-Za-z0-9_-]{5,60})/gid;
+var ARN_RE = /\barn:aws[a-z-]*:[a-z0-9-]+:[a-z0-9-]*:(\d{12}):/gid;
 var DMS_RE = /(?<![\d.])\d{1,3}°[ \t]*\d{1,2}['′][ \t]*\d{1,2}(?:\.\d+)?(?:\\?"|″|'')?[ \t]*[NS][ \t,;\/]*\d{1,3}°[ \t]*\d{1,2}['′][ \t]*\d{1,2}(?:\.\d+)?(?:\\?"|″|'')?[ \t]*[EW]\b/g;
 var UNC_USER_RE = /\\{2,4}[A-Za-z0-9._-]+\\{1,2}(?:homes?|users|profiles?|personal)\\{1,2}([^\\\/\s"'<>:*?|]{1,40})/gid;
 var GPS_RE = /(?<![\d.])-?(?:[1-8]?\d|90)\.\d{4,}[ \t]*,[ \t]*-?(?:1[0-7]\d|[1-9]?\d|180)\.\d{4,}(?![\d.])/g;
@@ -946,6 +978,8 @@ function piiPass(text, out, privateIps) {
     return /\d/.test(v) && /\p{L}/u.test(v) && /\s/.test(v) && !NOT_POSTAL.test(text.slice(Math.max(0, mm.index - 16), mm.index));
   });
   labeled(ID_RE, 'Personal detail', 'PERSONAL', function (v) { return /\d/.test(v) && v === v.toUpperCase(); });
+  labeled(CLOUD_ID_RE, 'Personal detail', 'PERSONAL');
+  labeled(ARN_RE, 'Personal detail', 'PERSONAL');
   labeled(ADDRESS_NEXT_RE, 'Personal detail', 'PERSONAL', function (v, mm) {
     return /\d/.test(v) && /\p{L}/u.test(v) && !NOT_POSTAL.test(text.slice(Math.max(0, mm.index - 16), mm.index));
   });
@@ -973,9 +1007,10 @@ function piiPass(text, out, privateIps) {
 }
 
 // customers: customer domains already known (from this text or from other files of the session)
-function sensitivePass(text, out, customers, privateIps) {
+function sensitivePass(text, out, customers, privateIps, terms) {
   personPass(text, out);
   loginPass(text, out);
+  directoryPass(text, out);
   piiPass(text, out, privateIps);
   for (var r of SENS_RULES) {
     r.re.lastIndex = 0;
@@ -985,10 +1020,22 @@ function sensitivePass(text, out, customers, privateIps) {
       if (!ix) continue;
       var v = text.slice(ix[0], ix[1]);
       if (IGNORE.test(v)) continue;
+      // user@host:path (scp, git over ssh) is no e-mail address: the host is what may identify a customer
+      if (r.prefix === 'EMAIL' && /^:[A-Za-z0-9_~.\/-]/.test(text.slice(ix[1], ix[1] + 2))) {
+        var at = text.indexOf('@', ix[0]), hostTxt = text.slice(at + 1, ix[1]), hm2 = /^(?:[A-Za-z0-9-]+\.)+([A-Za-z]{2,24})$/.exec(hostTxt);
+        if (hm2 && isOtherDomain(hostTxt, hm2[1])) out.push({ start: at + 1, end: ix[1], type: 'Other domain', prefix: 'DOMAIN', sens: true });
+        continue;
+      }
       if (r.ip && !isPublicIp(v)) continue;
       if (r.ipPrivate && !(privateIps && isPrivateIp(v))) continue;
       out.push({ start: ix[0], end: ix[1], type: r.type, prefix: r.prefix, sens: true });
     }
+  }
+  // Words to always mask: the "terms" of the product settings and the ones typed in the page (project, customer or site names)
+  var tl = cfgList('terms').concat(terms || []).map(function (t) { return String(t).trim(); }).filter(Boolean).sort(function (a, b) { return b.length - a.length; });
+  if (tl.length) {
+    var tre = new RegExp('(?<![A-Za-z0-9])(?:' + tl.map(reEscape).join('|') + ')(?![A-Za-z0-9])', 'gi'), tm;
+    while ((tm = tre.exec(text))) out.push({ start: tm.index, end: tm.index + tm[0].length, type: 'Customer domain', prefix: 'CUSTOMER', sens: true });
   }
   // The customer part is masked wherever it appears, not only in <service>.<vendor>.<customer>:
   // NO_PROXY=<vendor>.<customer>, auth.<customer>, someone@<customer>…
@@ -1036,7 +1083,7 @@ function detectCore(text, filename, opts) {
   var res = keepLongest(raw);
   if (opts && opts.sensitive) {   // a secret always wins over sensitive data that overlaps it
     var sens = [];
-    sensitivePass(text, sens, opts.customers, opts.privateIps);
+    sensitivePass(text, sens, opts.customers, opts.privateIps, opts.terms);
     sens = keepLongest(sens.filter(function (s) { return !res.some(function (d) { return d.start < s.end && s.start < d.end; }); }));
     res = res.concat(sens).sort(function (a, b) { return a.start - b.start; });
   }
@@ -1341,8 +1388,8 @@ function makeSampleHar() {
   var files = [], cur = -1, F = null;   // F: the file being shown
   var manualSeq = 0, pastedSeq = 0, LEVEL = 'secret';
   // Customer domains found so far in any file: they are masked in every file of the session
-  var customers = {}, relearn = null;
-  function opts() { return { sensitive: LEVEL === 'sensitive', customers: Object.keys(customers), privateIps: !catOff.has('Private IP') }; }
+  var customers = {}, relearn = null, userTerms = [];
+  function opts() { return { sensitive: LEVEL === 'sensitive', customers: Object.keys(customers), privateIps: !catOff.has('Private IP'), terms: userTerms }; }
   function learnCustomers(f) {
     var its = f.kind === 'image' ? f.regions : f.dets, fresh = false;
     its.forEach(function (d) {
@@ -1365,7 +1412,7 @@ function makeSampleHar() {
     { type: 'User login', label: 'Logins (name@machine, DOMAIN\\name)', group: 'People' },
     { type: 'Phone number', label: 'Phone numbers', group: 'People' },
     { type: 'Username in a path', label: 'User names in paths', group: 'People' },
-    { type: 'Personal detail', label: 'Labeled details (birth date, address, ID, booking)', group: 'People' },
+    { type: 'Personal detail', label: 'Labeled details (birth date, address, ID, account, booking)', group: 'People' },
     { type: 'Public IP', label: 'Public IP addresses (IPv4, IPv6)', group: 'Network and company' },
     // An option: off by default (private addresses help diagnosis); when off they are not detected, listed or reminded
     { type: 'Private IP', label: 'Private IP addresses (10.x, 192.168.x…), optional', group: 'Network and company', optIn: true, short: 'private IPs' },
@@ -1417,6 +1464,19 @@ function makeSampleHar() {
   }
   $('catall').onclick = function () { CATS.forEach(function (c) { setCat(c.type, true); }); catsChanged(true); };
   $('catnone').onclick = function () { CATS.forEach(function (c) { setCat(c.type, false); }); catsChanged(true); };
+  // Words to always mask: typed here, remembered in this browser, added to the "terms" of the product settings
+  var TERMS_KEY = 'hidesecrets.terms', termsTimer = null;
+  function parseTerms(t) { return String(t || '').split(/[\n,;]+/).map(function (x) { return x.trim(); }).filter(function (x) { return x.length >= 2; }).slice(0, 200); }
+  try { $('terms').value = localStorage.getItem(TERMS_KEY) || ''; } catch (e) { /* storage unavailable */ }
+  userTerms = parseTerms($('terms').value);
+  $('terms').oninput = function () {
+    clearTimeout(termsTimer);
+    termsTimer = setTimeout(function () {
+      userTerms = parseTerms($('terms').value);
+      try { localStorage.setItem(TERMS_KEY, $('terms').value); } catch (e) { /* storage unavailable */ }
+      applyLevel();
+    }, 350);
+  };
   function renderCats() {
     var bar = $('cats'), grid = $('cgrid');
     bar.style.display = LEVEL === 'sensitive' ? '' : 'none';
