@@ -10,7 +10,7 @@ HideSecrets finds these values, replaces them with readable placeholders (`[SECR
 
 ## What it looks like
 
-The home page: choose what to mask and which categories of sensitive data, then drop files or an archive, paste text, or paste a screenshot.
+The home page: choose what to mask and which categories of sensitive data, then drop files or an archive, paste text, or paste a screenshot. The box **Words to always mask** takes a project, customer or site name that nothing else can guess.
 
 ![The home page: masking level, categories of sensitive data and the drop zone](docs/screenshot-home.webp)
 
@@ -18,17 +18,13 @@ A log file: each detected value is highlighted in the text and listed on the rig
 
 ![A log file under review: detected values highlighted in the text and listed on the right](docs/screenshot-text.webp)
 
-A screenshot of an invented support session: secrets, names, contact details, bank and card numbers, devices and paths are blacked out, and the detections are listed on the right.
+A screenshot of an invented support session: secrets, names, contact details, bank and card numbers, devices and paths are blacked out, and the detections are listed on the right. The file list on the left keeps every file of the batch one click away.
 
 ![A screenshot under review: masked values on the image, detections listed on the right](docs/screenshot-image.webp)
 
-A batch of files and images: the file list with its search box (matches are highlighted), the reading time, and the current image on the right.
+Before and after, on the same invented screenshot: the original on the left, the version to share on the right.
 
-![A batch of 26 files and screenshots: the file list, its search box and an image under review](docs/screenshot-batch.webp)
-
-A word to always mask: type a project, customer or site name in **Words to always mask**, and every occurrence is masked, whatever the other categories do (here the people categories are off, the listed domain is still masked).
-
-![Words to always mask: a listed domain masked in every occurrence while the people categories are off](docs/screenshot-terms.webp)
+![The same invented screenshot before and after masking](docs/screenshot-before-after.webp)
 
 All the screenshots use invented data.
 
