@@ -110,6 +110,22 @@ Measured on a 16-inch MacBook Pro (Apple M5 Pro, 48 GB) with a folder of 307 scr
 
 Doubling the workers made the batch 1.8 times faster. Reading the same folder with a single worker would take roughly 25 minutes (an estimate, not a measurement). On a computer with fewer cores the gain stops at the number of cores, and each worker holds its own copy of the OCR engine in memory; if the computer struggles, choose Quiet.
 
+## Languages
+
+HideSecrets reads **English, French and German**, all at once: a file that mixes them (a German mail quoting an English log) is read in each language. What depends on a language is the words that label a value (`password`, `mot de passe`, `Passwort`), the titles and greetings before a name (`Mr`, `Madame`, `Herr`), the closing formulas before a signature (`Best regards`, `Cordialement`, `Mit freundlichen Grüßen`), the names of identity documents and numbers written in groups (`Steuer-ID`, `Sozialversicherungsnummer`), month names in dates, the first names, and the national phone formats. Everything else (IP addresses, IBAN, cards, tokens, domains, MAC addresses) is the same in every language.
+
+| | English | French | German |
+|---|---|---|---|
+| Secrets, one-time and recovery codes, door and Wi-Fi codes | yes | yes | yes |
+| Birth date, address, identity documents, labeled numbers | yes | yes | yes |
+| Names after a label, a title, a greeting or a closing | yes | yes | yes |
+| Phone numbers in national format | North American | French | German |
+| Screenshots (OCR) | yes | yes | needs `ocr/deu.traineddata.gz` |
+
+**Reading German in screenshots.** The OCR engine ships with English and French. For German, download `deu.traineddata.gz` from the [tessdata_fast](https://github.com/tesseract-ocr/tessdata_fast) project (Apache License 2.0), put it in `ocr/`, and add `ocrLanguages: ['eng', 'fra', 'deu']` to `config.local.js`. Text files need nothing.
+
+**Adding a language.** All the words live in one block, `LANGS`, at the top of the engine in `index.html`: one entry per language, each a list of short regular-expression fragments. Copy the `de` entry, translate the lists (the comment above it says what each one is for), add a few first names, and add a fixture such as [`examples/german.txt`](examples/german.txt) with the values that must be masked and the look-alikes that must stay visible. `node tests/verify.js --update` writes the expected result, and you read it once to check it. No other code changes. A language that writes with another alphabet (Greek, Cyrillic, Arabic, Chinese…) also needs its OCR file, and its names are only found after a label, because the "capital letter" clue does not exist in those scripts.
+
 ## What gets masked
 
 | Level | What is masked | Placeholder |
@@ -120,7 +136,7 @@ Doubling the workers made the batch 1.8 times faster. Reading the same folder wi
 | | logins shown as `account@machine` in shell prompts and terminal tabs, and Windows accounts (`ATELIER\jdoe`) (`jdoe@WS-0042`, `localadmin@WS-0042`); only a generic account on a generic machine (`admin@ubuntu-server`) stays visible | `[LOGIN_n]` |
 | | public IP addresses, IPv4 and IPv6 (loopback, link-local and private addresses stay visible) | `[PUBLIC_IP_n]` |
 | | private IP addresses (`10.x`, `172.16–31.x`, `192.168.x`, `100.64.x`, `169.254.x`, IPv6 `fe80::` and `fd…`), **only if you tick the optional "Private IP addresses" box** (off by default); loopback, `0.0.0.0`, netmasks and multicast are never masked | `[PRIVATE_IP_n]` |
-| | phone numbers, also spelled out (`zéro six, douze, trente-quatre…`): international (`+44 7700 900123`), French (`01 99 00 12 34`, `0612345678`), North American (`(555) 010-0199`) | `[PHONE_n]` |
+| | phone numbers, also spelled out (`zéro six, douze, trente-quatre…`): international (`+44 7700 900123`), French (`01 99 00 12 34`, `0612345678`), German (`0171 1234567`, `(089) 123456`), North American (`(555) 010-0199`) | `[PHONE_n]` |
 | | IBANs (checksum verified), bank card numbers (known card prefix and Luhn checksum), and the security code and expiry date of a card when a label names them (`card_cvv=…`, `expiry: 12/30`) | `[BANK_n]` |
 | | devices and locations: MAC addresses, labeled serial numbers (`Serial number: …`, `device_serial=…`, `S/N`, `service tag`, IMEI), GPS coordinates, decimal or degrees-minutes-seconds | `[DEVICE_n]` |
 | | birth dates, postal addresses (also under a label standing alone on its line, as in a contact card), identity documents, employee numbers, tickets and booking references, cloud account, tenant, subscription and project ids (also the account inside an ARN), only when a label names them (`Passeport : 00AA00000`, `dossier Q7X9LM`, `birth_date=…`, `date of birth: …`, `Naissance : 07 décembre 1988`, `born on March 3rd, 1990`, `address="42 rue …"`; `ip_address`, `email address` and the like are left alone) | `[PERSONAL_n]` |
@@ -163,6 +179,7 @@ The [`examples/demo/`](examples/demo/) folder is a demo kit you can drop on the 
 |---|---|
 | [`install-answers.conf`](examples/install-answers.conf) | An installer answers file: OIDC secret, registry and database passwords, keys, connection URLs with passwords, customer domain |
 | [`install-console.txt`](examples/install-console.txt) | Console output from a failing install: PostgreSQL URL with a password, `Proxy-Authorization` header, public IP, email address in a log |
+| [`german.txt`](examples/german.txt) | The same kinds of data in German: a support mail with titles, closing formula, tax and insurance numbers, phone formats, one-time codes, and look-alikes that stay visible |
 | [`customer-email.txt`](examples/customer-email.txt) | An email from a customer describing their problem and pasting a secret and passwords along the way (including one written in French) |
 | [`directory-and-cloud.txt`](examples/directory-and-cloud.txt) | LDAP/Active Directory entries (DN, `uid=`, SID, `sAMAccountName`), labeled cloud accounts (tenant, subscription, account, project, ARN), one-time codes, recovery codes, reset links, `git@host:path`; `client_id`, `uidNumber` and `default` stay visible |
 | [`browsing.har`](examples/browsing.har) | A browser network export: credentials sent at sign-in, session cookie, access token, customer domain |
@@ -210,7 +227,7 @@ The tool helps you review; it does not guarantee that nothing is left. Always ch
 index.html          the page: interface, detection engine and archive reader (inside <script id="engine">)
 config.example.js   example product settings (copy to config.local.js, which is not published)
 assets/               the logo (header) and the page icons
-ocr/                Tesseract.js OCR engine and language data (English, French), with their licenses
+ocr/                Tesseract.js OCR engine and language data (English, French; add German here), with their licenses
 examples/           invented test data
 tests/verify.js     checks the engine against the test data
 tests/expected/     expected results, per example and per level

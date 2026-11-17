@@ -1,0 +1,35 @@
+# Erfundene Beispieldaten (invented sample): a support mail and a settings export in German
+Betreff: Zugang zum Kundenportal
+Von: Anna Beispiel
+An: Herr Jürgen Köhler
+
+Sehr geehrter Herr Köhler,
+
+Zugangsdaten für Frau Dr. Schröder-Weiß: Kennwort Demo-7731x, Einmalpasswort: 771204
+Ihr Bestätigungscode lautet 482913.
+Der Code für die Tür ist 4711#, das WLAN-Passwort lautet Gast#2024x
+
+Ansprechpartner: Herr Hans-Peter Müller
+Geburtsdatum: 03.12.1988
+Geboren am 3. März 1990
+Anschrift: Beispielstraße 12, 80331 Musterstadt
+Telefon: 0171 1234567, Festnetz (089) 123456
+Steuer-ID: 12 345 678 901
+Sozialversicherungsnummer: 12 150988 K 123
+Personalausweisnummer: L01X00T47
+Kundennummer: 4711-0815
+Sicherheitsfrage: Name des ersten Haustiers? Antwort: Bello
+IBAN: DE89 3704 0044 0532 0130 00
+
+Passwort: Sommer2024!Geheim
+API-Schlüssel: abcd1234efgh5678ijkl
+Wiederherstellungscodes: 7194-2806, 5038-1642
+
+Mit freundlichen Grüßen
+Erika Mustermann
+
+# Dies bleibt sichtbar (stays visible):
+Das Passwort muss mindestens acht Zeichen lang sein.
+Bitte geben Sie Ihr Passwort ein.
+Die Telefonnummer 0800 gilt als gebührenfrei.
+Bestellung vom 12.03.2024 wurde versendet.

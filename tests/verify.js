@@ -114,6 +114,20 @@ async function archiveTests() {
     const out = ctx.sanitize(t, ctx.detect(t, 'x.txt', { sensitive: true, terms: ['orion-staging-48213'] }));
     eq('terms: win a tie with a labeled detail', out, 'project_id: [CUSTOMER_1]');
   }
+  {   // titles, greetings and signatures, in the three languages; a team name signs no person
+    const cases = [
+      ['Bonjour Madame Dupont, voici le dossier.', 'Bonjour Madame [PERSON_1], voici le dossier.'],
+      ['Cordialement,\nJean Martin\n', 'Cordialement,\n[PERSON_1]\n'],
+      ['Best regards,\nMaria Garcia', 'Best regards,\n[PERSON_1]'],
+      ['Mit freundlichen Grüßen\nErika Mustermann', 'Mit freundlichen Grüßen\n[PERSON_1]'],
+      ['Hallo Anna,', 'Hallo [PERSON_1],'],
+      ['Dear customer,\nThanks\nSupport team', 'Dear customer,\nThanks\nSupport team'],
+      ['Grüße\nTeam Support', 'Grüße\nTeam Support'],
+      ['password is required here', 'password is required here'],
+      ['Das Passwort muss acht Zeichen lang sein.', 'Das Passwort muss acht Zeichen lang sein.']
+    ];
+    cases.forEach(([t, want]) => eq('language: ' + t.split('\n')[0].slice(0, 28), ctx.sanitize(t, ctx.detect(t, 'x.txt', { sensitive: true })), want));
+  }
   const view = (r) => ({ entries: r.entries.map((e) => [e.path, Buffer.from(e.data).toString()]).sort(), skipped: r.skipped.map((k) => k.path + ' ' + k.why).sort() });
   const longName = 'deep/' + 'd'.repeat(60) + '/' + 'f'.repeat(50) + '.log';
   const zip = makeZip([

@@ -1,0 +1,35 @@
+# Erfundene Beispieldaten (invented sample): a support mail and a settings export in German
+Betreff: Zugang zum Kundenportal
+Von: [PERSON_1]
+An: [PERSON_2]
+
+Sehr geehrter [PERSON_3],
+
+Zugangsdaten für Frau Dr. [PERSON_4]: Kennwort [SECRET_1], Einmalpasswort: [SECRET_2]
+Ihr Bestätigungscode lautet [SECRET_3].
+Der Code für die Tür ist [SECRET_4], das WLAN-Passwort lautet [SECRET_5]
+
+Ansprechpartner: [PERSON_5]
+Geburtsdatum: [PERSONAL_1]
+Geboren am [PERSONAL_2]
+Anschrift: [PERSONAL_3]
+Telefon: [PHONE_1], Festnetz [PHONE_2]
+Steuer-ID: [PERSONAL_4]
+Sozialversicherungsnummer: [PERSONAL_5]
+Personalausweisnummer: [PERSONAL_6]
+Kundennummer: [PERSONAL_7]
+Sicherheitsfrage: Name des ersten Haustiers? Antwort: [SECRET_6]
+IBAN: [BANK_1]
+
+Passwort: [SECRET_7]
+API-Schlüssel: [SECRET_8]
+Wiederherstellungscodes: [SECRET_9]
+
+Mit freundlichen Grüßen
+[PERSON_6]
+
+# Dies bleibt sichtbar (stays visible):
+Das Passwort muss mindestens acht Zeichen lang sein.
+Bitte geben Sie Ihr Passwort ein.
+Die Telefonnummer 0800 gilt als gebührenfrei.
+Bestellung vom 12.03.2024 wurde versendet.
