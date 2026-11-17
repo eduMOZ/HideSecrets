@@ -131,13 +131,13 @@ HideSecrets reads **English, French and German**, all at once: a file that mixes
 | Names after a label, a title, a greeting or a closing | yes | yes | yes |
 | Phone numbers in national format | North American | French | German |
 | Screenshots (OCR) | yes | yes | yes |
-| How much it has been tested | most of the examples and screenshots | most of the examples and screenshots | one dedicated fixture ([`german.txt`](examples/german.txt)) and two screenshots |
+| How much it has been tested | most of the examples and screenshots | most of the examples and screenshots | one dedicated fixture ([`german.txt`](examples/cases/german.txt)) and two screenshots |
 
 "Yes" means the rule exists, not that the three languages have the same depth. English and French have been exercised the longest, on the whole example set. German is newer: expect more misses and more look-alikes taken for values, and report them.
 
 **Reading screenshots.** The OCR engine ships with the language data of the three languages (`ocr/*.traineddata.gz`, about 4.5 MB in all) and loads them together. With German added, `ß`, `ä`, `ö` and `ü` are read correctly (without it, `Grüßen` came out as `GrüBen`), and English and French are read exactly as before, at the same speed. To read fewer languages, or others, list them in `config.local.js`: `ocrLanguages: ['eng', 'fra']`.
 
-**Adding a language.** All the words live in one block, `LANGS`, at the top of the engine in `index.html`: one entry per language, each a list of short regular-expression fragments. Copy the `de` entry, translate the lists (the comment above it says what each one is for), add a few first names, and add a fixture such as [`examples/german.txt`](examples/german.txt) with the values that must be masked and the look-alikes that must stay visible. `node tests/verify.js --update` writes the expected result, and you read it once to check it. No other code changes. For the screenshots, also drop the language's file from [tessdata_fast](https://github.com/tesseract-ocr/tessdata_fast) (`xxx.traineddata`, gzipped) in `ocr/` and add its code to `ocrLanguages`. A language that writes with another alphabet (Greek, Cyrillic, Arabic, Chinese…) and its names are only found after a label, because the "capital letter" clue does not exist in those scripts.
+**Adding a language.** All the words live in one block, `LANGS`, at the top of the engine in `index.html`: one entry per language, each a list of short regular-expression fragments. Copy the `de` entry, translate the lists (the comment above it says what each one is for), add a few first names, and add a fixture such as [`examples/german.txt`](examples/cases/german.txt) with the values that must be masked and the look-alikes that must stay visible. `node tests/verify.js --update` writes the expected result, and you read it once to check it. No other code changes. For the screenshots, also drop the language's file from [tessdata_fast](https://github.com/tesseract-ocr/tessdata_fast) (`xxx.traineddata`, gzipped) in `ocr/` and add its code to `ocrLanguages`. A language that writes with another alphabet (Greek, Cyrillic, Arabic, Chinese…) and its names are only found after a label, because the "capital letter" clue does not exist in those scripts.
 
 A new language is ready to publish when: its fixture masks every value it lists and keeps the look-alikes visible (read the expected files once, line by line); the existing English, French and German fixtures are unchanged by `node tests/verify.js`; a screenshot in that language (invented data) has been read in the page with its OCR data loaded; the table above says how much it was tested.
 
@@ -197,27 +197,27 @@ You can check this yourself: open the browser's developer tools, go to the Netwo
 
 ## Test data
 
-The [`examples/demo/`](examples/demo/) folder is a demo kit you can drop on the page (text files of many formats, a network capture and screenshots, see its [README](examples/demo/README.md)). The files of [`examples/`](examples/) itself are smaller, one subject each. **Every value is invented**:
+The [`examples/demo/`](examples/demo/) folder is a demo kit you can drop on the page (text files of many formats, a network capture and screenshots, see its [README](examples/demo/README.md)). The files of [`examples/cases/`](examples/cases/) are smaller, one subject each, and are what the tests check (see the [`examples/` README](examples/README.md)). **Every value is invented**:
 
 | File | What it shows |
 |---|---|
-| [`install-answers.conf`](examples/install-answers.conf) | An installer answers file: OIDC secret, registry and database passwords, keys, connection URLs with passwords, customer domain |
-| [`install-console.txt`](examples/install-console.txt) | Console output from a failing install: PostgreSQL URL with a password, `Proxy-Authorization` header, public IP, email address in a log |
-| [`german.txt`](examples/german.txt) | The same kinds of data in German: a support mail with titles, closing formula, tax and insurance numbers, phone formats, one-time codes, and look-alikes that stay visible |
-| [`customer-email.txt`](examples/customer-email.txt) | An email from a customer describing their problem and pasting a secret and passwords along the way (including one written in French) |
-| [`directory-and-cloud.txt`](examples/directory-and-cloud.txt) | LDAP/Active Directory entries (DN, `uid=`, SID, `sAMAccountName`), labeled cloud accounts (tenant, subscription, account, project, ARN), one-time codes, recovery codes, reset links, `git@host:path`; `client_id`, `uidNumber` and `default` stay visible |
-| [`browsing.har`](examples/browsing.har) | A browser network export: credentials sent at sign-in, session cookie, access token, customer domain |
-| [`kubernetes.yaml`](examples/kubernetes.yaml) | A kubeconfig (key data, token) and a Kubernetes `Secret`; a `ConfigMap` and a public certificate stay readable |
-| [`commands.sh`](examples/commands.sh) | Commands from a shell history: `curl -u`, `--password`, `mysql -p`, `sshpass`, an API key header, an exported token |
-| [`netrc.conf`](examples/netrc.conf) | A `.netrc` file, in its two layouts |
-| [`users.csv`](examples/users.csv) | A CSV export: the password column, e-mail addresses, phone numbers |
-| [`dump.sql`](examples/dump.sql) | A SQL dump: `IDENTIFIED BY`, `WITH PASSWORD`, password hashes and tokens in an `INSERT` |
-| [`diagnostic-notes.txt`](examples/diagnostic-notes.txt) | Hard cases: a name with no capital letters, an address written with `[at]`, a birth date with the month in letters, a PIN, a security answer, a password split in two strings, JSON escapes, coordinates in degrees, a network share; and look-alikes that stay visible |
-| [`proxy.pac`](examples/proxy.pac) | A proxy auto-config file: domains written as suffixes (`.example.test`, `*.corp.example.test`), an internal ending, a listed project name; a public service and a private address stay visible |
-| [`chat-export.txt`](examples/chat-export.txt) | A chat and a contact card: names with particles found from chat headers and mail headers then masked everywhere, a phone number spelled out, an e-mail cut over two lines and encoded in a link, a door code, a security answer, a password on two lines, a passport and a booking number, an address under its label, a Windows account; and look-alikes that stay visible |
-| [`app.env`](examples/app.env) | A settings file with `SECRET_KEY`, `JWT_SECRET_KEY`, `SECRET_KEY_BASE` and a session secret; `PRIMARY_KEY=id` and `SORT_KEY=created_at` stay readable |
-| [`network-private.txt`](examples/network-private.txt) | Private, loopback, CGNAT and link-local addresses, IPv4 and IPv6, netmasks and a version number: visible by default, masked with the private IP option (checked in `tests/expected/` as the `.private.txt` result) |
-| [`personal-data.txt`](examples/personal-data.txt) | Phone numbers, IBAN, cards, serial number, MAC, IPv6, GPS, paths with a user name, a license key, and values that must stay visible |
+| [`install-answers.conf`](examples/cases/install-answers.conf) | An installer answers file: OIDC secret, registry and database passwords, keys, connection URLs with passwords, customer domain |
+| [`install-console.txt`](examples/cases/install-console.txt) | Console output from a failing install: PostgreSQL URL with a password, `Proxy-Authorization` header, public IP, email address in a log |
+| [`german.txt`](examples/cases/german.txt) | The same kinds of data in German: a support mail with titles, closing formula, tax and insurance numbers, phone formats, one-time codes, and look-alikes that stay visible |
+| [`customer-email.txt`](examples/cases/customer-email.txt) | An email from a customer describing their problem and pasting a secret and passwords along the way (including one written in French) |
+| [`directory-and-cloud.txt`](examples/cases/directory-and-cloud.txt) | LDAP/Active Directory entries (DN, `uid=`, SID, `sAMAccountName`), labeled cloud accounts (tenant, subscription, account, project, ARN), one-time codes, recovery codes, reset links, `git@host:path`; `client_id`, `uidNumber` and `default` stay visible |
+| [`browsing.har`](examples/cases/browsing.har) | A browser network export: credentials sent at sign-in, session cookie, access token, customer domain |
+| [`kubernetes.yaml`](examples/cases/kubernetes.yaml) | A kubeconfig (key data, token) and a Kubernetes `Secret`; a `ConfigMap` and a public certificate stay readable |
+| [`commands.sh`](examples/cases/commands.sh) | Commands from a shell history: `curl -u`, `--password`, `mysql -p`, `sshpass`, an API key header, an exported token |
+| [`netrc.conf`](examples/cases/netrc.conf) | A `.netrc` file, in its two layouts |
+| [`users.csv`](examples/cases/users.csv) | A CSV export: the password column, e-mail addresses, phone numbers |
+| [`dump.sql`](examples/cases/dump.sql) | A SQL dump: `IDENTIFIED BY`, `WITH PASSWORD`, password hashes and tokens in an `INSERT` |
+| [`diagnostic-notes.txt`](examples/cases/diagnostic-notes.txt) | Hard cases: a name with no capital letters, an address written with `[at]`, a birth date with the month in letters, a PIN, a security answer, a password split in two strings, JSON escapes, coordinates in degrees, a network share; and look-alikes that stay visible |
+| [`proxy.pac`](examples/cases/proxy.pac) | A proxy auto-config file: domains written as suffixes (`.example.test`, `*.corp.example.test`), an internal ending, a listed project name; a public service and a private address stay visible |
+| [`chat-export.txt`](examples/cases/chat-export.txt) | A chat and a contact card: names with particles found from chat headers and mail headers then masked everywhere, a phone number spelled out, an e-mail cut over two lines and encoded in a link, a door code, a security answer, a password on two lines, a passport and a booking number, an address under its label, a Windows account; and look-alikes that stay visible |
+| [`app.env`](examples/cases/app.env) | A settings file with `SECRET_KEY`, `JWT_SECRET_KEY`, `SECRET_KEY_BASE` and a session secret; `PRIMARY_KEY=id` and `SORT_KEY=created_at` stay readable |
+| [`network-private.txt`](examples/cases/network-private.txt) | Private, loopback, CGNAT and link-local addresses, IPv4 and IPv6, netmasks and a version number: visible by default, masked with the private IP option (checked in `tests/expected/` as the `.private.txt` result) |
+| [`personal-data.txt`](examples/cases/personal-data.txt) | Phone numbers, IBAN, cards, serial number, MAC, IPv6, GPS, paths with a user name, a license key, and values that must stay visible |
 
 For each text example, demo folder included, [`tests/expected/`](tests/expected/) holds the expected result at both levels. To check that the engine still produces them:
 
@@ -252,7 +252,7 @@ index.html          the page: interface, detection engine and archive reader (in
 config.example.js   example product settings (copy to config.local.js, which is not published)
 assets/               the logo (header) and the page icons
 ocr/                Tesseract.js OCR engine and language data (English, French, German), with their licenses
-examples/           invented test data
+examples/           invented test data: cases/ (one subject per file, checked by the tests) and demo/ (a realistic batch to drop on the page)
 tests/verify.js     checks the engine against the test data
 tests/expected/     expected results, per example and per level
 docs/               screenshots used in this README (invented data)

@@ -33,14 +33,14 @@ const LEVELS = { secret: {}, sensitive: { sensitive: true }, private: { sensitiv
 const PRIVATE_EXAMPLES = new Set(['network-private.txt']);
 let mismatches = 0;
 
-// Every text file under examples/, folders included (examples/demo/); images are for the OCR, checked by hand
+// Every text file under examples/, folders included (examples/cases/, examples/demo/); images are for the OCR, checked by hand
 function walk(dir, rel) {
   return fs.readdirSync(dir, { withFileTypes: true }).sort((x, y) => x.name.localeCompare(y.name))
     .flatMap((e) => e.isDirectory() ? walk(path.join(dir, e.name), rel + e.name + '/') : [rel + e.name]);
 }
 const SKIP = /\.(png|jpe?g|webp|gif|bmp)$|(^|\/)README\.md$/i;
 for (const rel of walk(examplesDir, '').filter((n) => !SKIP.test(n))) {
-  const name = path.basename(rel), flat = rel.replace(/\//g, '__');   // expected results are kept flat: demo__app-events.json.secret.txt
+  const name = path.basename(rel), flat = rel.replace(/\//g, '__');   // expected results are kept flat: cases__german.txt.secret.txt
   const text = fs.readFileSync(path.join(examplesDir, rel), 'utf8');
   for (const level of Object.keys(LEVELS).filter((l) => l !== 'private' || PRIVATE_EXAMPLES.has(name))) {
     const actual = ctx.sanitize(text, ctx.detect(text, name, LEVELS[level]));
