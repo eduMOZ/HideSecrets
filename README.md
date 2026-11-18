@@ -76,11 +76,12 @@ Nothing in a log says that `Orion` is a customer or `project-aurora` a code name
 ### Reviewing many files
 
 - **File list**: on the left, with the number of items found in each file and a ✓ once you have viewed it.
+- **Choosing what goes in the ZIP**: every file has a checkbox, checked by default. Uncheck a file you do not need (a screenshot of nothing, a log of another service): it is struck through, and it stays out of the ZIP. A count above the list ("3 of 5 files are in the ZIP") and the ZIP button ("Download 3 of 5 files (ZIP)") keep track. **Exclude all** and **Include all** change every file at once; while a search is active they become **Exclude matches** and **Include matches** and only touch the matching files, so "exclude everything, then check the three you want" and "exclude every `.png`" are both quick. A file left out does not hold the ZIP back while its image is still being read, it does not take a number in the shared numbering (the `[SECRET_n]` of the other files have no gap), and you can still download it alone with "Download clean version".
 - **Moving between files**: the ← → (or ↑ ↓) keys, or the arrows above the content. The content and its detections stay on screen.
 - **Search**: type part of a file name above the list. Matching files are highlighted; Enter opens the next one, Shift+Enter the previous one, Escape clears the search.
 - **Zoom**: the − + buttons, the `+` `-` keys, or a trackpad pinch (⌘ + scroll). Each image opens in "Fit" (`0`), which shows the whole image without enlarging a small one; "Actual size" (`1`) shows it at the size it had on screen.
 - **Moving a zoomed image**: hold space and drag (the cursor becomes a hand), or swipe with two fingers on a trackpad. Without space, a drag draws a rectangle.
-- **Progress**: while images are being read, the ZIP button shows how many are done.
+- **Progress**: while images are being read, the ZIP button shows how many of the images that go in it are done. The images you left out are read last.
 - **An image that could not be read** (the text reader failed, or the page was opened by double-clicking the file) has nothing masked unless you draw a rectangle. Such an image is left out of the ZIP, after a confirmation that lists it, and downloading it alone asks first, so that an unmasked copy is never exported by mistake.
 
 ### Accepted files
@@ -96,7 +97,7 @@ The cleaned ZIP of an archive keeps the layout and file names: `<archive>-clean/
 
 Use "Choose a folder…" or drop the folder on the page. Everything the folder and its subfolders hold is read: images, text files (logs, XML, JSON, configuration, scripts… see [Accepted files](#accepted-files)) and archives. Hidden files are left out, except the ones known by name (`.env`, `.npmrc`…). Any other file (a PDF, a database, a binary) is **listed under the drop zone and left out of the cleaned ZIP**: look at that list, such files may hold secrets.
 
-"Download all (ZIP)" then gives `<folder>-clean.zip`, holding a `<folder>-clean/` folder with the same layout and the **same file names** as the original, so each cleaned file can replace its original by hand. Images in GIF or BMP format come back as PNG, so their extension changes.
+Every file of the folder is checked for the ZIP; uncheck the ones you do not want in it (see [Reviewing many files](#reviewing-many-files)). "Download all (ZIP)", or "Download n of m files (ZIP)" when some are left out, then gives `<folder>-clean.zip`, holding a `<folder>-clean/` folder with the same layout and the **same file names** as the original, so each cleaned file can replace its original by hand. Images in GIF or BMP format come back as PNG, so their extension changes.
 
 Files dropped one by one go into the ZIP as `masked-screenshots/<name>` for images and `<name>-clean.<ext>` for text files. Pasted text is copied, not zipped.
 
