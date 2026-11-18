@@ -83,15 +83,22 @@
   #work #text, #work #imgwrap, #work #list, #flist { flex:1; min-height:0; max-height:none; overflow:auto; }
   #work:not(.many) > #side { display:none; }   /* one file: no file list */
   @media (max-width:800px) { #work, #work.many { grid-template-columns:1fr; height:auto; } #work #text, #work #imgwrap, #work #list, #flist { max-height:60vh; } }
-  .frow { display:flex; gap:6px; align-items:center; width:100%; text-align:left; border:0; border-bottom:1px solid var(--line); border-radius:0; padding:6px 12px; font-size:12.5px; }
+  /* One row per file: a checkbox (in the ZIP or not) and a button that opens the file */
+  .frow { display:flex; gap:8px; align-items:center; width:100%; border-bottom:1px solid var(--line); padding:0 12px; font-size:12.5px; cursor:pointer; }
+  .frow .fx { flex:none; margin:0; cursor:pointer; }
+  .frow .fsel { flex:1; min-width:0; display:flex; gap:6px; align-items:center; text-align:left; border:0; border-radius:0; background:transparent; color:inherit; font-size:inherit; padding:6px 0; }
   /* Long names are cut at the start: the end (date, number) is what tells files apart */
   .frow .fn { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; direction:rtl; text-align:left; }
   .frow .st { font-size:11.5px; color:var(--muted); white-space:nowrap; }
   .frow .st.hit { color:var(--hit-line); font-weight:600; }
-  .frow::before { content:''; width:1em; flex:none; color:var(--muted); }
-  .frow.seen::before { content:'✓'; }
+  .frow .fsel::before { content:''; width:1em; flex:none; color:var(--muted); }
+  .frow.seen .fsel::before { content:'✓'; }
   .frow.cur { background:var(--accent); color:var(--on-accent); }
   .frow.cur .st { color:var(--on-accent); }
+  .frow.cur .fx { accent-color:var(--on-accent); }
+  /* A file left out of the ZIP */
+  .frow.off .fn { text-decoration:line-through; opacity:.6; }
+  #fzip { display:flex; flex-wrap:wrap; gap:4px 8px; align-items:center; justify-content:space-between; padding:6px 12px; border-bottom:1px solid var(--line); }
   #ocrbar { padding:10px 12px; border-bottom:1px solid var(--line); background:color-mix(in srgb, var(--accent) 6%, var(--card)); }
   #ocrbar .orow { display:flex; gap:8px; align-items:center; }
   #ocrbar label { display:block; margin-bottom:5px; font-size:12.5px; font-weight:600; }
@@ -227,6 +234,8 @@
       </div>
       <div id="fsearch"><span id="fqw"><input type="search" id="fq" placeholder="Search a file name…" aria-label="Search a file name"><button type="button" id="fqx" aria-label="Clear the search" title="Clear the search">×</button></span>
         <span class="small" id="fqn"></span></div>
+      <div id="fzip" style="display:none"><span class="small" id="zcount"></span>
+        <span class="bar"><button id="zinc" class="del">Include all</button><button id="zexc" class="del">Exclude all</button></span></div>
       <div id="flist"></div>
     </div>
     <div class="card">
@@ -2173,7 +2182,9 @@ function makeSampleHar() {
     F.seen = true;
     $('fname').textContent = '— ' + F.path;
     renderFiles(); render();
+      // The file on screen first, then the ones that go in the ZIP; the files left out are read last
     if (first) $('work').scrollIntoView({ block: 'start' });
+      if (i < 0) i = queue.findIndex(function (g) { return !g.excluded; });
     if (F.row) F.row.scrollIntoView({ block: 'nearest' });
   }
   function step(d) { if (files.length > 1) select((cur + d + files.length) % files.length); }
@@ -2223,13 +2234,21 @@ function makeSampleHar() {
     var many = files.length > 1, list = $('flist'), hits = 0, seen = 0;
     $('work').classList.toggle('many', many);
     $('nav').style.display = many ? '' : 'none';
-    $('dlzip').style.display = files.filter(function (f) { return !f.pasted; }).length > 1 ? 'block' : 'none';
+    var zippable = zipFiles(), showZip = zippable.length > 1;
+    $('dlzip').style.display = showZip ? 'block' : 'none';
+    $('fzip').style.display = showZip ? '' : 'none';
     files.forEach(function (f, i) {
       if (!f.row) {
-        f.row = document.createElement('button');
+        f.row = document.createElement('div');
         f.row.className = 'frow'; f.row.title = f.path;
-        f.row.innerHTML = '<span class="fn"></span><span class="st"></span>';
-        f.row.firstChild.textContent = f.label || f.name.replace(/\.[^.]+$/, "");   // full path in the tooltip
+        f.row.innerHTML = '<input type="checkbox" class="fx"><button type="button" class="fsel"><span class="fn"></span><span class="st"></span></button>';
+        f.cb = f.row.firstChild; f.st = f.row.lastChild.lastChild;
+        f.row.lastChild.firstChild.textContent = f.label || f.name.replace(/\.[^.]+$/, "");   // full path in the tooltip
+        if (f.pasted) { f.cb.style.visibility = 'hidden'; f.cb.tabIndex = -1; }   // pasted text is copied, not zipped
+        f.cb.title = 'Include this file in the ZIP';
+        f.cb.setAttribute('aria-label', 'Include ' + f.path + ' in the ZIP');
+        f.cb.onclick = function (e) { e.stopPropagation(); };   // ticking the box does not open the file
+        f.cb.onchange = function () { f.excluded = !f.cb.checked; renderFiles(); };
         f.row.onclick = function () { select(files.indexOf(f)); };
         list.appendChild(f.row);
       }
@@ -2240,9 +2259,9 @@ function makeSampleHar() {
       if (n) hits++;
       if (f.seen) seen++;
       var hit = query && f.path.toLowerCase().indexOf(query) >= 0;
-      f.row.className = 'frow' + (i === cur ? ' cur' : '') + (f.seen ? ' seen' : '') + (query ? (hit ? ' match' : ' nomatch') : '');
-      f.row.lastChild.textContent = st;
-      f.row.lastChild.className = 'st' + (n ? ' hit' : '');
+      f.row.className = 'frow' + (i === cur ? ' cur' : '') + (f.seen ? ' seen' : '') + (f.excluded ? ' off' : '') + (query ? (hit ? ' match' : ' nomatch') : '');
+      f.st.textContent = st;
+      f.st.className = 'st' + (n ? ' hit' : '');
     });
     var waiting = files.some(function (f) { return f.kind === 'image' && (f.status === 'loading' || f.status === 'reading'); });
     $('ocrbar').style.display = waiting ? '' : 'none';
@@ -2260,10 +2279,13 @@ function makeSampleHar() {
   function updateButtons() {
     var pending = function (f) { return f.status === 'loading' || f.status === 'reading'; };
     $('dl').disabled = !F || pending(F);
-    $('dlzip').disabled = files.some(function (f) { return !f.pasted && pending(f); });
-    var imgs = files.filter(function (f) { return f.kind === 'image'; });
+    // Only the files that go in the ZIP matter: a file left out never has to be finished
+    var inc = inZip(), total = zipFiles().length;
+    $('dlzip').disabled = !inc.length || inc.some(pending);
+    var imgs = inc.filter(function (f) { return f.kind === 'image'; });
     var left = imgs.filter(pending).length;
-    $('dlzip').textContent = left ? 'Download all (ZIP): reading images, ' + (imgs.length - left) + ' of ' + imgs.length + ' done'
+    $('dlzip').textContent = left ? 'Download ' + (inc.length < total ? 'selected' : 'all') + ' (ZIP): reading images, ' + (imgs.length - left) + ' of ' + imgs.length + ' done'
+      : inc.length < total ? 'Download ' + inc.length + ' of ' + total + ' files (ZIP)'
       : 'Download all (ZIP)';
   }
 
@@ -2439,6 +2461,16 @@ function makeSampleHar() {
       }
       drawCanvas();
     }
+  // ---------- Choosing what goes in the ZIP ----------
+  // Every file is in the ZIP unless it is unchecked in the list (f.excluded). Pasted text is copied, never zipped.
+  function zipFiles() { return files.filter(function (f) { return !f.pasted; }); }
+  function inZip() { return zipFiles().filter(function (f) { return !f.excluded; }); }
+  // "Include all" / "Exclude all" act on the files that match the search while one is active
+  function zipTargets() { return (query ? matches() : files).filter(function (f) { return !f.pasted; }); }
+  function setIncluded(list, on) { list.forEach(function (f) { f.excluded = !on; }); renderFiles(); }
+  $('zinc').onclick = function () { setIncluded(zipTargets(), true); };
+  $('zexc').onclick = function () { setIncluded(zipTargets(), false); };
+
   });
 
   // ---------- Detection list ----------
@@ -2454,6 +2486,7 @@ function makeSampleHar() {
     // Domains come first (the customer domain, then other domains): they are the quick decisions
     var rank = function (d) { return d.type === 'Customer domain' ? 0 : d.type === 'Other domain' ? 1 : 2; };
     var ordered = its.slice().sort(function (a, b) { return rank(a) - rank(b); });
+      f.cb.checked = !f.excluded;
     ordered.forEach(function (d) {
       if (seen[d.key]) return; seen[d.key] = true;
       var n = its.filter(function (x) { return x.key === d.key; }).length;
@@ -2465,6 +2498,11 @@ function makeSampleHar() {
       t.textContent = d.type + (n > 1 ? (isImg ? '  (' + n + ' areas)' : '  (×' + n + ')') : '');
       var v = document.createElement('div'); v.className = 'val';
       v.textContent = d.value ? (d.value.length > 70 ? d.value.slice(0, 70) + '…' : d.value) : Math.round(d.w) + ' × ' + Math.round(d.h) + ' px';
+    var nIn = inZip().length;
+    $('zcount').textContent = nIn === zippable.length ? 'All ' + nIn + ' files are in the ZIP' : nIn + ' of ' + zippable.length + ' files are in the ZIP';
+    $('zinc').textContent = query ? 'Include matches' : 'Include all';
+    $('zexc').textContent = query ? 'Exclude matches' : 'Exclude all';
+    $('zinc').disabled = $('zexc').disabled = !zipTargets().length;
       lab.appendChild(t); lab.appendChild(v);
       if (d.type === 'Customer domain') {
         var hint = document.createElement('div'); hint.className = 'small';
@@ -2552,9 +2590,10 @@ function makeSampleHar() {
     return name.replace(/\.[^./]*$/, '') + ext;
   }
   // { blob, single: name for a single download, zip: path inside the archive }
-  // The text files of a batch share one numbering ([SECRET_1] is the same value in every file); pasted text has its own
+  // The text files of a batch share one numbering ([SECRET_1] is the same value in every file); pasted text has its own.
+  // A file left out of the ZIP is not part of the batch: it must not leave gaps in the numbers of the others.
   function batchState() {
-    return batchNumbering(files.filter(function (x) { return x.kind === 'text' && !x.pasted && x.status !== 'unreadable'; }).map(function (x) { return x.dets; }));
+    return batchNumbering(files.filter(function (x) { return x.kind === 'text' && !x.pasted && !x.excluded && x.status !== 'unreadable'; }).map(function (x) { return x.dets; }));
   }
   function output(f, shared) {
     if (f.kind === 'text') {
@@ -2631,11 +2670,11 @@ function makeSampleHar() {
   }
   $('dlzip').onclick = function () {
     var shared = batchState();
-    var left = files.filter(function (f) { return !f.pasted && unprotected(f); });
+    var left = inc.filter(unprotected);
     if (left.length && !confirm(left.length + ' image' + (left.length > 1 ? 's' : '') + ' could not be read and ' + (left.length > 1 ? 'have' : 'has') + ' no masked area:\n\n' +
         left.slice(0, 8).map(function (f) { return '  ' + f.path; }).join('\n') + (left.length > 8 ? '\n  … and ' + (left.length - 8) + ' more' : '') +
         '\n\n' + (left.length > 1 ? 'They would' : 'It would') + ' be exported unmasked, so ' + (left.length > 1 ? 'they are' : 'it is') + ' left out of the ZIP. Continue without ' + (left.length > 1 ? 'them' : 'it') + '? (Cancel: go back and mask by hand.)')) return;
-    mapLimit(files.filter(function (f) { return !f.pasted && !unprotected(f); }), 3, function (f) {
+    mapLimit(inc.filter(function (f) { return !unprotected(f); }), 3, function (f) {
       return output(f, shared).then(function (o) {
         if (!o) return null;
         return o.blob.arrayBuffer().then(function (buf) { return { zip: o.zip, blob: o.blob, size: buf.byteLength, crc: crc32(new Uint8Array(buf)) }; });
@@ -2756,3 +2795,5 @@ function makeSampleHar() {
 </script>
 </body>
 </html>
+    var inc = inZip();   // the files unchecked in the list stay out
+    if (!inc.length) return;
