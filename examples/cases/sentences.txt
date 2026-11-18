@@ -1,0 +1,21 @@
+Passwords and secrets given in a sentence or after a loose label. Every marked value (it holds two capital Z) must be masked.
+
+le mot de passe du compte admin est aZZ1q7Lm2x.
+The password for the registry is aZZ2q7Lm2x
+J'ai mis ZZ3Secret! comme secret client.
+login: admin / aZZ4q7Lm2x
+identifiants : admin/aZZ5q7Lm2x
+user admin pass aZZ6q7Lm2x
+pw: aZZ7q7Lm2x
+OIDC client secret [none]: aZZ8q7Lm2x
+msg="using client secret aZZ9q7Lm2x for issuer"
+valkey: AUTH aZZ10q7Lm2x failed
+redis-cli -a aZZ11q7Lm2x ping
+
+Look-alikes that stay readable:
+The password for the registry is required.
+the password for the user is invalid today
+Please use the token as described in the docs.
+redis-cli ping
+AUTH failed for client
+login: admin / see the docs

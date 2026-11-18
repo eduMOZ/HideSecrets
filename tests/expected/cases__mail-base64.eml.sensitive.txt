@@ -1,0 +1,18 @@
+From: [EMAIL_1]
+To: [EMAIL_2]
+Subject: Re: installation (encoded parts)
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="BOUND"
+
+--BOUND
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: base64
+
+[SECRET_1]
+--BOUND
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: base64
+
+RXZlcnl0aGluZyBpcyBmaW5lLCB0aGUgc2VydmljZSByZXN0YXJ0ZWQgYXQgMTA6MDAgYW5kIG5v
+dGhpbmcgZWxzZSBjaGFuZ2VkLgo=
+--BOUND--

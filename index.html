@@ -269,7 +269,7 @@ function reEscape(v) { return v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 // translate the lists, and add a few first names; the rest of the engine does not change.
 var LANGS = {
   en: {
-    secret: ['password', 'passwd', 'pwd', 'pass[ _-]?phrase', 'api[ _-]?key', 'apikey', 'credential'],
+    secret: ['password', 'passwd', 'pwd', 'pw', 'pass[ _-]?phrase', 'api[ _-]?key', 'apikey', 'credential'],
     secretLabel: ['password', 'passwd', 'passphrase'],
     codeWords: ['(?:verification|security|confirmation|one[- ]time|login|sign[- ]?in|authentication|2fa|mfa|sms)[ _-]?(?:code|pin|passcode)', '\\botp\\b', '\\btotp\\b'],
     codeIs: ['is', 'was', 'sent'],
@@ -391,17 +391,18 @@ var NAME = '(?:' + lang('secret') + '|auth|secret(?:[ _-]?key(?:[ _-]?base)?)?|t
 // ("Password:" alone at the end of a line, then "WARNING!" below it).
 var RULES = [
   { type: 'Private key (PEM)', g: 0, re: /-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/gd },
+  { type: 'Private key (PEM, cut)', g: 0, re: /-----BEGIN [A-Z ]*PRIVATE KEY-----(?:[ \t]*\r?\n[ \t]*[A-Za-z0-9+\/=]{16,}[ \t]*)+/gd },
   { type: 'JWT', g: 0, re: /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/gd },
   { type: 'Known API key', g: 0, re: /(?<![\w-])(?:AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{30,}|sk-[A-Za-z0-9_-]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|AIza[0-9A-Za-z_-]{35})\b/gd },
   { type: 'Authorization header', g: 1, re: /authorization(?:\\?["'])?[ \t]*[:=][ \t]*(?:\\?["'])?(?:(?:Bearer|Basic|Token|Digest|Negotiate)\s+)?([^\s"'\\,;]{4,})/gid },
   { type: 'Cookie header', g: 1, needsEq: true, cookie: true, re: new RegExp('(?:\\b|(?<=[a-z]))(?:' + lang('cookieHeader') + ')(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*(?:\\\\?["\'])?([^\\r\\n"\\\\]{4,})', 'gid') },
   { type: 'client_secret', g: 1, re: /client[ _-]?secret(?:\\?["'])?[ \t]*[:=][ \t]*(?:\\?["'])?((?:[^\s"'&,;}\\<>]|\\u[0-9a-fA-F]{4}|\\[\\\/bfnrt])+)/gid },
   // Password embedded in a URL: postgres://user:PASSWORD@host, redis://:PASSWORD@host
-  { type: 'Password in a URL', g: 1, re: /\b[a-z][a-z0-9+.-]*:\/\/[^\s:\/@"']*:([^\s@\/"']+)@/gid },
+  { type: 'Password in a URL', g: 1, re: /(?<![A-Za-z0-9+.-])[a-z][a-z0-9+.-]*:\/\/[^\s:\/@"']*:([^\s\/"'?#]+)@(?=[^\s@\/"'?#]+(?:[:\/?#\s"']|$))/gid },
   // A secret written as two or three strings: password = "Demo" + "Only!729"
   { type: 'Password (split in strings)', g: 1, re: /\b(?:password|passwd|pwd|secret|token|api[_-]?key)(?:\\?["'])?[ \t]*[:=][ \t]*(["'][^"'\n]{1,60}["'](?:[ \t]*\+[ \t]*["'][^"'\n]{1,60}["'])+)/gid },
   // Tokens in a link: ...?code=demo_k8P4t9 (long, with letters and digits: code=200 or state=ready are not secrets)
-  { type: 'URL parameter (code, state…)', g: 1, mixed: true, re: /(?<![A-Za-z_])(?:code|state|nonce|invite|invitation|sig|signature|auth|sid|sessionid|ticket)=([A-Za-z0-9._~%-]{8,})/gid },
+  { type: 'URL parameter (code, state…)', g: 1, mixed: true, re: /(?:(?<![A-Za-z_])(?:code|state|nonce|invite|invitation|sig|signature|auth|sid|sessionid|ticket)|(?<![A-Za-z])(?:session_state|relaystate))=([A-Za-z0-9._~%-]{8,})/gid },
   // A door, gate or Wi-Fi code given in a sentence: "le code pour entrer demain est 7391#"
   { type: 'Access code', g: 1, re: new RegExp('(?<![A-Za-z0-9])(?:' + lang('accessCode') + ')(?:[ \\t]+\\p{L}{2,12}){0,3}?[ \\t]*(?:[:=]|' + lang('is') + ')[ \\t]*["\'«]?([A-Za-z0-9#*]{3,12})', 'giud') },
   // "Password Test-7731", "Passwort ist Test-7731": a password label, then a value mixing letters and digits
@@ -410,7 +411,7 @@ var RULES = [
   { type: 'Security answer', g: 1, re: new RegExp('(?:' + lang('securityCtx') + ')[^\\n]{0,60}?(?:' + lang('answer') + ')[ \\t]+(?:' + lang('is') + ')[ \\t]*[«"“]\\s*([^»"”\\n]{2,40}?)\\s*[»"”]', 'gid') },
   // A secret that does not fit "name=value": quoted with spaces ('Demo SSH!72#orange'), or  password "value"  (nginx, netrc style).
   // It must hold a digit or a symbol: "Password is required" is a message.
-  { type: 'Password (quoted)', g: 3, strong: true, re: /([A-Za-z0-9_.-]*(?:password|passwd|passphrase|pass[ _-]phrase|pwd|secret)[A-Za-z0-9_-]*)(?:\\?["'])?[ \t]*[:=][ \t]*(["'])((?:(?!\2)[^\n\\]){6,80})\2/gid },
+  { type: 'Password (quoted)', g: 3, strong: true, re: /(?<![A-Za-z0-9_.-])([A-Za-z0-9_.-]*(?:password|passwd|passphrase|pass[ _-]phrase|pwd|secret)[A-Za-z0-9_-]*)(?:\\?["'])?[ \t]*[:=][ \t]*(["'])((?:(?!\2)[^\n\\]){6,80})\2/gid },
   { type: 'Password (quoted)', g: 2, strong: true, re: /\b(?:password|passwd|passphrase|secret|token)[ \t]+(["'])([^"'\n]{6,80})\1/gid },
   // Values that only their surroundings give away: {"event":"secret.loaded","value":"…"}, Terraform outputs, YAML blocks, recovery data
   { type: 'Secret value (JSON)', g: 1, re: /(?:secret|password|passphrase|token|credential)[^\n]{0,120}?"value"[ \t]*:[ \t]*"([^"\\\n]{6,200})"/gid },
@@ -418,7 +419,7 @@ var RULES = [
   { type: 'Security answer', g: 1, re: /"question"[ \t]*:[ \t]*"[^"\n]*"[ \t]*,[ \t]*"answer"[ \t]*:[ \t]*"([^"\n]{2,80})"/gid },
   { type: 'Recovery codes', g: 1, re: new RegExp('(?:' + lang('recovery') + ')(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*\\[([^\\]\\n]{4,300})\\]', 'gid') },
   { type: 'Recovery codes', g: 2, re: new RegExp('(?:' + lang('recovery') + ')(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*(["\'])([^"\'\\n]{4,300})\\1', 'gid') },
-  { type: 'Secret (YAML block)', g: 1, re: /[A-Za-z0-9_.-]*(?:secret|password|passphrase|token|api[ _-]?key|credential)[A-Za-z0-9_-]*:[ \t]*[>|][-+]?[ \t]*\r?\n[ \t]+(\S[^\n]*(?:\r?\n[ \t]+\S[^\n]*)*)/gid },
+  { type: 'Secret (YAML block)', g: 1, re: /(?<![A-Za-z0-9_.-])[A-Za-z0-9_.-]*(?:secret|password|passphrase|token|api[ _-]?key|credential)[A-Za-z0-9_-]*:[ \t]*[>|][-+]?[ \t]*\r?\n[ \t]+(\S[^\n]*(?:\r?\n[ \t]+\S[^\n]*)*)/gid },
   // A code sent to the user: "Your verification code is 482913", "OTP: 771204"
   { type: 'One-time code', g: 1, re: new RegExp('(?:' + lang('codeWords') + ')(?:[ \\t]+(?:' + lang('codeIs') + '|:|=))*[ \\t]*[:=]?[ \\t]*["\']?(\\d{4,8})(?!\\d)', 'gid') },
   { type: 'Recovery codes', g: 1, re: new RegExp('(?:' + lang('recovery') + ')(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*((?:[A-Za-z0-9]{4,}(?:-[A-Za-z0-9]{3,})*)(?:[ \\t]*[,;][ \\t]*[A-Za-z0-9]{4,}(?:-[A-Za-z0-9]{3,})*)*)', 'gid') },
@@ -455,7 +456,30 @@ var RULES = [
   { type: 'Password (netrc)', g: 1, words: true, re: /\bmachine[ \t]+\S+[ \t\r\n]+login[ \t]+\S+[ \t\r\n]+password[ \t]+([^\s"']{4,})/gid },
   // SQL: IDENTIFIED BY 'x', WITH PASSWORD 'x', PASSWORD('x')
   { type: 'SQL password', g: 1, re: /\b(?:IDENTIFIED[ \t]+BY|WITH[ \t]+(?:ENCRYPTED[ \t]+)?PASSWORD|PASSWORD)[ \t]*\(?[ \t]*(?:PASSWORD[ \t]+)?'([^'\r\n]{3,})'/gid },
-  { type: 'Password / token / key', g: 2, words: true, re: new RegExp('([A-Za-z0-9_.-]*' + NAME + '[0-9_-]*(?![A-Za-z]))(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*(?:\\\\?["\'])?((?:[^\\s"\'&,;}\\\\<>]|\\\\u[0-9a-fA-F]{4}|\\\\[\\\\\\/bfnrt])+)', 'gid') }
+  // "The password for the registry is X", "le mot de passe du compte admin est X.": a few words between the label and the verb
+  { type: 'Password (in a longer sentence)', g: 1, mixed: true, re: new RegExp('(?<![A-Za-z0-9])(?:' + lang('secretLabel') + ')(?:[ \\t]+[\\p{L}0-9_.@\u2019\'-]{1,30}){1,4}?[ \\t]+(?:' + lang('is') + '|=)[ \\t]+["\'«]?([A-Za-z0-9][^\\s"\'<>,;»]{4,39}?)(?=[.!?)»"\']*(?:[ \\t\\r\\n]|$))', 'giud') },
+  // "J'ai mis X comme secret client", "set X as the password"
+  { type: 'Password (put as secret)', g: 1, strong: true, re: new RegExp('\\b(?:mis|mets|met|mettre|put|set|use|used|using|utilis[eé]|utilise|nutze|verwende)[ \\t]+["\'«]?([^\\s"\'»]{5,40})["\'»]?[ \\t]+(?:comme|as|for|pour|als|f(?:ü|ue)r)[ \\t]+(?:(?:le|la|un|une|a|the|mon|ma|my|das|den|ein|mein)[ \\t]+)?(?:' + lang('secretLabel') + '|secret|token|clé|cle|key)', 'gid') },
+  // "login: admin / X", "identifiants : admin/X"
+  { type: 'Password (login / password)', g: 1, mixed: true, re: /\b(?:logins?|identifiants?|credentials?|anmeldedaten|zugangsdaten|user(?:name)?|compte|account)[ \t]*[:=][ \t]*[\w.@-]{2,40}[ \t]*\/[ \t]*([^\s"'\/,;]{5,40})/gid },
+  // "user admin pass X"
+  { type: 'Password (user … pass …)', g: 1, re: new RegExp('\\b(?:user(?:name)?|login)[ \\t]+[\\w.@-]{2,40}[ \\t]+(?:pass|' + lang('secretLabel') + ')[ \\t]+["\']?([^\\s"\']{4,40})', 'gid') },
+  // "OIDC client secret [none]: X": an installer prompt with its default in brackets
+  { type: 'Password (prompt with default)', g: 1, re: new RegExp('(?:client[ _-]?secret|secret|' + lang('secretLabel') + ')[ \\t]*\\[[^\\]\\n]{0,30}\\][ \\t]*[:=][ \\t]*["\']?([^\\s"\'<>,;]{4,60})', 'gid') },
+  // "using client secret X for issuer"
+  { type: 'Password (in a log sentence)', g: 1, mixed: true, re: new RegExp('\\b(?:using|use|with|utilise|avec|verwende|mit)[ \\t]+(?:the[ \\t]+|le[ \\t]+|la[ \\t]+|den[ \\t]+)?(?:client[ _-]?secret|secret|' + lang('secretLabel') + '|token|api[ _-]?key)[ \\t]+["\']?([A-Za-z0-9][^\\s"\'<>,;]{5,60})', 'gid') },
+  // Redis: AUTH X, redis-cli -a X
+  { type: 'Password (AUTH command)', g: 1, mixed: true, re: /\bAUTH[ \t]+(?:[\w.-]{1,30}[ \t]+(?=[^\s"',;]*\d))?(?=[^\s"',;]*\d)([A-Za-z0-9][^\s"',;]{5,60})/gd },
+  { type: 'Command-line password', g: 1, re: /\bredis-cli\b[^\n|;&]*?[ \t]-a[ \t]+["']?([^\s"'-][^\s"']{2,})/gid },
+  // A hidden or text field of an HTML form: <input type="hidden" name="client_secret" value="X">, in either order
+  { type: 'Form field value', g: 2, re: new RegExp('<input\\b[^>]*?\\bname=["\']?[A-Za-z0-9_.-]*' + NAME + '[0-9_-]*["\'\\s>][^>]*?\\bvalue=(["\'])([^"\'\\n]{4,})\\1', 'gid') },
+  { type: 'Form field value', g: 1, re: new RegExp('<input\\b[^>]*?\\bvalue="([^"\\n]{4,})"[^>]*?\\bname=["\']?[A-Za-z0-9_.-]*' + NAME + '[0-9_-]*["\'\\s>]', 'gid') },
+  // A JWK's private part
+  { type: 'JWK private key', g: 1, re: /"kty"[ \t]*:[^{}]*?"(?:d|p|q|dp|dq|qi|k)"[ \t]*:[ \t]*"([A-Za-z0-9_-]{16,})"/gid },
+  { type: 'JWK private key', g: 1, re: /"(?:d|p|q|dp|dq|qi|k)"[ \t]*:[ \t]*"([A-Za-z0-9_-]{16,})"[^{}]*?"kty"/gid },
+  // A variable name with a secret in it, then its value after spaces or a tab (a table, an HTML table once its tags are gone)
+  { type: 'Password / token / key (table)', g: 1, mixed: true, re: /(?<![A-Za-z0-9_])[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*_(?:SECRET|PASSWORD|PASSWD|PASSPHRASE|TOKEN|[A-Z]*KEY)(?:_[A-Z0-9]+)*(?:\t|[ ]{2,})["']?([A-Za-z0-9][^\s"']{5,100})/gd },
+  { type: 'Password / token / key', g: 2, words: true, re: new RegExp('(?<![A-Za-z0-9_.-])([A-Za-z0-9_.-]*' + NAME + '[0-9_-]*(?![A-Za-z]))(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*(?:\\\\?["\'])?((?:[^\\s"\'&,;}\\\\<>]|\\\\u[0-9a-fA-F]{4}|\\\\[\\\\\\/bfnrt])+)', 'gid') }
 ];
 // A cookie is secret if its name says so, or if its value is long and is not a word (theme=dark is not)
 var COOKIE_NAME = new RegExp('(sess|auth|token|sid|jwt|key|secret|login|csrf|xsrf|^_ga|^_gid|^_gat|^_gcl|^_fb[pc]$|_hj|^ajs_|amplitude|^mp_|^__utm|^_pk_|^_uet|visitor|anonymous|device[_-]?id|tracking|' + lang('cookieName') + ')', 'i');   // tracking cookies identify a person too
@@ -518,13 +542,13 @@ function regexPass(text, out) {
   }
 }
 
-var URL_TOKEN_NAME = /^(?:code|state|nonce|invite|invitation|sig|signature|auth|sid|sessionid|ticket)$/i;
+var URL_TOKEN_NAME = /^(?:code|state|nonce|invite|invitation|sig|signature|auth|sid|sessionid|ticket|session_state|relaystate)$/i;
 function harPass(text, out) {
   var j;
   try { j = JSON.parse(text); } catch (e) { return false; }
   if (!j || !j.log || !Array.isArray(j.log.entries)) return false;
   var SENS_NAME = new RegExp(NAME, 'i');
-  var SENS_HEADER = /^(authorization|proxy-authorization|cookie|set-cookie|x-api-key|x-auth-token|x-access-token)$/i;
+  var SENS_HEADER = /^(authorization|proxy-authorization|cookie|set-cookie|x-api-key|x-auth-token|x-access-token)$|csrf|xsrf/i;
   function push(v, type, depth, strict) {
     if (typeof v !== 'string' || v.length < 6 || IGNORE.test(v)) return;
     if (strict && !strictOk(v)) return;   // a sentence or a word is not a secret
@@ -563,9 +587,16 @@ function harPass(text, out) {
       if (cookieIsSecret(String(c.name), String(c.value))) push(c.value, 'Cookie "' + c.name + '"', 0);
     });
     var urlTok = function (n, v) { return URL_TOKEN_NAME.test(n) && typeof v === 'string' && v.length >= 8 && /\d/.test(v) && /[A-Za-z]/.test(v); };
-    (m.queryString || []).forEach(function (q) { if (SENS_NAME.test(q.name) || urlTok(q.name, q.value)) push(q.value, 'URL parameter "' + q.name + '"', 0, true); });
+    var samlName = /^SAML(?:Response|Request|art)$/i;
+    (m.queryString || []).forEach(function (q) {
+      if (samlName.test(q.name)) push(q.value, 'SAML message', 0);
+      else if (SENS_NAME.test(q.name) || urlTok(q.name, q.value)) push(q.value, 'URL parameter "' + q.name + '"', 0, true);
+    });
     if (m.postData) {
-      (m.postData.params || []).forEach(function (p) { if (SENS_NAME.test(p.name) || urlTok(p.name, p.value)) push(p.value, 'Body: "' + p.name + '"', 0, true); });
+      (m.postData.params || []).forEach(function (p) {
+        if (samlName.test(p.name)) push(p.value, 'SAML message', 0);
+        else if (SENS_NAME.test(p.name) || urlTok(p.name, p.value)) push(p.value, 'Body: "' + p.name + '"', 0, true);
+      });
       body(m.postData.text, m.postData.mimeType, 1);
     }
     if (m.content && m.content.text && m.content.encoding !== 'base64') body(m.content.text, m.content.mimeType, 1);
@@ -612,6 +643,47 @@ function secretManifestPass(text, out) {
       }
     }
   });
+}
+
+// Kubernetes env entries and Helm extraEnv:  - name: SECRET_VARIABLE / value: X  (also in flow or JSON form)
+function nameValuePass(text, out) {
+  var S = new RegExp('^[A-Za-z0-9_.-]*' + NAME + '[0-9_-]*$', 'i');
+  function add(v, a, b) {
+    var val = text.slice(a, b);
+    if (val.length >= 4 && plausible(val) && !IGNORE.test(val) && !/^\$|^\{\{/.test(val)) out.push({ start: a, end: b, type: 'Secret value (name / value pair)' });
+  }
+  var yaml = /(?:^|[\s{,-])["']?name["']?[ \t]*:[ \t]*["']?([A-Za-z0-9_.-]+)["']?[ \t]*(?:\r?\n[ \t]*(?:-[ \t]+)?|,[ \t]*)["']?value["']?[ \t]*:[ \t]*(?:"((?:[^"\\\r\n]|\\.)*)"|'([^'\r\n]*)'|([^\s#,}"'][^\r\n#,}]*?))[ \t]*(?=[#,}\r\n]|$)/gid, m;
+  while ((m = yaml.exec(text))) {
+    if (!S.test(m[1])) continue;
+    var g = m[2] !== undefined ? 2 : m[3] !== undefined ? 3 : 4, ix = m.indices[g];
+    if (ix) add(m[g], ix[0], ix[1]);
+  }
+}
+// A mail part in base64 (Content-Transfer-Encoding: base64): a reader sees nothing, an assistant decodes it.
+// The part is read; when a secret is inside, the whole encoded body goes.
+function mimeBase64Pass(text, out) {
+  var re = /^Content-Transfer-Encoding:[ \t]*base64[ \t]*\r?\n(?:[^\r\n]+\r?\n)*\r?\n((?:[A-Za-z0-9+\/]{4,}={0,2}[ \t]*(?:\r?\n|$))+)/gim, m;
+  while ((m = re.exec(text))) {
+    var body = m[1].replace(/\s+$/, ''), raw;
+    try {
+      var bin = atob(body.replace(/\s+/g, ''));
+      var bytes = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      raw = new TextDecoder('utf-8').decode(bytes);
+    } catch (e) { continue; }   // not base64 text
+    if (raw.length > 8 && (raw.match(/[\x20-\x7e\n\r\t]/g) || []).length > raw.length * 0.9 && detect(raw, '', {}).length) {
+      var at = m.index + m[0].indexOf(m[1]);
+      out.push({ start: at, end: at + body.length, type: 'Mail body (base64) holding a secret' });
+    }
+  }
+}
+// A key stored raw in a file whose name says it is a key: vapid_private.key, keys/vapid.txt
+function rawKeyFilePass(text, filename, out) {
+  if (!/(?:^|[\/\\_.-])(?:vapid|private[_-]?key|secret[_-]?key|signing[_-]?key|master[_-]?key|encryption[_-]?key)|\.key$/i.test(filename || '')) return;
+  var re = /^[ \t]*([A-Za-z0-9_+\/=-]{32,})[ \t\r]*$/gm, m;
+  while ((m = re.exec(text))) {
+    var at = m.index + m[0].indexOf(m[1]);
+    out.push({ start: at, end: at + m[1].length, type: 'Key file content' });
+  }
 }
 // "Password:" alone at the end of a line, the secret on the next line(s): chat boxes, mails, terminals
 function nextLinePasswordPass(text, out) {
@@ -791,6 +863,8 @@ var PUBLIC_DOMAINS = new Set(('github.com githubusercontent.com github.io docker
   'rust-lang.org crates.io maven.org apache.org postgresql.org redis.io nginx.org nginx.com openssl.org ' +
   'w3.org ietf.org openid.net oauth.net schema.org json-schema.org wikipedia.org ' +
   'slack.com zoom.us okta.com auth0.com ' +
+  'valkey.io keycloak.org cert-manager.io jetstack.io traefik.io k3s.io rancher.com grafana.com prometheus.io elastic.co sentry.io ' +
+  'min.io minio.io bitnami.com pkg.dev ntp.org sectigo.com globalsign.com zscaler.net ' +
   'example.com example.org example.net example.test').split(' ')   // reserved example domains (test data)
   .concat(cfgList('publicDomains').map(function (d) { return d.toLowerCase(); })));   // the product's own public domains
 // The same, written as a suffix: dnsDomainIs(host, ".example.com"), "*.example.com" (proxy auto-config files, certificates)
@@ -1257,6 +1331,9 @@ function detectCore(text, filename, opts) {
   secretManifestPass(text, raw);
   sqlInsertPass(text, raw);
   nextLinePasswordPass(text, raw);
+  nameValuePass(text, raw);
+  mimeBase64Pass(text, raw);
+  rawKeyFilePass(text, filename, raw);
   if (/\.(csv|tsv)$/i.test(filename)) csvPass(text, raw);
   if (/\.har$/i.test(filename) || /^\s*\{/.test(text)) harPass(text, raw);
   raw = raw.reduce(function (acc, d) { return acc.concat(expandJsonCookie(text, d)); }, []);
@@ -1368,20 +1445,48 @@ function readArchive(name, u8) {
 }
 
 // JSON logs write characters as \u005f, \u0040, \u0020…: the text is also read decoded, and the spans are mapped back
+// Text can hide a value from the rules without hiding it from a reader: A escapes, terminal colors
+// (ESC[32m between a name and its "="), quoted-printable mail (=3D, a line cut with "="), simple HTML tags.
+// The rules read a decoded copy; every position found in it is mapped back to the original text.
+function decodedView(text, filename) {
+  var fn = filename || '';
+  var uni = /\\u[0-9a-fA-F]{4}/.test(text), ansi = text.indexOf('\x1b[') >= 0;
+  var html = /\.html?$/i.test(fn) || /<\/(?:td|th|p|b|i|u|em|strong|span|div|li|code|pre|font|h[1-6])>/i.test(text);
+  var mail = /\.(?:eml|mbox)$/i.test(fn) || /^(?:MIME-Version|Content-Transfer-Encoding|Content-Type):/mi.test(text);
+  var qp = /quoted-printable/i.test(text) || /=3D/.test(text) || (mail && /[A-Za-z0-9.,;: ]=\r?\n/.test(text));
+  if (!(uni || ansi || html || qp)) return null;
+  var parts = [];
+  if (uni) parts.push('\\\\u([0-9a-fA-F]{4})');                       // 1
+  if (ansi) parts.push('\\x1b\\[[0-9;?]*[ -\\/]*[@-~]');             // 2
+  if (qp) parts.push('=(?:\\r?\\n|([0-9A-Fa-f]{2}))');                 // 3: soft line break, or =XX
+  if (html) parts.push('(<(?:\\/?(?:td|th|tr|table|tbody|thead|p|b|i|u|em|strong|span|div|li|ul|ol|code|pre|font|h[1-6]|small|label)\\b[^>]{0,200}|br\\s*\\/?)>)', '(&(?:nbsp|amp|lt|gt|quot|#39|#x27);)');   // 4, 5
+  var re = new RegExp(parts.join('|'), 'gi'), dec = '', os = [], oe = [], last = 0, m;
+  // group numbers: only the capturing groups count
+  var g = 0; if (uni) g++; var gHex = qp ? ++g : 0; var gTag = html ? ++g : 0; var gEnt = html ? ++g : 0;
+  function put(str, a, b) { for (var i = 0; i < str.length; i++) { dec += str.charAt(i); os.push(a); oe.push(b); } }
+  function copy(a, b) { for (var i = a; i < b; i++) { dec += text.charAt(i); os.push(i); oe.push(i + 1); } }
+  while ((m = re.exec(text))) {
+    copy(last, m.index); last = m.index + m[0].length;
+    var rs = m.index, re_ = last;
+    if (uni && m[1] !== undefined) put(String.fromCharCode(parseInt(m[1], 16)), rs, re_);
+    else if (m[0].charAt(0) === '\x1b') { /* colors: dropped */ }
+    else if (qp && m[0].charAt(0) === '=' && gHex && m[gHex] === undefined) { /* soft line break: dropped */ }
+    else if (qp && m[0].charAt(0) === '=' && gHex && m[gHex] !== undefined) put(String.fromCharCode(parseInt(m[gHex], 16)), rs, re_);
+    else if (gTag && m[gTag] !== undefined) put(/^<br/i.test(m[0]) ? '\n' : ' ', rs, re_);
+    else if (gEnt && m[gEnt] !== undefined) put({ nbsp: ' ', amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'", '#x27': "'" }[m[0].slice(1, -1).toLowerCase()], rs, re_);
+    else copy(rs, re_);
+  }
+  copy(last, text.length);
+  if (dec === text) return null;
+  return { dec: dec, os: os, oe: oe };
+}
+
 function detect(text, filename, opts) {
   var plainRes = detectCore(text, filename, opts);
-  if (!/\\u[0-9a-fA-F]{4}/.test(text)) return plainRes;
-  var dec = '', qs = [], last = 0, em, ere = /\\u([0-9a-fA-F]{4})/g;
-  while ((em = ere.exec(text))) {
-    dec += text.slice(last, em.index); qs.push(dec.length);   // decoded position of this escape
-    dec += String.fromCharCode(parseInt(em[1], 16)); last = em.index + 6;
-  }
-  dec += text.slice(last);
-  var before = function (x) { var lo = 0, hi = qs.length; while (lo < hi) { var mid = (lo + hi) >> 1; if (qs[mid] < x) lo = mid + 1; else hi = mid; } return lo; };   // escapes before x
-  var toStart = function (x) { return x + 5 * before(x); };
-  var toEnd = function (e) { var x = e - 1, k = before(x); return x + 5 * k + (qs[k] === x ? 6 : 1); };
-  var mapped = detectCore(dec, filename, opts).map(function (d) {
-    return { start: toStart(d.start), end: toEnd(d.end), type: d.type, prefix: d.prefix, sens: d.sens, key: d.key };
+  var view = decodedView(text, filename);
+  if (!view) return plainRes;
+  var mapped = detectCore(view.dec, filename, opts).map(function (d) {
+    return { start: view.os[d.start], end: view.oe[d.end - 1], type: d.type, prefix: d.prefix, sens: d.sens, key: d.key };
   });
   var all = mapped.concat(plainRes);   // the decoded reading first: its keys match the plain text of the same value
   var res = keepLongest(all.map(function (d) { return d; }));
@@ -1393,9 +1498,11 @@ function detect(text, filename, opts) {
   return res;
 }
 
-// A given value always gets the same placeholder; different values stay distinguishable
-function sanitize(text, dets) {
-  var nums = {}, counts = {}, out = '', pos = 0;
+// A given value always gets the same placeholder; different values stay distinguishable.
+// "shared" (from batchNumbering) makes that true across the files of a batch: the same value has the same
+// placeholder in every file, so a reader (or an AI assistant) can follow it from one file to the next.
+function sanitize(text, dets, shared) {
+  var nums = shared ? shared.nums : {}, counts = shared ? shared.counts : {}, out = '', pos = 0;
   dets.forEach(function (d) {
     if (!d.checked) return;
     var p = d.prefix || 'SECRET', k = p + '|' + d.key;
@@ -1404,6 +1511,18 @@ function sanitize(text, dets) {
     pos = d.end;
   });
   return out + text.slice(pos);
+}
+// One numbering for several files, in the order of the list
+function batchNumbering(detLists) {
+  var shared = { nums: {}, counts: {} };
+  detLists.forEach(function (dets) {
+    (dets || []).forEach(function (d) {
+      if (!d.checked) return;
+      var p = d.prefix || 'SECRET', k = p + '|' + d.key;
+      if (!(k in shared.nums)) shared.nums[k] = shared.counts[p] = (shared.counts[p] || 0) + 1;
+    });
+  });
+  return shared;
 }
 
 // ---------- Images: from OCR text to rectangles to mask ----------
@@ -2182,7 +2301,7 @@ function makeSampleHar() {
   function statusText(f) {
     if (f.status === 'loading') return 'Loading image…';
     if (f.status === 'reading') return 'Reading the text in the image… You can already draw rectangles.';
-    if (f.status === 'error') return 'Automatic reading failed (' + f.error + '). Mask areas by hand.';
+    if (f.status === 'error') return 'Automatic reading failed (' + f.error + '). Mask areas by hand: until one is masked, this image is left out of the ZIP and its download asks for a confirmation.';
     if (f.status === 'unreadable') return 'This image could not be opened.';
     return '';
   }
@@ -2433,10 +2552,14 @@ function makeSampleHar() {
     return name.replace(/\.[^./]*$/, '') + ext;
   }
   // { blob, single: name for a single download, zip: path inside the archive }
-  function output(f) {
+  // The text files of a batch share one numbering ([SECRET_1] is the same value in every file); pasted text has its own
+  function batchState() {
+    return batchNumbering(files.filter(function (x) { return x.kind === 'text' && !x.pasted && x.status !== 'unreadable'; }).map(function (x) { return x.dets; }));
+  }
+  function output(f, shared) {
     if (f.kind === 'text') {
       if (f.status === 'unreadable') return Promise.resolve(null);
-      var blob = new Blob([sanitize(f.text, f.dets)], { type: 'text/plain;charset=utf-8' });
+      var blob = new Blob([sanitize(f.text, f.dets, f.pasted ? null : (shared || batchState()))], { type: 'text/plain;charset=utf-8' });
       var cut = f.path.indexOf('/');
       return Promise.resolve({ blob: blob, single: cleanName(f.name), zip: (f.fromArchive || f.fromFolder) && cut > 0 ? f.path.slice(0, cut) + '-clean' + f.path.slice(cut) : cleanName(f.path) });
     }
@@ -2462,8 +2585,16 @@ function makeSampleHar() {
     if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).then(function () { done(true); }, fallback);
     else fallback();
   }
+  // An image the OCR could not read, with no area masked by hand, would be exported as an unmasked copy
+  function unprotected(f) {
+    return f.kind === 'image' && f.status === 'error' && !f.confirmed && !f.regions.some(function (r) { return r.checked; });
+  }
   $('dl').onclick = function () {
     if (F.pasted) { copyText(sanitize(F.text, F.dets), $('dl')); return; }
+    if (unprotected(F)) {
+      if (!confirm('The text in this image could not be read and no area is masked: the file you download is an unmasked copy.\n\nDownload it anyway?')) return;
+      F.confirmed = true;
+    }
     output(F).then(function (o) { if (o) saveBlob(o.blob, o.single); });
   };
 
@@ -2499,8 +2630,13 @@ function makeSampleHar() {
     return Promise.all(ps).then(function () { return res; });
   }
   $('dlzip').onclick = function () {
-    mapLimit(files.filter(function (f) { return !f.pasted; }), 3, function (f) {
-      return output(f).then(function (o) {
+    var shared = batchState();
+    var left = files.filter(function (f) { return !f.pasted && unprotected(f); });
+    if (left.length && !confirm(left.length + ' image' + (left.length > 1 ? 's' : '') + ' could not be read and ' + (left.length > 1 ? 'have' : 'has') + ' no masked area:\n\n' +
+        left.slice(0, 8).map(function (f) { return '  ' + f.path; }).join('\n') + (left.length > 8 ? '\n  … and ' + (left.length - 8) + ' more' : '') +
+        '\n\n' + (left.length > 1 ? 'They would' : 'It would') + ' be exported unmasked, so ' + (left.length > 1 ? 'they are' : 'it is') + ' left out of the ZIP. Continue without ' + (left.length > 1 ? 'them' : 'it') + '? (Cancel: go back and mask by hand.)')) return;
+    mapLimit(files.filter(function (f) { return !f.pasted && !unprotected(f); }), 3, function (f) {
+      return output(f, shared).then(function (o) {
         if (!o) return null;
         return o.blob.arrayBuffer().then(function (buf) { return { zip: o.zip, blob: o.blob, size: buf.byteLength, crc: crc32(new Uint8Array(buf)) }; });
       });

@@ -48,7 +48,7 @@ The "a fake .log", "a fake .har" and "a fake screenshot" buttons let you try it 
 1. **Choose what to mask**: "Secrets only", or "Secrets and sensitive data" (see below).
 2. **Give it some content**: paste text into the text box, **paste a screenshot** (⌘V / Ctrl+V anywhere on the page), drop one or more files or archives (see [Accepted files](#accepted-files)), or choose or drop a folder.
 3. **Review.** Each detected value is highlighted in the text or blacked out on the image, and listed on the right. Uncheck what should stay readable; a decision applies to every occurrence of the same value in that file. On an image, draw a rectangle to mask an area by hand, or click an area to turn it on or off.
-4. **Get the result**: "Copy clean text" for pasted text, "Download clean version" for a file, or "Download all (ZIP)" when there are several. The originals are never changed.
+4. **Get the result**: "Copy clean text" for pasted text, "Download clean version" for a file, or "Download all (ZIP)" when there are several. The originals are never changed. In a batch, the text files share one numbering: `[SECRET_2]` is the same value in every file, so a reader can follow it from one file to the next.
 
 ### Choosing what to mask
 
@@ -81,6 +81,7 @@ Nothing in a log says that `Orion` is a customer or `project-aurora` a code name
 - **Zoom**: the − + buttons, the `+` `-` keys, or a trackpad pinch (⌘ + scroll). Each image opens in "Fit" (`0`), which shows the whole image without enlarging a small one; "Actual size" (`1`) shows it at the size it had on screen.
 - **Moving a zoomed image**: hold space and drag (the cursor becomes a hand), or swipe with two fingers on a trackpad. Without space, a drag draws a rectangle.
 - **Progress**: while images are being read, the ZIP button shows how many are done.
+- **An image that could not be read** (the text reader failed, or the page was opened by double-clicking the file) has nothing masked unless you draw a rectangle. Such an image is left out of the ZIP, after a confirmation that lists it, and downloading it alone asks first, so that an unmasked copy is never exported by mistake.
 
 ### Accepted files
 
@@ -242,7 +243,9 @@ The tool helps you review; it does not guarantee that nothing is left. Always ch
 - **Chat headers**: a name alone on a line with a time is taken for a person (`Scheduled Backup 02:00` too): uncheck it, or turn the category off.
 - **A four-part version number** (`1.84.2.0`) can be mistaken for a public IP: uncheck it.
 - **Not detected**: national identity numbers, personal names in file names, postal addresses and birth dates that no label announces, and any value with no clue around it. Phone-number patterns can match some long numbers: uncheck them, or turn the category off.
-- **Documents** (PDF, Word, Excel, PowerPoint), video, network captures and password-manager exports are not read. Do not share them through this tool.
+- **Documents** (PDF, Word, Excel, PowerPoint), Outlook `.msg` mail files (save the mail as `.eml` or paste its text), video, network captures and password-manager exports are not read. Do not share them through this tool.
+- **Encoded text**: terminal colors, quoted-printable mail (`=3D`, lines cut with `=`) and simple HTML tags are read through before the rules apply. A mail part in base64 is decoded and read; if a secret is inside, the whole encoded part is masked (not just the secret). Other encodings (a secret written in hexadecimal or base64 inside a log line, for example) are not decoded.
+- **Very short passwords** (three characters or fewer) in a connection URL are not masked.
 - **Very large files** (HAR files of several tens of MB): the display can slow down.
 
 ## Repository layout

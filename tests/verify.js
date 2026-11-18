@@ -23,7 +23,7 @@ vm.createContext(ctx);
 vm.runInContext(fs.readFileSync(path.join(root, 'config.example.js'), 'utf8'), ctx);
 // The archive reader needs a few browser APIs, which Node provides as globals
 Object.assign(ctx, { Blob, DecompressionStream, TextDecoder, atob });
-vm.runInContext(engine[1] + ';this.detect = detect; this.sanitize = sanitize; this.readArchive = readArchive;', ctx);
+vm.runInContext(engine[1] + ';this.detect = detect; this.sanitize = sanitize; this.batchNumbering = batchNumbering; this.readArchive = readArchive;', ctx);
 
 const update = process.argv.includes('--update');
 const examplesDir = path.join(root, 'examples');
@@ -157,6 +157,51 @@ async function archiveTests() {
   ctx.ARCHIVE_MAX_BYTES = 512 * 1024 * 1024;
   const bad = await ctx.readArchive('x.zip', new Uint8Array(Buffer.from('not a zip at all, just text'))).then(() => 'read', (e) => e.message);
   eq('zip: garbage is refused', bad, 'not a zip file');
+
+  // ---------- Nothing marked may survive ----------
+  // The golden files record what the engine does today, misses included. This check states what must never
+  // happen: in the fixtures of examples/, every invented secret carries the marker "ZZ" (two capital Z), and
+  // no marked value may appear in the output, in whole or in pieces, at either level, with LF or CRLF line
+  // endings. Cleaning an already cleaned text must change nothing.
+  {
+    const MARK = /[A-Za-z0-9_+\/.!%-]*ZZ[A-Za-z0-9_+\/.!%-]*/g;
+    const pieces = (tok) => { const w = []; for (let i = 0; i + 8 <= tok.length; i++) w.push(tok.slice(i, i + 8)); return w.length ? w : [tok]; };
+    for (const rel of walk(examplesDir, '').filter((n) => !SKIP.test(n))) {
+      const base = fs.readFileSync(path.join(examplesDir, rel), 'utf8');
+      const toks = [...new Set(base.match(MARK) || [])];
+      if (!toks.length) continue;
+      const name = path.basename(rel);
+      for (const level of ['secret', 'sensitive']) {
+        for (const [variant, text] of [['LF', base], ['CRLF', base.replace(/\n/g, '\r\n')]]) {
+          const out = ctx.sanitize(text, ctx.detect(text, name, LEVELS[level]));
+          const left = toks.filter((t) => pieces(t).some((w) => out.includes(w)));
+          eq('never appears: ' + rel + ' (' + level + ', ' + variant + ')', left, []);
+        }
+        const once = ctx.sanitize(base, ctx.detect(base, name, LEVELS[level]));
+        eq('idempotent: ' + rel + ' (' + level + ')', ctx.sanitize(once, ctx.detect(once, name, LEVELS[level])), once);
+      }
+    }
+  }
+  // The same value has the same placeholder in every file of a batch
+  {
+    const a = 'FXA_COOKIE_KEY=aZZ1q7Lm2x\nPASSWORD=bZZ2q7Lm2x\n', b = 'PASSWORD=bZZ2q7Lm2x\nTOKEN=cZZ3q7Lm2xtoken\n';
+    const da = ctx.detect(a, 'a.env', {}), db = ctx.detect(b, 'b.env', {});
+    const shared = ctx.batchNumbering([da, db]);
+    eq('batch numbering: file a', ctx.sanitize(a, da, shared), 'FXA_COOKIE_KEY=[SECRET_1]\nPASSWORD=[SECRET_2]\n');
+    eq('batch numbering: file b', ctx.sanitize(b, db, shared), 'PASSWORD=[SECRET_2]\nTOKEN=[SECRET_3]\n');
+    eq('batch numbering: one file alone is unchanged', ctx.sanitize(b, db), 'PASSWORD=[SECRET_1]\nTOKEN=[SECRET_2]\n');
+  }
+  // A very long unbroken token must not freeze the page (it used to take minutes)
+  {
+    const t0 = Date.now();
+    for (const unit of ['QUJD', 'a.', '0123456789abcdef']) { const t = 'blob: ' + unit.repeat(Math.ceil(300000 / unit.length)) + '\n'; ctx.detect(t, 'a.log', { sensitive: true }); }
+    eq('speed: long single tokens take under 3 s', Date.now() - t0 < 3000, true);
+  }
+  // Well-known public software and certificate authorities stay visible; an unknown domain is masked
+  {
+    const t = 'repo https://charts.bitnami.com/x, valkey.io, keycloak.org, pool.ntp.org, acme-corp.fr';
+    eq('public domains stay visible', ctx.sanitize(t, ctx.detect(t, 'a.txt', { sensitive: true })), 'repo https://charts.bitnami.com/x, valkey.io, keycloak.org, pool.ntp.org, [DOMAIN_1]');
+  }
 }
 
 archiveTests().then(function () {

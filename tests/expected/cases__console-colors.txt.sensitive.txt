@@ -1,0 +1,5 @@
+Text copied from a terminal that colors its output: an escape code sits between the name and the "=".
+[32mNIMBUS_VALKEY_PASSWORD[0m=[SECRET_1]
+[1;33mNIMBUS_COOKIE_KEY[0m: [SECRET_2]
+[36mpassword[0m=[31m[SECRET_3][0m
+[90m2026-11-17T10:00:00Z[0m [32mINFO[0m listening on :8443

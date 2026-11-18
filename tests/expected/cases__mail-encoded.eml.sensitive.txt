@@ -1,0 +1,16 @@
+From: [EMAIL_1]
+To: [EMAIL_2]
+Subject: Re: installation
+MIME-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+Bonjour,
+
+Voici ce que j'ai dans le fichier :
+client_secret=3D"[SECRET_1]"
+Mot de passe : [SECRET_2]
+Pour info, le mot de passe =
+admin est [SECRET_3] et il ne change pas.
+
+Contact =C3=A0 jour : [EMAIL_3]

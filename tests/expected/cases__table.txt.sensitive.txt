@@ -1,0 +1,5 @@
+A two-column table of variables: the secrets are masked, the others stay readable.
+NIMBUS_VALKEY_PASSWORD          [SECRET_1]
+NIMBUS_COOKIE_KEY               [SECRET_2]
+NIMBUS_REPLICAS                 3
+NIMBUS_LOG_LEVEL                debug

@@ -1,0 +1,19 @@
+From: support@nimbus-cloud.test
+To: ops@example-customer.test
+Subject: Re: installation (encoded parts)
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="BOUND"
+
+--BOUND
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: base64
+
+Qm9uam91ciwKbGUgbW90IGRlIHBhc3NlIGR1IGNvbXB0ZSBhZG1pbiBlc3QgYVpaMXE3TG0yeApD
+b3JkaWFsZW1lbnQK
+--BOUND
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: base64
+
+RXZlcnl0aGluZyBpcyBmaW5lLCB0aGUgc2VydmljZSByZXN0YXJ0ZWQgYXQgMTA6MDAgYW5kIG5v
+dGhpbmcgZWxzZSBjaGFuZ2VkLgo=
+--BOUND--
