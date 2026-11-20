@@ -158,6 +158,13 @@ function cases() {
   c.push(one('token', 'secret', ['API-Schliissel: ', V('demo4f8Q2kL9xW3mZ7')]));                                                      // "ü" read as "ii"
   c.push(one('file-name', 'sensitive', ['Anhang: Bericht_', V('JanMüller'), '.pdf']));                                              // the "_" lost between two names
   c.push(Object.assign(one('token', 'secret', ['API_T0KEN=', V('demo4f8Q2kL9xW3mZ7')]), { ocrOnly: true }));
+  // The "@" of a prompt read as "e"; a space after the ":" of "postgresql://" and one before the password's ":"; the capital of a first name read as "s"
+  c.push(Object.assign(one('login', 'sensitive', [V('m.mueller@bereitstellung-01'), ':~/infrastruktur$ ./bereitstellen.sh --kunde beispielwerk\n', V('m.muellerebereitstellung-01'), ':~/infrastruktur$ cat kundenwerte.yaml\n']), { ocrOnly: true }));
+  // An address spells ö as oe: it tells the name written with the accent
+  c.push(one('name', 'sensitive', ['kontaktadresse: ', V('soeren.gross@example.com'), '\n[WARN] Anmeldung fehlgeschlagen für ', V('Sören Groß'), ' von [2001:db8:91::7]\n']));
+  c.push(Object.assign(one('url-password', 'secret', ['verbindung: "postgresql: //svc_portal :', V('Demo%23Datenbank72'), '@db.example.net:5432/portal"']), { ocrOnly: true }));
+  c.push(Object.assign(one('url-password', 'secret', ['verbindung: "postgresql: //svc_portal:', V('Demo%40Bach%2391'), '@daten.example.net:5432/portal"']), { ocrOnly: true }));
+  c.push(Object.assign(one('name', 'sensitive', ['ansprechpartner: "', V('Sören Groß'), '"\nkontaktadresse: ', V('soeren.gross@example.com'), '\n[TRACE] Benutzerattribute: {"name":"', V('sören'), ' ', V('Groß'), '"}\n']), { ocrOnly: true }));
 
   // ---------- Found on screenshots of a support session (a terminal and a mail) ----------
   // German quotation marks: »…« (reversed from the French «…») and „…“
@@ -321,7 +328,7 @@ function cases() {
     'Das Konto lautet auf den Kunden.', 'Seriennr.: erforderlich', 'Quelle: https://docs.example.org/s/uebersicht', 'Link: https://git.example.net/files/Release2Beta',
     'Der Vertrag wurde am ersten Mai zweitausendzwanzig geschlossen.', 'Wir benötigen acht Tage und drei Wochen.', 'Prozesskennung=3817',
     'Die Entsperrphrase wurde geändert.', 'Das Geheimnis: Verschwiegenheit', 'Schlüssel: Wert', 'Bitte c/o weglassen.',
-    '[INFO] Freier Speicher=7052MB Dateirechte=0600 Port=9443', 'Nehmen Sie zuerst Folie 1 und hängen Sie Folie 2 an.'
+    '[INFO] Freier Speicher=7052MB Dateirechte=0600 Port=9443', 'Nehmen Sie zuerst Folie 1 und hängen Sie Folie 2 an.', 'verbindung: "postgresql://db.example.net:5432/portal"'
   ].forEach((t) => c.push(one('keep', 'secret', [K(t)])));
 
   return c;

@@ -430,8 +430,8 @@ var RULES = [
   // A cookie with its attributes, whose header the OCR lost or misread: "Sitzungscooki portal_sitzung=demo_…; Secure; HttpOnly"
   { type: 'Cookie (with attributes)', g: 2, cookieLike: true, re: /(?<![\w.-])([A-Za-z0-9_.-]{2,40})=([^\s;"']{6,})(?=;[ \t]*(?:[A-Za-z0-9_.-]+(?:=[^\s;]*)?;[ \t]*)*(?:Secure|HttpOnly|Path|Domain|SameSite|Expires|Max-Age)\b)/gd },
   { type: 'client_secret', g: 1, re: /(?:cl|dl?)ient[ _-]?secret(?:\\?["'])?(?:[ \t]*[:=][ \t]*|[ \t]+(?=["']?[^\s"']*\d))(?:\\?["'])?((?:[^\s"'&,;}\\<>]|\\u[0-9a-fA-F]{4}|\\[\\\/bfnrt])+)/gid },
-  // Password embedded in a URL: postgres://user:PASSWORD@host, redis://:PASSWORD@host (a space before "://" or before the password's ":" is an OCR misreading)
-  { type: 'Password in a URL', g: 1, re: /(?<![A-Za-z0-9+.-])[a-z][a-z0-9+.\]|!-]*[ \t]?:\/\/[^\s:\/@"']*[ \t]?:([^\s\/"'?#]+)@(?=[^\s@\/"'?#]+(?:[:\/?#\s"']|$))/gid },
+  // Password embedded in a URL: postgres://user:PASSWORD@host, redis://:PASSWORD@host (a space before or after the ":" of "://", or before the password's ":", is an OCR misreading)
+  { type: 'Password in a URL', g: 1, re: /(?<![A-Za-z0-9+.-])[a-z][a-z0-9+.\]|!-]*[ \t]?:[ \t]?\/\/[^\s:\/@"']*[ \t]?:([^\s\/"'?#]+)@(?=[^\s@\/"'?#]+(?:[:\/?#\s"']|$))/gid },
   // A secret written as two or three strings: password = "Demo" + "Only!729"
   { type: 'Password (split in strings)', g: 1, re: /\b(?:password|passwd|pwd|secret|token|api[_-]?key)(?:\\?["'])?[ \t]*[:=][ \t]*(["'][^"'\n]{1,60}["'](?:[ \t]*\+[ \t]*["'][^"'\n]{1,60}["'])+)/gid },
   // Tokens in a link: ...?code=demo_k8P4t9 (long, with letters and digits: code=200 or state=ready are not secrets)
@@ -1017,8 +1017,9 @@ function learnNames(text, found, out) {
   var firstF = new Set(), lastFold = new Set();
   first.forEach(function (w) { foldName(w).forEach(function (x) { firstF.add(x); }); });
   last.forEach(function (w) { foldName(w).forEach(function (x) { lastFold.add(x); }); });
-  var isFirst = function (w) { return first.has(w) || firstP.has(plain(w)) || foldName(w).some(function (x) { return firstF.has(x); }); };
-  var isLast = function (w) { return last.has(w) || lastP.has(plain(w)) || foldName(w).some(function (x) { return lastFold.has(x); }); };
+  // (soeren.gross@example.org tells "Sören Groß": the address spells ö as oe, the text keeps the accent)
+  var isFirst = function (w) { return first.has(w) || firstP.has(plain(w)) || foldName(w).some(function (x) { return firstF.has(x) || firstP.has(x); }); };
+  var isLast = function (w) { return last.has(w) || lastP.has(plain(w)) || foldName(w).some(function (x) { return lastFold.has(x) || lastP.has(x); }); };
   var sre = new RegExp('(?<![\\p{L}\\d_])(' + NAME_WORD + ')(?![\\p{L}\\d_])', 'gu'), toks = [], m;
   while ((m = sre.exec(text))) toks.push({ s: m.index, e: m.index + m[0].length, w: m[1], k: isFirst(m[1]) || isLast(m[1]) });
   var gap = function (a, b) { return /^[ \t]+(?:(?:de|du|des|van|von|der|den|da|di|del|la|le)[ \t]+)?$/.test(text.slice(a.e, b.s)); };
@@ -1041,6 +1042,9 @@ function learnNames(text, found, out) {
     var lm = /^[ \t]+(\p{Ll}[\p{L}'\u2019-]{2,})/u.exec(text.slice(t.e, t.e + 40));
     if (lm && foldName(lm[1]).some(function (x) { return lastF.has(x); })) out.push({ start: t.e + lm[0].length - lm[1].length, end: t.e + lm[0].length, type: 'Person name', prefix: 'PERSON', sens: true });
   });
+  // ... and the capital of a first name, read as a small letter right before a known family name: "sören Groß" for "Sören Groß"
+  var lre = /(?<![\p{L}\d_])(\p{Ll}[\p{L}'’-]{2,})[ \t]+(\p{Lu}[\p{L}'’-]+)(?![\p{L}\d_])/gu, lm2;
+  while ((lm2 = lre.exec(text))) if (isFirst(lm2[1]) && isLast(lm2[2])) out.push({ start: lm2.index, end: lm2.index + lm2[1].length, type: 'Person name', prefix: 'PERSON', sens: true });
   for (var i = 0; i < toks.length; i++) {
     if (!toks[i].k) continue;
     var j = i;
@@ -1542,6 +1546,8 @@ function repeatPass(text, res) {
       var u = v.replace(/^.*\\/, '').replace(/@.*$/, '');   // ATELIER\jdoe -> jdoe, jdoe@WS-0042 -> jdoe
       // a short plain word (info, mail) is no login to chase through the text: five letters, or a dot, a digit, a "-" or a "_"
       if (u.length >= 4 && /^[A-Za-z0-9._-]+$/.test(u) && (u.length >= 5 || /[.0-9_-]/.test(u)) && !GENERIC_USERS.has(u.toLowerCase())) want(u, 'login', d);
+      // The "@" of jdoe@WS-0042 is read as a letter by an OCR (jdoeeWS-0042): the whole login is chased in that form too
+      if (u !== v && /^[A-Za-z0-9._-]{4,}@[A-Za-z0-9.-]{3,}$/.test(v) && !/\\/.test(v)) ['e', 'a', 'o', '©', '®'].forEach(function (c) { want(v.replace('@', c), 'login', d); });
     } else if (d.prefix === 'PERSONAL') {
       dateForms(v).forEach(function (f) { want(f, 'date', d); });
     } else if (!d.prefix) {

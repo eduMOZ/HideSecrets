@@ -38,7 +38,7 @@ The report is written to `out/report.html` (each image after masking, and what i
 - text size: 13, 15 or 17 px;
 - image format: PNG, JPEG or WebP.
 
-The fonts (Noto Sans, Noto Sans Mono and Noto Serif) come from npm, so a screenshot looks the same on every machine.
+The fonts (Noto Sans, Noto Sans Mono and Noto Serif) come from npm, so the letters are the same on every machine. The way a system draws their edges is not (macOS and Linux differ), and the OCR then reads some words differently: see Accepted misses.
 
 ## Replays
 
@@ -48,7 +48,7 @@ Record again when the OCR changes: `verify.js` says so when a replay was made wi
 
 ## Accepted misses
 
-[`known-misses.json`](known-misses.json) lists the misses accepted for now, each with its reason. A run fails on a new miss, and on a listed miss that no longer happens, so the list can only shrink. Each image is read on a fresh page, because the OCR keeps some state from one image to the next. That keeps the results independent of the order the images are read in.
+The OCR misreads a page drawn on macOS and on Linux in different places, so each system has its own list of the misses accepted for now, each with its reason: [`known-misses.json`](known-misses.json) for macOS, where the page is developed, and [`known-misses.linux.json`](known-misses.linux.json) for the GitHub runners (their results repeat run after run). A run fails on a new miss. On macOS it also fails on a listed miss that no longer happens, so that list can only shrink; on Linux a miss that no longer happens is only reported, because a change to the page may fix a miss before a Linux run has seen it. The Linux list covers the smoke variants only: the nightly full run is report-only until every variant is listed (download its `out/` artifact to see the misses). Each image is read on a fresh page, because the OCR keeps some state from one image to the next. That keeps the results independent of the order the images are read in.
 
 ## Adding a screenshot
 
