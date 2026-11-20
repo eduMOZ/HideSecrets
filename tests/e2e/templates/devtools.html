@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="de" data-theme="dark"><head><meta charset="utf-8"><title>Netzwerkanalyse (de)</title>
+<link rel="stylesheet" href="base.css"><script src="template.js"></script>
+<style>
+  #shot { width: 1180px; --bg: #232327; --fg: #e8e8ea; --muted: #a6a6ad; --line: #3c3c43; --key: #79b8ff; --sel: #353b48; }
+  [data-theme=light] #shot { --bg: #ffffff; --fg: #1d1d1f; --muted: #5f6368; --line: #d0d0d7; --key: #1a4fd0; --sel: #e8f0fe; }
+  #shot { background: var(--bg); color: var(--fg); font-family: var(--mono); font-size: calc(var(--size) - 1px); }
+  .tabs { border-bottom: 1px solid var(--line); padding: 6px 12px; font-family: var(--sans); color: var(--muted); }
+  .sel { background: var(--sel); padding: 4px 12px; } .sec { padding: 6px 12px; } .k { color: var(--key); } .h { font-family: var(--sans); font-weight: 700; margin-top: 4px; }
+</style></head><body>
+<div id="shot">
+  <div class="tabs">Netzwerkanalyse · Alle · XHR · <span data-k>Status 302</span> · Methode GET</div>
+  <div class="sel">GET https://anmeldung.example.org/callback?code=<span data-s="token">demo_Anmeldung5vK7</span>&amp;state=<span data-s="token">demo_Zustand3pW9</span></div>
+  <div class="sec"><div class="h">Anfragekopfzeilen</div>
+    <span class="k">Authorization:</span> Bearer <span data-s="token">eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkZW1vIn0.c2lnbmF0dXJlZGVtbw</span><br>
+    <span class="k">Cookie:</span> sitzung=<span data-s="token">demo_Sitzung9pK3xQ</span>; <span data-k>theme=dark</span><br>
+    <span class="k">User-Agent:</span> Mozilla/5.0 (X11; Linux x86_64; rv:140.0)</div>
+  <div class="sec"><div class="h">Antwortkopfzeilen</div>
+    <span class="k">Set-Cookie:</span> anmeldung=<span data-s="token">demo_Anmelde4mT8zR2</span>; Path=/; Secure; HttpOnly<br>
+    <span class="k">Location:</span> https://konto.example.org/passwort-zuruecksetzen/<span data-s="token">demoX7kP2mQ9rL4vB8Zt</span><br>
+    <span class="k">Content-Length:</span> <span data-k>0</span></div>
+</div>
+</body></html>

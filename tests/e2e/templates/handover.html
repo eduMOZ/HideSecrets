@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><title>Mail client, device handover (de)</title>
+<link rel="stylesheet" href="base.css"><script src="template.js"></script>
+<style>
+  #shot { width: 1100px; --bg: #ffffff; --fg: #202124; --muted: #5f6368; --line: #dadce0; --head: #f6f8fc; --chip: #eef1f6; }
+  [data-theme=dark] #shot { --bg: #1f1f1f; --fg: #e3e3e3; --muted: #a8abb0; --line: #3c4043; --head: #2a2b2e; --chip: #303134; }
+  #shot { background: var(--bg); color: var(--fg); border: 1px solid var(--line); }
+  .head { background: var(--head); padding: 10px 18px; border-bottom: 1px solid var(--line); }
+  .subj { font-size: 1.4em; font-weight: 700; margin-bottom: 6px; } .muted { color: var(--muted); }
+  .cols { display: flex; align-items: flex-start; }
+  .body { padding: 14px 18px; width: 640px; border-right: 1px solid var(--line); }
+  .side { padding: 14px 18px; width: 340px; }
+  .quote { color: var(--muted); border-top: 1px solid var(--line); margin-top: 12px; padding-top: 8px; }
+  .att { display: block; background: var(--chip); border-radius: 6px; padding: 6px 12px; margin: 4px 0 12px; }
+</style></head><body>
+<!-- A mail of a customer to the support, in a mail client with the device handover on the side: the phrasings of a real screenshot
+     (German »…« quotes, a spelled-out phone number and birth date, a password given in two parts, a share link). Every value is invented. -->
+<div id="shot">
+  <div class="head">
+    <div class="subj">AW: Ersatzgerät und Zugang zur Kundenumgebung</div>
+    <div><span class="muted">Von:</span> Dr. <span data-s="name">Franziska Waldmann</span></div>
+    <div><span class="muted">An:</span> <span data-s="name">Björn Großmann</span></div>
+    <div><span class="muted">Datum:</span> <span data-k>20. November 2026, 09:18</span></div>
+  </div>
+  <div class="cols">
+    <div class="body">
+      Guten Morgen Herr <span data-s="name">Großmann</span>,<br>
+      bitte schicken Sie das Ersatzgerät an meine Privatanschrift:<br>
+      <span data-s="name">Franziska Waldmann</span><br>
+      c/o <span data-s="name">İlker Yılmaz</span><br>
+      <span data-s="address">Fiktivgässchen 18b, Hinterhaus, 3. OG links</span><br>
+      <span data-s="address">00000 Beispielstadt</span><br><br>
+      Für die Zuordnung: Ich bin am <span data-s="birth-date">neunten Oktober neunzehnhundertvierundachtzig</span> geboren.
+      Tagsüber bin ich unter <span data-s="phone">null null eins fünf eins null null null null null eins zwei drei vier</span> erreichbar.
+      Meine alternative Mailadresse lautet:<br><span data-s="email">franziska.waldmann@example.net</span><br><br>
+      Zum Entsperren verwenden Sie bitte zunächst <span data-s="password">Herbstlaub!</span> und hängen ohne Leerzeichen <span data-s="code">6047</span> an.
+      Falls die Sicherheitsfrage erscheint: Meine Antwort ist »<span data-s="answer">Der kleine Eisbär</span>«.<br><br>
+      Viele Grüße<br><span data-s="name">Franziska Waldmann</span>
+      <div class="quote">
+        &gt; Am 20.11.2026 um 08:52 schrieb <span data-s="name">Björn Großmann</span>:<br>
+        &gt; Die Rücksendung läuft unter Vorgangsnummer <span data-s="id">RET-DEMO-6047</span><br>
+        &gt; Ihr Benutzerkonto <span data-s="login">WERKSTATT\fwaldmann</span><br>
+        &gt; Freigabelink: https://freigabe.example.net/s/<span data-s="token">DEMO8qR2m7</span>?download=1<br>
+        &gt; Einmalcode zur Freigabe: <span data-s="code">6047</span>
+      </div>
+      <br><span data-s="name">Björn Großmann</span> | Technischer Kundendienst<br>
+      Kundenportal: service.kundenwerk.example.org
+    </div>
+    <div class="side">
+      <strong>Anhänge</strong>
+      <span class="att">📎 <span data-k>Retoure.pdf</span> · 184 KB</span>
+      <strong>Geräteübergabe</strong><br>
+      Rechner: <span data-s="device-name">NB-FWM-082</span><br>
+      Seriennr.: <span data-s="serial">DEMO-8Q71-M4P9</span><br><br>
+      <span class="muted"><span data-k>Nachrichten-ID: lab-msg-0082</span></span>
+    </div>
+  </div>
+</div>
+</body></html>

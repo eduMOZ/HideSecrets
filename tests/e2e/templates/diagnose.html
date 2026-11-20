@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="de" data-theme="dark"><head><meta charset="utf-8"><title>Terminal, support session (de)</title>
+<link rel="stylesheet" href="base.css"><script src="template.js"></script>
+<style>
+  #shot { width: 1180px; font-family: var(--mono); white-space: pre; --bg: #0c0c0c; --fg: #cccccc; --u: #16c60c; --p: #3b78ff; --i: #61d6d6; --w: #f9f1a5; --bar: #1f1f1f; }
+  [data-theme=light] #shot { --bg: #ffffff; --fg: #1e1e1e; --u: #0a7a0a; --p: #1a4fd0; --i: #0b6e7a; --w: #8a6d00; --bar: #e8e8e8; }
+  #shot { background: var(--bg); color: var(--fg); }
+  .bar { background: var(--bar); text-align: center; padding: 4px 0; font-family: var(--sans); }
+  .body { padding: 8px 14px 14px; }
+  .u { color: var(--u); } .p { color: var(--p); } .i { color: var(--i); } .w { color: var(--w); }
+</style></head><body>
+<!-- A support session of a German identity service: the phrasings of a real screenshot (German »…« quotes, a JSON dump, an .ini file, a note
+     with the customer's address, birth date and phone number). Every person, value and company is invented. -->
+<div id="shot"><div class="bar">diagnose — staging / Identitätsdienst</div><div class="body"># SYNTHETISCHER TEST · sämtliche Zugangsdaten sind erfunden
+<span class="u" data-s="login">f.oesterreich@sprungserver</span><span class="p">:~/betrieb</span>$ ./diagnose.sh --mandant nordlicht
+<span class="i">[INFO]</span> Zuständige Mitarbeiterin: Dr. <span data-s="name">Franziska Österreich</span>
+<span class="i">[INFO]</span> Rückfragen an <span data-s="email">franziska.oesterreich+betrieb@example.org</span>
+<span class="i">[INFO]</span> Kundenumgebung: verwaltung.nordlicht.example.net
+<span class="i">[INFO]</span> <span data-k>Dienstversion=6.4.2 Port=9443</span> Wiederholungen=3
+<span class="u" data-s="login">f.oesterreich@sprungserver</span><span class="p">:~/betrieb</span>$ systemctl show portal --property=Environment
+Environment="DIENSTKONTO=svc_abgleich" "ZUGANGSKENNWORT=<span data-s="password">Demo!Föhn73#Grün</span>"
+Environment="VERBINDUNG=postgresql://svc_abgleich:<span data-s="url-password">Demo%40Bach%2391</span>@daten.example.net:5432/portal"
+Environment="SCHLUESSEL=<span data-s="token">demo_K8qR2m9X4p7N</span>"
+<span class="u" data-s="login">f.oesterreich@sprungserver</span><span class="p">:~/betrieb</span>$ cat /etc/portal/anmeldung.ini
+[Verzeichnisdienst]
+Server=ldaps://verzeichnis.nordlicht.example.net:636
+BindDN=CN=svc_abgleich,OU=Dienstkonten,DC=nordlicht,DC=example,DC=net
+BindKennwort="<span data-s="password">Demo LDAP!82:gelb</span>"
+Suchbasis=OU=Mitarbeitende,DC=nordlicht,DC=example,DC=net
+[Notfallzugang]
+Wiederherstellungskennwort = "<span data-s="password">Birke!64Fluss?92</span>"
+Ersatzcodes = <span data-s="code">3817-9264;7052-1486</span>
+<span class="u" data-s="login">f.oesterreich@sprungserver</span><span class="p">:~/betrieb</span>$ kubectl logs deploy/identitaetsdienst --tail=8
+<span class="i">[DEBUG]</span> Anmeldekennung: <span data-s="login">NORDLICHT\foesterreich</span>
+<span class="i">[TRACE]</span> Benutzerprofil={"vorname":"<span data-s="name">Franziska</span>","nachname":"<span data-s="name">Österreich</span>",
+ "elektronischePost":"<span data-s="email">franziska.oesterreich@example.org</span>"}
+<span class="i">[TRACE]</span> Anfrage={"client_secret":"<span data-s="token">Demo!0idc73</span>","benutzer":"<span data-s="login">foesterreich</span>"}
+<span class="i">[TRACE]</span> Weiterleitung:https://portal.example.org/cb?code=<span data-s="token">demo_Z9r4M2</span>&amp;state=<span data-s="token">demo_S8q3</span>
+<span class="i">[TRACE]</span> Cookie: sprache=de; sitzung=<span data-s="token">demo_B7x2P9</span>; ansicht=kompakt
+<span class="w">[WARN]</span> Gegenstelle=[<span data-s="ip">2001:db8:64::9</span>]:52177 Anmeldung fehlgeschlagen
+<span class="i">[INFO]</span> Bearbeitungsdauer=<span data-k>3817ms</span> Status=401
+<span class="u" data-s="login">f.oesterreich@sprungserver</span><span class="p">:~/betrieb</span>$ cat /tmp/uebergabe.txt
+Für Herrn <span data-s="name">René Weißgärber</span> wurde ein Ersatzgerät vorbereitet.
+Versand an: <span data-s="name">René Weißgärber</span>, <span data-s="address">Musterpfad 6c, 00000 Testhausen</span>.
+Geboren am <span data-s="birth-date">4. Mai 1979</span>; erreichbar unter <span data-s="phone">+1 (202) 555-0138</span>.
+Sein Konto lautet <span data-s="login">r.weissgaerber</span>, Rechnername <span data-s="device-name">NB-RW-019</span>.
+Die Entsperrphrase lautet »<span data-s="password">Sieben grüne Blätter!</span>«.
+Die Antwort auf die Sicherheitsfrage ist »<span data-s="answer">Großmutters Garten</span>«.
+Dokument: /home/<span data-s="path">rene.weissgaerber</span>/Privat/Personalbogen_<span data-s="birth-date">1979-05-04</span>.pdf
+<span class="u" data-s="login">f.oesterreich@sprungserver</span><span class="p">:~/betrieb</span>$ cat /tmp/weitergabe.json
+{"empfaenger":"<span data-s="name">René Weißgärber</span>","kontakt":"<span data-s="email">rene@example.org</span>",
+ "download":"https:\/\/ablage.example.net\/s\/<span data-s="token">demo_D8m2Q7</span>",
+ "zugangsdaten":{"kennung":"svc_versand","geheimnis":"<span data-s="token">DemoPaket!47</span>"}}
+<span class="i">[INFO]</span> Prüfsumme=<span data-k>9e107d9d372bb6826bd81d3542a419d6</span>
+<span class="i">[INFO]</span> Freier Speicher=<span data-k>7052MB</span> Dateirechte=0600 Prozesskennung=<span data-k>3817</span>
+<span class="i">[INFO]</span> Vorlage: KENNWORT=${KENNWORT} Beispielwert=&lt;nicht gesetzt&gt;
+<span class="i">[INFO]</span> Diagnose abgeschlossen. Keine Änderungen vorgenommen.
+<span class="u" data-s="login">f.oesterreich@sprungserver</span><span class="p">:~/betrieb</span>$ █</div></div>
+</body></html>

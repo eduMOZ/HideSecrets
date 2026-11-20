@@ -51,6 +51,10 @@ Rücksetzlink: https://konto.example.org/reset?token=dexxxxxxxxxxxxxx12&user=j.w
 
 [TRACE] Sitzungscookie: portal_sitzung=demo_Sitzung9pK3; Secure; HttpOnly
   verbindung: "postgresql://svc_portal:Demo%23Datenbank72@db.example.net:5432/portal"
+Das betroffene Gerät heißt BER-LT-JWEISS-07.
+Anhang: Personalbogen_Jörg_Weiß_1986-03-23.pdf
+Kontoinhaber: Käthe Weiß
+Rückrufkontakt: Özlem Şahin
 
 # Dies bleibt sichtbar (stays visible):
 Das Passwort muss mindestens acht Zeichen lang sein.
@@ -60,3 +64,6 @@ Bestellung vom 12.03.2024 wurde versendet.
 Benutzername: erforderlich
 Benutzername: svc_deploy
 anmelden mit ?user=admin
+Das Gerät ist neu.
+Hostname: srv-payment-01
+Anhang: Rechnung_2024-05.pdf

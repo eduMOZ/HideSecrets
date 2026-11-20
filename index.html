@@ -295,7 +295,7 @@ var LANGS = {
     serial: ['serial(?:[ _-]?(?:number|no\\.?))?', 's\\/n', 'service[ _-]?tag', 'asset[ _-]?tag', 'imei', 'udid', 'hardware[ _-]?uuid'],
     cvv: ['cvv2?', 'cvc2?', 'security[ _-]?code', 'card[ _-]?(?:verification|security)[ _-]?(?:code|value)'],
     expiry: ['(?:card[ _-]?)?(?:expiry|expiration|expires?|exp)(?:[ _-]?date)?'],
-    personLabel: ['operator', 'manager', 'requested by', 'requester', 'created by', 'approved by', 'assigned to', 'technician', 'full name is', 'my name is', 'emergency contact', 'name', 'full[ _-]?name', 'display[ _-]?name', 'author', 'owner', 'assignee', 'reporter', 'contact', 'signed in as', 'logged in as', 'user'],
+    personLabel: ['operator', 'manager', 'requested by', 'requester', 'created by', 'approved by', 'assigned to', 'technician', 'full name is', 'my name is', 'emergency contact', 'name', 'full[ _-]?name', 'display[ _-]?name', 'author', 'owner', 'assignee', 'reporter', 'contact', 'signed in as', 'logged in as', 'account[ ]holder', 'user'],
     mailHeader: ['from', 'to', 'cc', 'bcc', 'sender', 'recipient'],
     titles: ['Mr', 'Mrs', 'Ms', 'Miss', 'Dr', 'Prof'],
     greeting: ['Hello', 'Hi', 'Hey', 'Dear'],
@@ -309,6 +309,10 @@ var LANGS = {
     securityQ: ['(?:security|secret|recovery)[ ]question'],
     answer: ['answer'],
     securityCtx: ['account', 'recover', 'reset', 'security'],
+    phraseLabel: ['pass[ _-]?phrase', 'unlock[ _-]?phrase'],
+    namePart: ['first[ _-]?name', 'last[ _-]?name', 'sur[ _-]?name', 'given[ _-]?name', 'family[ _-]?name'],
+    deviceLabel: ['device[ _-]?name', 'computer[ _-]?name', 'machine[ _-]?name', 'workstation', 'laptop', 'notebook'],
+    called: ['is[ ]called', 'is[ ]named', 'called', 'named', 'is'],
     firstNames: ''
   },
   fr: {
@@ -329,7 +333,7 @@ var LANGS = {
     serial: ['num[ée]ro[ ]de[ ]s[ée]rie'],
     cvv: [],
     expiry: [],
-    personLabel: ['nom complet est', 'mon nom est', 'je m[\'’]appelle', 'contact de secours', 'personne [àa] pr[ée]venir', 'nom', 'pr[ée]nom', 'auteur', 'connect[ée](?:e)? en tant que', 'utilisateur'],
+    personLabel: ['nom complet est', 'mon nom est', 'je m[\'’]appelle', 'contact de secours', 'personne [àa] pr[ée]venir', 'nom', 'pr[ée]nom', 'auteur', 'connect[ée](?:e)? en tant que', 'titulaire(?:[ ]du[ ]compte)?', 'utilisateur'],
     mailHeader: ['de', 'à', 'pour', 'exp[ée]diteur', 'destinataire'],
     titles: ['Monsieur', 'Madame', 'Mme', 'Mlle', 'M\\.'],
     greeting: ['Bonjour', 'Salut', 'Cher', 'Chère'],
@@ -343,27 +347,33 @@ var LANGS = {
     securityQ: ['question[ ](?:de[ ])?(?:s[ée]curit[ée]|r[ée]cup[ée]ration|secr[èe]te)'],
     answer: ['r[ée]ponse'],
     securityCtx: ['compte', 'r[ée]cup[ée]r', 's[ée]curit'],
+    phraseLabel: ['phrase de passe', 'phrase secr[èe]te'],
+    namePart: ['pr[ée]nom', 'nom[ _-]de[ _-]famille'],
+    deviceLabel: ['nom[ ]de[ ]l[\'’]appareil', 'nom[ ]du[ ]poste', 'nom[ ]de[ ]la[ ]machine', 'poste[ ]de[ ]travail'],
+    called: ['s[\'’]appelle', 'est'],
     firstNames: ''
   },
   de: {
-    secret: ['passwort', 'kennwort', 'kennwortphrase', 'geheimer[ _-]?schl(?:ü|ue|u)ssel', 'api[ _-]?schl(?:ü|ue|u)ssel', 'zugangscode', 'geheimzahl'],
+    secret: ['passwort', 'kennwort', 'kennwortphrase', 'geheimer[ _-]?schl(?:ü|ue|u)ssel', 'api[ _-]?schl(?:ü|ue|u)ssel', 'zugangscode', 'geheimzahl',
+      'geheimnis', 'geheimwort', 'losungswort', 'schl(?:ü|ue|u)ssel', 'entsperr[ -]?(?:phrase|passwort|kennwort)'],
     secretLabel: ['passwort', 'kennwort'],
     codeWords: ['best(?:ä|ae|a)tigungs[ -]?code', 'einmal[ -]?(?:passwort|kennwort|code)', 'sicherheits[ -]?code', 'verifizierungs[ -]?code', 'authentifizierungs[ -]?code', 'sms[ -]?code', 'anmelde[ -]?code', '\\btan\\b', '\\bmtan\\b'],
     codeIs: ['ist', 'lautet'],
-    recovery: ['wiederherstellungs[ -]?(?:codes?|schl(?:ü|ue|u)ssel)', 'notfall[ -]?codes?', 'backup[ -]?codes?'],
+    recovery: ['wiederherstellungs[ -]?(?:codes?|schl(?:ü|ue|u)ssel)', 'notfall[ -]?codes?', 'backup[ -]?codes?', 'ersatz[ -]?codes?', 'reserve[ -]?codes?', 'sicherungs[ -]?codes?'],
     linkWords: ['zur(?:ü|ue|u)cksetzen', 'passwort-zur(?:ü|ue|u)cksetzen', 'passwort-vergessen', 'best(?:ä|ae|a)tigen', 'aktivieren', 'einladung', 'verifizieren', 'freigabe'],
     pin: ['geheimzahl'],
     dob: ['geburtsdatum', 'geburtstag', 'geburtsjahr', 'geboren(?:[ ]+am)?', 'geb'],
     months: ['januar', 'februar', 'm(?:ä|ae|a)rz', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'dezember', 'j(?:ä|ae|a)n', 'feb', 'm(?:ä|ae|a)r', 'apr', 'jun', 'jul', 'aug', 'sept?', 'okt', 'nov', 'dez'],
-    address: ['anschrift', 'adresse', 'wohnadresse', 'wohnort', 'lieferadresse', 'lieferanschrift', 'rechnungsadresse', 'rechnungsanschrift', 'postanschrift', 'privatadresse', 'meldeadresse'],
+    address: ['anschrift', 'adresse', 'wohnadresse', 'wohnort', 'lieferadresse', 'lieferanschrift', 'rechnungsadresse', 'rechnungsanschrift', 'postanschrift', 'privatadresse', 'meldeadresse',
+      'privatanschrift', 'wohnanschrift', 'heimatadresse', 'zustell(?:adresse|anschrift)', 'versand(?:adresse|anschrift)', 'versand an'],
     addressKind: [],
     idDoc: ['personalausweis(?:nummer)?', 'ausweis(?:nummer)?', 'reisepass(?:nummer)?', 'f(?:ü|ue|u)hrerschein(?:nummer)?', 'kunden(?:nummer|-?nr\\.?)', 'mitarbeiter(?:nummer|-?id)', 'personalnummer', 'buchungs(?:nummer|code)', 'vorgangsnummer', 'aktenzeichen', 'ticket(?:nummer)?', 'bestellnummer', 'mandantennummer', 'vertragsnummer', 'matrikelnummer'],
     idSpaced: ['steuer-?id(?:entifikationsnummer)?', 'steuernummer', 'sozialversicherungs(?:nummer|ausweis)', 'rentenversicherungsnummer', 'versicherungsnummer', 'sv-?nummer', 'krankenversichertennummer'],
     idSuffix: ['nummer', 'nr\\.?'],
-    serial: ['serien?[ -]?nummer', 'ger(?:ä|ae|a)te[ -]?(?:serien?[ -]?)?nummer'],
+    serial: ['serien?[ -]?nummer', 'serien?[ -]?(?:nr|no)\\.?', 'ger(?:ä|ae|a)te[ -]?(?:serien?[ -]?)?nummer'],
     cvv: ['kartenpr(?:ü|ue|u)fnummer', 'pr(?:ü|ue|u)fnummer', 'sicherheitscode'],
     expiry: ['g(?:ü|ue|u)ltig[ ]bis', 'ablaufdatum', 'verfallsdatum'],
-    personLabel: ['ansprechpartner(?:in)?', 'name', 'vorname', 'nachname', 'familienname', 'vollst(?:ä|ae|a)ndiger[ ]name', 'mein name ist', 'ich hei(?:ß|ss)e', 'kunde', 'kundin', 'absender(?:in)?', 'empf(?:ä|ae|a)nger(?:in)?', 'erstellt von', 'bearbeiter(?:in)?', 'verantwortlich', 'besitzer(?:in)?', 'autor(?:in)?', 'notfallkontakt', 'angemeldet als', 'eingeloggt als', 'zust(?:ä|ae|a)ndig', 'benutzer'],
+    personLabel: ['ansprechpartner(?:in)?', 'name', 'vorname', 'nachname', 'familienname', 'vollst(?:ä|ae|a)ndiger[ ]name', 'mein name ist', 'ich hei(?:ß|ss)e', 'kunde', 'kundin', 'absender(?:in)?', 'empf(?:ä|ae|a)nger(?:in)?', 'erstellt von', 'bearbeiter(?:in)?', 'verantwortlich', 'besitzer(?:in)?', 'autor(?:in)?', 'notfallkontakt', 'angemeldet als', 'eingeloggt als', 'zust(?:ä|ae|a)ndig', 'kontoinhaber(?:in)?', 'r(?:ü|ue|u)ckrufkontakt', 'kontaktperson', 'benutzer'],
     mailHeader: ['von', 'an', 'kopie', 'absender', 'empf(?:ä|ae|a)nger'],
     titles: ['Herrn', 'Herr', 'Frau', 'Fr\\.', 'Hr\\.'],
     greeting: ['Hallo', 'Hi', 'Hey', 'Liebe', 'Lieber', 'Liebes', 'Guten Tag', 'Guten Morgen', 'Guten Abend', 'Sehr geehrte', 'Sehr geehrter', 'Sehr geehrte Frau', 'Sehr geehrter Herr', 'Moin', 'Servus', 'Gr(?:ü|ue|u)(?:ß|ss) Gott'],
@@ -373,10 +383,14 @@ var LANGS = {
     cookieName: ['sitzung', 'anmeld', 'zugang', 'schl(?:ü|ue|u)ssel'],
     userLabel: ['benutzer[ -]?name', 'nutzer[ -]?name', 'anmelde[ -]?name', 'benutzerkennung', 'benutzer-?id'],
     accessCode: ['t(?:ü|ue|u)rcode', 'code f(?:ü|ue|u)r (?:die |das |den )?(?:t(?:ü|ue|u)r|haust(?:ü|ue|u)r|eingang|tor|garage|alarmanlage|wlan|w-lan|wifi)', '(?:t(?:ü|ue|u)r|zugangs|eingangs|garagen|tor|alarm)[ -]?(?:code|passwort|kennwort)', '(?:wlan|w-lan|wifi)[ -]?(?:passwort|kennwort|schl(?:ü|ue|u)ssel)'],
-    is: ['ist', 'lautet'],
+    is: ['ist', 'lautet', 'hei(?:ß|ss)t'],
     securityQ: ['sicherheitsfrage', 'geheimfrage', 'wiederherstellungsfrage'],
     answer: ['antwort'],
     securityCtx: ['konto', 'wiederherstell', 'sicherheit'],
+    phraseLabel: ['entsperr[ -]?(?:phrase|passwort|kennwort|code)', 'passphrase', 'kennwortphrase', 'losungswort', 'geheimwort'],
+    namePart: ['vorname', 'nachname', 'familienname', 'zuname'],
+    deviceLabel: ['ger(?:ä|ae|a)te?[ -]?name', 'rechner[ -]?name', 'computer[ -]?name', 'arbeitsplatz(?:rechner|[ -]?pc)?', 'laptop', 'notebook', 'ger(?:ä|ae|a)t', 'rechner'],
+    called: ['hei(?:ß|ss)t', 'lautet', 'ist'],
     firstNames: 'alexander andreas anja annette antje bernd birgit bjorn christoph claudia dagmar dieter dirk elke erik franziska frank friedrich gabriele georg gerhard gisela gunter hannah hans-peter heike heinz helga helmut herbert holger ingrid jan jens joachim johannes jorg jurgen juergen jutta karin karl katharina kerstin kurt lars lena leon lisa lukas manfred manuela markus matthias maximilian monika nadine nicole niklas norbert olaf oliver petra ralf reinhard renate rolf sandra sebastian silke simone stefan susanne sven thorsten tim tobias torsten ulrich ulla uwe ursula volker walter werner wolfgang'
   }
 };
@@ -384,11 +398,18 @@ var LANGS = {
 var GAP = '(?:[ \\t]+[\\w\u00c0-\u00ff.-]{1,24}){0,4}?';
 // The fragments of one kind, over every language: lang('secret') -> 'password|passwd|…|passwort|…'
 function lang(kind) {
-  // longest first, so that "ist" is not cut to "is"
-  return Object.keys(LANGS).reduce(function (acc, k) { return acc.concat(LANGS[k][kind] || []); }, []).sort(function (a, b) { return b.length - a.length; }).join('|');
+  // longest first, so that "ist" is not cut to "is"; the OCR often reads ü as ii ("Schliissel", "fiir")
+  return Object.keys(LANGS).reduce(function (acc, k) { return acc.concat(LANGS[k][kind] || []); }, []).sort(function (a, b) { return b.length - a.length; })
+    .map(function (f) { return f.replace(/\(\?:ü\|ue\|u\)/g, '(?:ü|ue|ii|u)'); }).join('|');
 }
 // "is" as a link between a label and its value, with the small words that follow it: "ist der", "is on"
 var LINK = '(?:[ \\t]+(?:' + lang('is') + ')(?:[ \\t]+(?:der|am|den|le|the|on))?)?';
+// Quotation marks around a value: "…", « … » (French), »…« and „…“ (German: the pair is reversed or low-high), “…” (English).
+// QO opens, QC closes, QX is what a quoted value never holds. The apostrophe is left out: it is inside words (Großmutter's).
+var QO = '["«»„“”‚‘‹›]', QC = '["«»“”‘’‹›]', QX = '"«»„“”‹›';
+// the closing mark of a quoted value, or the end of the sentence when the OCR lost it (it reads "Eisbär«." as "Eisbäre.").
+// Only a full stop ends the sentence: a "!" or a "?" may be the last character of the passphrase.
+var QEND = '(?:' + QC + '|(?=\\.?[ \\t]*(?:\\r?\\n|$)))';
 
 // ---------- Detection ----------
 // Sensitive field names. Generic keys ("key" alone) do not count: too many false positives (sort_key, primary_key…).
@@ -403,11 +424,14 @@ var RULES = [
   { type: 'Private key (PEM, cut)', g: 0, re: /-----BEGIN [A-Z ]*PRIVATE KEY-----(?:[ \t]*\r?\n[ \t]*[A-Za-z0-9+\/=]{16,}[ \t]*)+/gd },
   { type: 'JWT', g: 0, re: /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]*/gd },
   { type: 'Known API key', g: 0, re: /(?<![\w-])(?:AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{30,}|sk-[A-Za-z0-9_-]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|AIza[0-9A-Za-z_-]{35})\b/gd },
-  { type: 'Authorization header', g: 1, re: /authorization(?:\\?["'])?[ \t]*[:=][ \t]*(?:\\?["'])?(?:(?:Bearer|Basic|Token|Digest|Negotiate)\s+)?([^\s"'\\,;]{4,})/gid },
+  { type: 'Authorization header', g: 1, any: true, re: /authorization(?:\\?["'])?[ \t]*[:=][ \t]*(?:\\?["'])?(?:(?:Bearer|Basic|Token|Digest|Negotiate)\s+)?([^\s"'\\,;]{4,})/gid },
   { type: 'Cookie header', g: 1, needsEq: true, cookie: true, re: new RegExp('(?:\\b|(?<=[a-z]))(?:' + lang('cookieHeader') + ')(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*(?:\\\\?["\'])?([^\\r\\n"\\\\]{4,})', 'gid') },
-  { type: 'client_secret', g: 1, re: /client[ _-]?secret(?:\\?["'])?[ \t]*[:=][ \t]*(?:\\?["'])?((?:[^\s"'&,;}\\<>]|\\u[0-9a-fA-F]{4}|\\[\\\/bfnrt])+)/gid },
-  // Password embedded in a URL: postgres://user:PASSWORD@host, redis://:PASSWORD@host
-  { type: 'Password in a URL', g: 1, re: /(?<![A-Za-z0-9+.-])[a-z][a-z0-9+.-]*:\/\/[^\s:\/@"']*:([^\s\/"'?#]+)@(?=[^\s@\/"'?#]+(?:[:\/?#\s"']|$))/gid },
+  // ("dient_secret", "dlient_secret": OCR reads "cl" as "d" or "dl"; a colon lost by the OCR leaves a space before a value with a digit)
+  // A cookie with its attributes, whose header the OCR lost or misread: "Sitzungscooki portal_sitzung=demo_…; Secure; HttpOnly"
+  { type: 'Cookie (with attributes)', g: 2, cookieLike: true, re: /(?<![\w.-])([A-Za-z0-9_.-]{2,40})=([^\s;"']{6,})(?=;[ \t]*(?:[A-Za-z0-9_.-]+(?:=[^\s;]*)?;[ \t]*)*(?:Secure|HttpOnly|Path|Domain|SameSite|Expires|Max-Age)\b)/gd },
+  { type: 'client_secret', g: 1, re: /(?:cl|dl?)ient[ _-]?secret(?:\\?["'])?(?:[ \t]*[:=][ \t]*|[ \t]+(?=["']?[^\s"']*\d))(?:\\?["'])?((?:[^\s"'&,;}\\<>]|\\u[0-9a-fA-F]{4}|\\[\\\/bfnrt])+)/gid },
+  // Password embedded in a URL: postgres://user:PASSWORD@host, redis://:PASSWORD@host (a space before "://" or before the password's ":" is an OCR misreading)
+  { type: 'Password in a URL', g: 1, re: /(?<![A-Za-z0-9+.-])[a-z][a-z0-9+.\]|!-]*[ \t]?:\/\/[^\s:\/@"']*[ \t]?:([^\s\/"'?#]+)@(?=[^\s@\/"'?#]+(?:[:\/?#\s"']|$))/gid },
   // A secret written as two or three strings: password = "Demo" + "Only!729"
   { type: 'Password (split in strings)', g: 1, re: /\b(?:password|passwd|pwd|secret|token|api[_-]?key)(?:\\?["'])?[ \t]*[:=][ \t]*(["'][^"'\n]{1,60}["'](?:[ \t]*\+[ \t]*["'][^"'\n]{1,60}["'])+)/gid },
   // Tokens in a link: ...?code=demo_k8P4t9 (long, with letters and digits: code=200 or state=ready are not secrets)
@@ -417,27 +441,41 @@ var RULES = [
   // "Password Test-7731", "Passwort ist Test-7731": a password label, then a value mixing letters and digits
   { type: 'Password (in a sentence)', g: 1, mixed: true, re: new RegExp('(?<![A-Za-z0-9])(?:' + lang('secretLabel') + ')[ \\t]+(?:(?:' + lang('is') + ')[ \\t]+)?["\']?([A-Za-z0-9][^\\s"\'<>,;]{5,40})', 'gid') },
   // The answer to a security question, given in a sentence: "pour récupérer mon compte, la réponse est « Plume »"
-  { type: 'Security answer', g: 1, re: new RegExp('(?:' + lang('securityCtx') + ')[^\\n]{0,60}?(?:' + lang('answer') + ')[ \\t]+(?:' + lang('is') + ')[ \\t]*[«"“]\\s*([^»"”\\n]{2,40}?)\\s*[»"”]', 'gid') },
+  { type: 'Security answer', g: 1, re: new RegExp('(?:' + lang('securityCtx') + ')[^\\n]{0,60}?(?:' + lang('answer') + ')[ \\t]+(?:' + lang('is') + ')[ \\t]*[:=]?(?:[ \\t]*\\r?\\n)?[ \\t]*' + QO + '\\s*([^' + QX + '\\n]{2,40}?)[ \\t]*' + QEND, 'gid') },
+  // the answer comes before the word that names the question: "Die Antwort auf die Sicherheitsfrage ist »Großmutters Garten«."
+  { type: 'Security answer', g: 1, re: new RegExp('(?:' + lang('answer') + ')[ \\t]+(?:auf|to|à|a)[ \\t]+(?:die |das |the |la |les )?(?:' + lang('securityQ') + ')[ \\t]+(?:' + lang('is') + ')[ \\t]*[:=]?(?:[ \\t]*\\r?\\n)?[ \\t]*' + QO + '\\s*([^' + QX + '\\n]{2,60}?)[ \\t]*' + QEND, 'gid') },
   // A secret that does not fit "name=value": quoted with spaces ('Demo SSH!72#orange'), or  password "value"  (nginx, netrc style).
-  // It must hold a digit or a symbol: "Password is required" is a message.
-  { type: 'Password (quoted)', g: 3, strong: true, re: /(?<![A-Za-z0-9_.-])([A-Za-z0-9_.-]*(?:password|passwd|passphrase|pass[ _-]phrase|pwd|secret)[A-Za-z0-9_-]*)(?:\\?["'])?[ \t]*[:=][ \t]*(["'])((?:(?!\2)[^\n\\]){6,80})\2/gid },
+  // It must hold a digit or a symbol: "Password is required" is a message. The label may be in any language, with a prefix (BindKennwort).
+  { type: 'Password (quoted)', g: 3, strong: true, re: new RegExp('(?<![A-Za-z0-9_.-])([A-Za-z0-9_.-]*(?:password|passwd|passphrase|pass[ _-]phrase|pwd|secret|' + lang('secretLabel') + '|' + lang('phraseLabel') + ')[A-Za-z0-9_-]*)(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*(["\'])((?:(?!\\2)[^\\n\\\\]){6,80})\\2', 'gid') },
+  // "Die Entsperrphrase lautet »Sieben grüne Blätter!«", "Das Kennwort ist „Demo 42“": a label, a verb, a quoted value that may hold spaces.
+  // A passphrase label is enough; for a plain password label the value must hold a digit or a symbol ("Das Passwort ist »ungültig«" is a message).
+  { type: 'Password (quoted, in a sentence)', g: 1, re: new RegExp('(?<![A-Za-z0-9])[A-Za-z]{0,20}(?:' + lang('phraseLabel') + ')(?:[ \\t]+(?:' + lang('is') + '))[ \\t]*[:=]?(?:[ \\t]*\\r?\\n)?[ \\t]*' + QO + '\\s*([^' + QX + '\\n]{4,60}?)[ \\t]*' + QEND, 'gid') },
+  { type: 'Password (quoted, in a sentence)', g: 1, strong: true, re: new RegExp('(?<![A-Za-z0-9])[A-Za-z]{0,20}(?:' + lang('secretLabel') + ')(?:[ \\t]+(?:' + lang('is') + '))[ \\t]*[:=]?(?:[ \\t]*\\r?\\n)?[ \\t]*' + QO + '\\s*([^' + QX + '\\n]{4,60}?)[ \\t]*' + QEND, 'gid') },
+  // A secret given in two pieces to put together: "verwenden Sie zunächst Herbstlaub! und hängen ohne Leerzeichen 6047 an".
+  // Both pieces are masked; each must hold a digit or a symbol, so that "hängen Sie das Foto an" is left alone. A line break may fall inside the sentence.
+  { type: 'Password (in two parts)', g: 1, also: [2], re: new RegExp('(?<![\\p{L}\\d])(?:verwenden|nutzen|nehmen|use|enter|utilisez|saisissez)\\s+(?:Sie\\s+)?(?:bitte\\s+)?(?:zun(?:ä|ae)chst|zuerst|first|d[\'’]abord)\\s+[„"»«]?(?=[^\\s"«»“”]*[\\d!#$%&*+=?@^_~])([^\\s"«»“”]{5,40}?)[“"«»]?\\s+(?:und|and|puis|then|et)\\s+(?:h(?:ä|ae)ngen|h(?:ä|ae)nge|f(?:ü|ue)gen|f(?:ü|ue)ge|append|add|ajoutez|ajouter)\\s+(?:Sie\\s+)?(?:\\p{L}+\\s+){0,3}?[„"»«]?(?=[^\\s"«»“”]*[\\d!#$%&*+=?@^_~])([^\\s"«»“”]{4,40}?)[“"«»]?\\s+(?:an|hinzu|dran|to\\s+it|at\\s+the\\s+end|à\\s+la\\s+fin)(?![\\p{L}])', 'giud') },
   { type: 'Password (quoted)', g: 2, strong: true, re: /\b(?:password|passwd|passphrase|secret|token)[ \t]+(["'])([^"'\n]{6,80})\1/gid },
   // Values that only their surroundings give away: {"event":"secret.loaded","value":"…"}, Terraform outputs, YAML blocks, recovery data
   { type: 'Secret value (JSON)', g: 1, re: /(?:secret|password|passphrase|token|credential)[^\n]{0,120}?"value"[ \t]*:[ \t]*"([^"\\\n]{6,200})"/gid },
   { type: 'Terraform sensitive output', g: 1, re: /"sensitive"[ \t]*:[ \t]*true[\s\S]{0,80}?"value"[ \t]*:[ \t]*"([^"\\\n]{4,200})"/gid },
   { type: 'Security answer', g: 1, re: /"question"[ \t]*:[ \t]*"[^"\n]*"[ \t]*,[ \t]*"answer"[ \t]*:[ \t]*"([^"\n]{2,80})"/gid },
-  { type: 'Recovery codes', g: 1, re: new RegExp('(?:' + lang('recovery') + ')(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*\\[([^\\]\\n]{4,300})\\]', 'gid') },
+  { type: 'Recovery codes', g: 1, re: new RegExp('(?:' + lang('recovery') + ')(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*\\[([^\\]\\n]{4,300}?)(?:\\]|[ \\t]*(?=\\r?\\n|$))', 'gid') },   // the "]" may be lost by the OCR
   { type: 'Recovery codes', g: 2, re: new RegExp('(?:' + lang('recovery') + ')(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*(["\'])([^"\'\\n]{4,300})\\1', 'gid') },
   { type: 'Secret (YAML block)', g: 1, re: /(?<![A-Za-z0-9_.-])[A-Za-z0-9_.-]*(?:secret|password|passphrase|token|api[ _-]?key|credential)[A-Za-z0-9_-]*:[ \t]*[>|][-+]?[ \t]*\r?\n[ \t]+(\S[^\n]*(?:\r?\n[ \t]+\S[^\n]*)*)/gid },
   // A code sent to the user: "Your verification code is 482913", "OTP: 771204"
   { type: 'One-time code', g: 1, re: new RegExp('(?:' + lang('codeWords') + ')(?:[ \\t]+(?:' + lang('codeIs') + '|:|=))*[ \\t]*[:=]?[ \\t]*["\']?(\\d{4,8})(?!\\d)', 'gid') },
+  // "Die SMS mit der TAN ist angekommen: 482913": a few words, then a colon
+  { type: 'One-time code', g: 1, re: new RegExp('(?:' + lang('codeWords') + ')(?:[ \\t]+\\p{L}{2,15}){1,3}?[ \\t]*:[ \\t]*["\']?(\\d{4,8})(?!\\d)', 'giud') },
   { type: 'Recovery codes', g: 1, re: new RegExp('(?:' + lang('recovery') + ')(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*((?:[A-Za-z0-9]{4,}(?:-[A-Za-z0-9]{3,})*)(?:[ \\t]*[,;][ \\t]*[A-Za-z0-9]{4,}(?:-[A-Za-z0-9]{3,})*)*)', 'gid') },
   // "Der Wiederherstellungscode lautet 4826-1937"
   { type: 'Recovery codes', g: 1, re: new RegExp('(?:' + lang('recovery') + ')[ \\t]+(?:' + lang('is') + ')[ \\t]*[:=]?[ \\t]*["\']?([A-Za-z0-9]{4,}(?:-[A-Za-z0-9]{3,})+)', 'gid') },
   // "Kennwort für das Konto svc_x: Demo!Wald72#Blau"
-  { type: 'Password (with words before the colon)', g: 1, words: true, re: new RegExp('(?<![A-Za-z0-9])(?:' + lang('secretLabel') + ')[ \\t]+(?:für|fuer|for|de|du|pour|of|to|zu|zum|zur)(?:[ \\t]+[\\w\u00c0-\u00ff.-]{1,30}){1,4}?[ \\t]*[:=][ \\t]*["\']?([^\\s"\'<>,;]{5,60})', 'gid') },
+  { type: 'Password (with words before the colon)', g: 1, words: true, re: new RegExp('(?<![A-Za-z0-9])(?:' + lang('secretLabel') + ')[ \\t]+(?:für|fuer|fiir|fur|for|de|du|pour|of|to|zu|zum|zur)(?:[ \\t]+[\\w\u00c0-\u00ff.-]{1,30}){1,4}?[ \\t]*[:=][ \\t]*["\']?([^\\s"\'<>,;]{5,60})', 'gid') },
   // A token in the path of a link: /reset/<token>, /invite/<token>, /verify/<token>
   { type: 'Token in a link', g: 1, mixed: true, re: new RegExp('\\\\?\\/(?:' + lang('linkWords') + ')\\\\?\\/([A-Za-z0-9_~-]{16,})(?![A-Za-z0-9_~-])', 'gid') },
+  // A share link: https://host/s/<token>, also with escaped slashes in JSON (https:\/\/host\/s\/<token>). The token is short but random:
+  // capitals, small letters and a digit (a path such as /s/overview or /files/Release2Beta is not one)
+  { type: 'Token in a link', g: 1, re: new RegExp('https?:[ \\t]?(?:\\\\?\\/){2}[A-Za-z0-9.-]+(?::\\d+)?(?:\\\\?\\/[A-Za-z0-9._~-]+){0,3}?\\\\?\\/(?:s|d|f|l|t|dl|share|shared|download|public|get|link)\\\\?\\/(?=[A-Za-z0-9_~-]*\\d)(?=[A-Za-z0-9_~-]*[A-Z])(?=[A-Za-z0-9_~-]*[a-z])([A-Za-z0-9_~-]{8,64})(?![A-Za-z0-9_~-])', 'gid') },
   { type: 'PIN code', g: 1, re: new RegExp('(?<![A-Za-z0-9])(?:code[ ]+)?(?:' + lang('pin') + ')(?:[ ]+(?:de|du|of|for|test|carte|card))*[ \\t]*[:=][ \\t]*["\']?(\\d{4,8})(?!\\d)', 'gid') },
   // The answer to a security question, on the line after the question
   { type: 'Security answer', g: 1, re: new RegExp('(?:' + lang('securityQ') + ')[^\\n]*\\n[ \\t]*(?:' + lang('answer') + ')[ \\t]*[:=][ \\t]*([^\\n]{2,80})', 'gid') },
@@ -446,7 +484,7 @@ var RULES = [
   // "Antwort auf die Sicherheitsfrage: Gänseblümchen"
   { type: 'Security answer', g: 1, re: new RegExp('(?:' + lang('answer') + ')[ \\t]+(?:auf|to|à|a)[ \\t]+(?:die |das |the |la |les )?(?:' + lang('securityQ') + ')[ \\t]*[:=][ \\t]*([^\\n]{2,80})', 'gid') },
   // the question, then the answer in a sentence: "Meine Antwort ist Schneeflöckchen."
-  { type: 'Security answer', g: 1, re: new RegExp('(?:' + lang('securityQ') + ')[^\\n]*\\n[ \\t]*(?:[A-Za-z\u00c0-\u00ff]+[ \\t]+){0,2}(?:' + lang('answer') + ')[ \\t]+(?:' + lang('is') + ')[ \\t]*[:=]?[ \\t]*["«]?([^\\n.!"»]{2,60})', 'gid') },
+  { type: 'Security answer', g: 1, re: new RegExp('(?:' + lang('securityQ') + ')[^\\n]*\\n[ \\t]*(?:[A-Za-z\u00c0-\u00ff]+[ \\t]+){0,2}(?:' + lang('answer') + ')[ \\t]+(?:' + lang('is') + ')[ \\t]*[:=]?(?:[ \\t]*\\r?\\n)?[ \\t]*' + QO + '?([^\\n.!' + QX + ']{2,60})', 'gid') },
   { type: 'Private key (PGP)', g: 0, re: /-----BEGIN PGP PRIVATE KEY BLOCK-----[\s\S]*?-----END PGP PRIVATE KEY BLOCK-----/gd },
   // Hashes of passwords: /etc/shadow, database dumps (bcrypt, argon2, crypt)
   { type: 'Password hash', g: 0, re: /\$2[aby]\$\d\d\$[.\/A-Za-z0-9]{53}|\$argon2(?:id|i|d)\$[^\s'"]{20,}|\$[156y]\$[.\/A-Za-z0-9$,=-]{20,}/gd },
@@ -486,6 +524,9 @@ var RULES = [
   // A JWK's private part
   { type: 'JWK private key', g: 1, re: /"kty"[ \t]*:[^{}]*?"(?:d|p|q|dp|dq|qi|k)"[ \t]*:[ \t]*"([A-Za-z0-9_-]{16,})"/gid },
   { type: 'JWK private key', g: 1, re: /"(?:d|p|q|dp|dq|qi|k)"[ \t]*:[ \t]*"([A-Za-z0-9_-]{16,})"[^{}]*?"kty"/gid },
+  // A form or a screenshot of one: a secret's label, then its value after a space ("API-Schlüssel demo4f8Q2…"): the value is long and mixes letters and digits
+  // (the label may keep a closing quote, and the colon after it may be missing: the OCR drops it, `"geheimnis" "DemoPaket!47"`)
+  { type: 'Password / token / key (form)', g: 1, mixed: true, words: true, form: true, re: new RegExp('(?<![A-Za-z0-9_.-])(?:' + lang('secret') + '|(?:cl|dl?)ient[ _-]?secret|api[ _-]?key|secret[ _-]?key|access[ _-]?key|token)(?:\\\\?["\'])?[ \\t]+["\']?([A-Za-z0-9][^\\s"\'<>,;]{7,100})', 'gid') },
   // A variable name with a secret in it, then its value after spaces or a tab (a table, an HTML table once its tags are gone)
   { type: 'Password / token / key (table)', g: 1, mixed: true, re: /(?<![A-Za-z0-9_])[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*_(?:SECRET|PASSWORD|PASSWD|PASSPHRASE|TOKEN|[A-Z]*KEY)(?:_[A-Z0-9]+)*(?:\t|[ ]{2,})["']?([A-Za-z0-9][^\s"']{5,100})/gd },
   { type: 'Password / token / key', g: 2, words: true, re: new RegExp('(?<![A-Za-z0-9_.-])([A-Za-z0-9_.-]*' + NAME + '[0-9_-]*(?![A-Za-z]))(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*(?:\\\\?["\'])?((?:[^\\s"\'&,;}\\\\<>]|\\\\u[0-9a-fA-F]{4}|\\\\[\\\\\\/bfnrt])+)', 'gid') }
@@ -526,11 +567,14 @@ function regexPass(text, out) {
       if (!ix) continue;
       var v = text.slice(ix[0], ix[1]);
       if (IGNORE.test(v)) continue;
-      if (r.g > 0 && !plausible(v)) continue;
+      // an Authorization value is a credential whatever the OCR read in it (")", "®"), unless it is a variable: Bearer ${TOKEN}
+      if (r.g > 0 && (r.any ? /^[$`{(\[<%]|\$\{/.test(v) : !plausible(v))) continue;
       if (r.words && looksLikeWords(v)) continue;
       if (r.mixed && !(/\d/.test(v) && /[A-Za-z]/.test(v))) continue;
       if (r.strong && !/[\d!#$%&*+=?@^_~\/\\]/.test(v)) continue;
       if (r.needsEq && v.indexOf('=') < 0) continue;
+      if (r.cookieLike && !cookieIsSecret(m[1], v)) continue;
+      if (r.form && (/^\d{4}-\d{2}-\d{2}|^v?\d+(?:\.\d+)+$/i.test(v) || v.indexOf('=') >= 0)) continue;   // a date, a version, a "key=value" is not the value of a form field
       if (r.cookie) {   // one secret per cookie, not the whole header
         var isSet = /^set-/i.test(m[0]), off = 0;
         var parts = v.split(';');
@@ -547,6 +591,8 @@ function regexPass(text, out) {
         continue;
       }
       out.push({ start: ix[0], end: ix[1], type: r.type });
+      // a rule with several pieces ("X und hängen Y an"): the other groups are masked too
+      if (r.also) r.also.forEach(function (g2) { var j = m.indices[g2]; if (j && plausible(text.slice(j[0], j[1]))) out.push({ start: j[0], end: j[1], type: r.type }); });
     }
   }
 }
@@ -925,6 +971,13 @@ var NAME_WORD = "(?:[dl]['’])?\\p{Lu}(?:\\p{Ll}+|\\p{Lu}+)(?:[-'’]\\p{Lu}?\\
 var PERSON_FIRST_RE = new RegExp('(?<![\\p{L}\\d_.@-])(' + NAME_WORD + ')((?:[ \\t]+' + NAME_WORD + '){1,2})(?:[ \\t]+(\\d{4,}))?(?![\\p{L}\\d_@-])', 'gu');
 var PERSON_CAPS_RE = /(?<![\p{L}\d_])(\p{Lu}{2,}(?:[-'\u2019]\p{Lu}+)*(?:[ \t]+\p{Lu}{2,}(?:[-'\u2019]\p{Lu}+)*){1,2})[ \t]*(\d{4,})(?![\p{L}\d])/gu;   // the ID may be stuck to the name (OCR)
 var PERSON_LABEL_RE = new RegExp('(?<![A-Za-z0-9])(?:' + lang('personLabel') + ')\\b[ \\t]*[:=]?[ \\t]*["\']?(?!(?:' + lang('titles') + ')[ \\t])(\\p{Lu}\\p{Ll}+(?:[- ](?:[dl][\'’])?\\p{Lu}[\\p{L}\'’-]+){1,2})', 'giu');
+// A name given by its field: "vorname":"Franziska", "nachname":"Österreich". Alone, the word is a name whatever the lists of names say.
+// The value is the whole field (a quote, a comma, a closing bracket or the end of the line follows), not the start of a sentence: "Vorname: Bitte ausfüllen".
+var PERSON_PART_RE = new RegExp('(?<![A-Za-z0-9])(?:' + lang('namePart') + ')(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*(?:\\\\?["\'])?(\\p{L}[\\p{L}\'’-]{1,30}(?:[ \\t]+\\p{L}[\\p{L}\'’-]{1,30}){0,2}?)(?=\\\\?["\',;})\\]]|[ \\t]*(?:\\r?\\n|$)|[ \\t]+(?:' + lang('namePart') + ')\\b)', 'gimu');
+var NAME_PART_STOP = new Set('unbekannt unknown inconnu null none nil leer empty test demo admin user name'.split(' '));
+// "c/o İlker Yılmaz": in care of, so a person; a company stays visible (a legal form ends the name). Capitals matter here: "c/o Büro und" is not "Büro und".
+var PERSON_CO_RE = new RegExp('(?<![\\p{L}\\d_])[cC]\\/[oO][ \\t]+(' + NAME_WORD + '(?:[ \\t]+(?:(?:de|du|des|van|von|der|den|da|di|del|la|le)[ \\t]+)?' + NAME_WORD + '){0,2})(?![\\p{L}\\d_@-])', 'gu');
+var LEGAL_FORM = /(?:^|[ \t])(?:GmbH|mbH|AG|KG|UG|OHG|SE|eG|e\.V\.?|Ltd|Inc|LLC|SARL|SAS|SA|Co\.?)(?:[ \t]|$)|[a-zäöüß](?:GmbH|mbH|Ltd|SARL|OHG)(?![A-Za-z])/;   // the OCR may glue the form to the name
 var CAPS_STOP = new Set(('GET POST PUT DELETE PATCH HEAD OPTIONS HTTP HTTPS INFO WARN WARNING ERROR DEBUG TRACE FATAL NOTICE CRIT ' +
   'UTC GMT CET CEST PID UID GID TCP UDP DNS TLS SSL API URL URI ID IDS OK KO NAME READY STATUS AGE PORT PORTS IP CPU MEM ' +
   'SELECT FROM WHERE INSERT UPDATE INTO VALUES AND OR NOT NULL TRUE FALSE THE TOTAL SIZE TYPE DATE TIME USER ' +
@@ -958,9 +1011,14 @@ function learnNames(text, found, out) {
     var f = em[1].toLowerCase(), l = em[2].toLowerCase();
     if (!GENERIC_LOCAL.has(f) && !GENERIC_LOCAL.has(l)) { firstP.add(f); lastP.add(l); }
   }
+  namesInTokens(text, [first, last], out);   // not the names guessed from an address: "orion-ops@" names a project
   if (!first.size && !last.size && !firstP.size) return;
-  var isFirst = function (w) { return first.has(w) || firstP.has(plain(w)); };
-  var isLast = function (w) { return last.has(w) || lastP.has(plain(w)); };
+  // the same name with its accents lost or written ae/oe/ue/ss: an OCR drops them ("Osterreich" for "Österreich")
+  var firstF = new Set(), lastFold = new Set();
+  first.forEach(function (w) { foldName(w).forEach(function (x) { firstF.add(x); }); });
+  last.forEach(function (w) { foldName(w).forEach(function (x) { lastFold.add(x); }); });
+  var isFirst = function (w) { return first.has(w) || firstP.has(plain(w)) || foldName(w).some(function (x) { return firstF.has(x); }); };
+  var isLast = function (w) { return last.has(w) || lastP.has(plain(w)) || foldName(w).some(function (x) { return lastFold.has(x); }); };
   var sre = new RegExp('(?<![\\p{L}\\d_])(' + NAME_WORD + ')(?![\\p{L}\\d_])', 'gu'), toks = [], m;
   while ((m = sre.exec(text))) toks.push({ s: m.index, e: m.index + m[0].length, w: m[1], k: isFirst(m[1]) || isLast(m[1]) });
   var gap = function (a, b) { return /^[ \t]+(?:(?:de|du|des|van|von|der|den|da|di|del|la|le)[ \t]+)?$/.test(text.slice(a.e, b.s)); };
@@ -974,12 +1032,59 @@ function learnNames(text, found, out) {
       else if (isLast(toks[i + 1].w)) toks[i + 1].k = true;
     }
   });
+  // OCR may read the capital of a family name as a small letter ("Jorg weiß"): right after a first name, a family name in any case
+  var lastF = new Set();
+  last.forEach(function (w) { foldName(w).forEach(function (x) { lastF.add(x); }); });
+  lastP.forEach(function (w) { lastF.add(w); });
+  toks.forEach(function (t) {
+    if (!t.k || !isFirst(t.w)) return;
+    var lm = /^[ \t]+(\p{Ll}[\p{L}'\u2019-]{2,})/u.exec(text.slice(t.e, t.e + 40));
+    if (lm && foldName(lm[1]).some(function (x) { return lastF.has(x); })) out.push({ start: t.e + lm[0].length - lm[1].length, end: t.e + lm[0].length, type: 'Person name', prefix: 'PERSON', sens: true });
+  });
   for (var i = 0; i < toks.length; i++) {
     if (!toks[i].k) continue;
     var j = i;
     while (j + 1 < toks.length && toks[j + 1].k && gap(toks[j], toks[j + 1])) j++;
     out.push({ start: toks[i].s, end: toks[j].e, type: 'Person name', prefix: 'PERSON', sens: true });
     i = j;
+  }
+}
+// A name inside a file or machine name, where no space separates it: "Personalbogen_Jörg_Weiß_1986-03-23.pdf",
+// "Lebenslauf_Franziska_Groß.docx", "BER-LT-JWEISS-07" once "Jörg Weiß" was found in the same text.
+// A word joined by "_" or "-", or with letters and digits stuck together (the OCR cuts and glues such names:
+// "Personalbogen_Jörg_" "Weiß1986-03-23.pdf"), is masked whole when one of its parts is a name found in the text
+// (possibly with an initial: JWEISS), or a known first name followed by a capitalized part (Franziska_Groß).
+// A file keeps its extension visible. Anything else stays visible: Rechnung_2024-05.pdf, srv-payment-01.
+var NAME_TOKEN_RE = /(?<![\p{L}\d_.+@-])(?=[\p{L}\d_.+-]*?(?:[_-]|\p{L}\d|\d\p{L}|\.(?:pdf|docx?|xlsx?|pptx?|od[tsp]|rtf|txt|csv|log|eml|msg|zip|7z|rar|tgz|tar|gz|png|jpe?g|gif|webp|heic|tiff?)(?![\p{L}\d])))([\p{L}\d][\p{L}\d_.+-]*)(?![\p{L}\d_.+@-])/gu;
+var FILE_EXT_RE = /^(.+?)(\.(?:pdf|docx?|xlsx?|pptx?|od[tsp]|rtf|txt|csv|log|eml|msg|zip|7z|rar|tar\.gz|tgz|tar|gz|png|jpe?g|gif|webp|heic|tiff?))$/i;
+function foldName(w) {   // the forms a name takes in a file or machine name: Käthe -> kathe, kaethe; Weiß -> weiss
+  var l = w.toLowerCase();
+  return [plain(l).replace(/ß/g, 'ss'), l.replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')];
+}
+function namesInTokens(text, sets, out) {
+  var known = new Set();
+  sets.forEach(function (s) { s.forEach(function (n) { foldName(n).forEach(function (x) { if (x.length >= 4 && !GENERIC_LOCAL.has(x)) known.add(x); }); }); });
+  var holds = function (part) {   // the part is a known name, or a known name with an initial or two
+    if (!known.size || !/^\p{L}+$/u.test(part)) return false;
+    var p = foldName(part);
+    for (var n of known) if (p.some(function (x) { return x === n || (x.length - n.length <= 2 && x.indexOf(n) >= 0); })) return true;
+    return false;
+  };
+  var m;
+  NAME_TOKEN_RE.lastIndex = 0;
+  while ((m = NAME_TOKEN_RE.exec(text))) {
+    var tok = m[1].replace(/[.,+-]+$/, ''), fm = FILE_EXT_RE.exec(tok), stem = fm ? fm[1] : tok.replace(/_+$/, '_');
+    if (!fm && stem.indexOf('.') >= 0) continue;   // a host name, a dotted login: other rules read them
+    // a known name counts in a file name, a machine name (a digit) or an identifier (a "_"), not in a hyphenated word (customer-orion)
+    var strong = !!fm || /[\d_]/.test(stem);
+    var parts = stem.split(/[_.+-]+|(?<=\p{L})(?=\d)|(?<=\d)(?=\p{L})|(?<=\p{Ll})(?=\p{Lu})/u).filter(Boolean), hit = false;   // also "JôrgWeif"
+    for (var i = 0; i < parts.length && !hit; i++) {
+      if (strong && holds(parts[i])) hit = true;
+      else if (isFirstName(parts[i]) && /^\p{Lu}\p{L}+$/u.test(parts[i]) && i + 1 < parts.length && /^\p{Lu}\p{L}+$/u.test(parts[i + 1]) && !CAPS_STOP.has(parts[i + 1].toUpperCase())) hit = true;
+    }
+    if (!hit) continue;
+    var device = !fm && /\d/.test(stem) && /[_-]/.test(stem);
+    out.push({ start: m.index, end: m.index + stem.length, type: device ? 'Device or location' : 'Person name', prefix: device ? 'DEVICE' : 'PERSON', sens: true });
   }
 }
 // "Alias: …", "Nickname: …": the value may be in any script (no capital letters to rely on)
@@ -1013,7 +1118,7 @@ function personPass(text, out) {
   }
   ALIAS_RE.lastIndex = 0;
   while ((m = ALIAS_RE.exec(text))) {
-    var av = m[1].replace(/[ \t]+$/, '');
+    var av = m[1].replace(/[ \t\r]+$/, '');
     if (/[\p{Lu}]|[^\x00-\x7f]/u.test(av) && !/[=<>{}()]/.test(av)) {   // "alias: production" is a setting, not a person
       var as = m.index + m[0].length - m[1].length;
       out.push({ start: as, end: as + av.length, type: 'Person name', prefix: 'PERSON', sens: true });
@@ -1042,6 +1147,19 @@ function personPass(text, out) {
     var ix = m.index + m[0].length - m[1].length;
     out.push({ start: ix, end: ix + m[1].length, type: 'Person name', prefix: 'PERSON', sens: true });
   }
+  PERSON_PART_RE.lastIndex = 0;
+  while ((m = PERSON_PART_RE.exec(text))) {
+    var npv = m[1];   // the field says it is a name: it only has to look like one (a capital, three letters, not a placeholder)
+    if (npv.length < 3 || !/^\p{Lu}[\p{L}'’-]+(?:[ \t]+\p{Lu}[\p{L}'’-]+){0,2}$/u.test(npv) || npv.split(/[ \t]+/).some(function (w) { return NAME_PART_STOP.has(plain(w)) || CAPS_STOP.has(w.toUpperCase()); })) continue;
+    var nps = m.index + m[0].length - npv.length;
+    out.push({ start: nps, end: nps + npv.length, type: 'Person name', prefix: 'PERSON', sens: true });
+  }
+  PERSON_CO_RE.lastIndex = 0;
+  while ((m = PERSON_CO_RE.exec(text))) {
+    if (!/^\p{Lu}/u.test(m[1]) || LEGAL_FORM.test(m[1] + text.slice(m.index + m[0].length, m.index + m[0].length + 12))) continue;   // "c/o Muster GmbH": the legal form may come after what the name pattern read
+    var cos = m.index + m[0].indexOf(m[1]);
+    out.push({ start: cos, end: cos + m[1].length, type: 'Person name', prefix: 'PERSON', sens: true });
+  }
   PERSON_CHAT_RE.lastIndex = 0;
   while ((m = PERSON_CHAT_RE.exec(text))) {
     if (m[1].split(/[ \t]+/).some(function (w) { return CAPS_STOP.has(w.toUpperCase()); })) continue;
@@ -1050,7 +1168,7 @@ function personPass(text, out) {
   }
   PERSON_HEADER_RE.lastIndex = 0;
   while ((m = PERSON_HEADER_RE.exec(text))) {
-    var hv = m[1].replace(/[ \t]+$/, '');
+    var hv = m[1].replace(/[ \t\r]+$/, '');   // \r: a file with CRLF line endings (mail)
     if (!PERSON_NAME_ONLY.test(hv) || hv.split(/[ \t]+/).some(function (w) { return CAPS_STOP.has(w.toUpperCase()); })) continue;
     var hs = m.index + m[0].length - m[1].length;
     out.push({ start: hs, end: hs + hv.length, type: 'Person name', prefix: 'PERSON', sens: true });
@@ -1100,20 +1218,36 @@ function directoryPass(text, out) {
 }
 // A login given by its label ("Benutzername lautet j.weiss") or in a link ("?user=j.weiss"): a structured name, not a generic account
 var USER_LABEL_RE = new RegExp('(?<![A-Za-z0-9])(?:' + lang('userLabel') + '|user|benutzer)\\b(?:\\\\?["\'])?(?:[ \\t]*[:=]|[ \\t]+(?:' + lang('is') + '))[ \\t]*(?:\\\\?["\'])?([A-Za-z][A-Za-z0-9._-]{2,39})(?![A-Za-z0-9._-]*@)', 'gid');
+// "Sein Konto lautet r.weissgaerber": an account named in a sentence (with its verb: "Konto: 12345678" is a bank account)
+var USER_SENTENCE_RE = new RegExp('(?<![A-Za-z0-9])(?:konto|benutzerkonto|nutzerkonto|account|login|anmeldename)[ \\t]+(?:' + lang('is') + ')[ \\t]+(?:\\\\?["\'])?([A-Za-z][A-Za-z0-9._-]{2,39})', 'gid');
+// What a quoted "user" field holds when it is no person: a placeholder, or a service account (see GENERIC_USERS)
+var PLACEHOLDER_USER = /^(?:your|my|the|example|sample|changeme|change[_-]?me|required|optional|username|user[_-]?name|login|name|value|string|default|anonymous|unknown|admin|root|test|demo|svc|srv|sys|service|app|bot|ci|deploy|cron|backup|batch|worker|system)(?:[_-].*|\d*)$/i;
 function loginPass(text, out) {
   var lm;
-  USER_LABEL_RE.lastIndex = 0;
-  while ((lm = USER_LABEL_RE.exec(text))) {
-    var lv = lm[1].replace(/[.\-_]+$/, '');
-    if (!/[.0-9]/.test(lv) || GENERIC_USERS.has(lv.toLowerCase()) || IGNORE.test(lv)) continue;   // "username: required" is no login; a dot or a digit tells a person (j.weiss), not a service account (svc_deploy)
-    out.push({ start: lm.indices[1][0], end: lm.indices[1][0] + lv.length, type: 'User login', prefix: 'LOGIN', sens: true });
-  }
+  [USER_LABEL_RE, USER_SENTENCE_RE].forEach(function (re) {
+    re.lastIndex = 0;
+    while ((lm = re.exec(text))) {
+      var lv = lm[1].replace(/[.\-_]+$/, '');
+      // "username: required" is no login; a dot or a digit tells a person (j.weiss), not a service account (svc_deploy). A value in quotes
+      // after the label ("benutzer":"foesterreich") is a login when it is made of letters only (a hyphen or an underscore tells a service
+      // account: terraform-runner); the OCR may drop the quote before the label.
+      var quoted = re === USER_LABEL_RE && /^[A-Za-z]{5,39}$/.test(lm[1]) && /["'\u2018\u201c]/.test(text.charAt(lm.indices[1][0] - 1)) && /["'\u2019\u201d]/.test(text.charAt(lm.indices[1][0] + lm[1].length)) && !PLACEHOLDER_USER.test(lv);
+      if (!(/[.0-9]/.test(lv) || quoted) || GENERIC_USERS.has(lv.toLowerCase()) || IGNORE.test(lv)) continue;
+      out.push({ start: lm.indices[1][0], end: lm.indices[1][0] + lv.length, type: 'User login', prefix: 'LOGIN', sens: true });
+    }
+  });
   LOGIN_RE.lastIndex = 0;
   var m;
   while ((m = LOGIN_RE.exec(text))) {
     if (GENERIC_USERS.has(m[1].toLowerCase()) && GENERIC_HOSTS.has(m[2].toLowerCase())) continue;
     if (/^(?:sha\d+|md5|latest|stable|main|master|v?\d+)$/i.test(m[2])) continue;   // image@sha256, package@1, branch@main
     out.push({ start: m.index, end: m.index + m[0].length, type: 'User login', prefix: 'LOGIN', sens: true });
+  }
+  PROMPT_RE.lastIndex = 0;
+  while ((m = PROMPT_RE.exec(text))) {
+    if (GENERIC_USERS.has(m[2].toLowerCase()) && GENERIC_HOSTS.has(m[3].toLowerCase())) continue;
+    var ps = m.index + m[0].indexOf(m[1]);
+    out.push({ start: ps, end: ps + m[1].length, type: 'User login', prefix: 'LOGIN', sens: true });
   }
   // A Windows account: ATELIER\jdoe (the domain in capitals; drives, UNC paths and system folders are left alone)
   DOMAIN_USER_RE.lastIndex = 0;
@@ -1123,6 +1257,8 @@ function loginPass(text, out) {
   }
 }
 var DOMAIN_USER_RE = /(?<![\w\\:])([A-Z][A-Z0-9_-]{1,15})\\{1,2}([A-Za-z][A-Za-z0-9._-]{1,30})(?![\w\\])/g;
+// A shell prompt at the start of a line, "user@machine:~/path$", even when the OCR misreads the machine name
+var PROMPT_RE = /^[ \t]*(([A-Za-z_][A-Za-z0-9_.-]{1,31})@([^\s:]{1,64})):[~\/-][^\s]*[$#%>](?=[ \t]|$)/gm;
 var NOT_DOMAIN = new Set('WINDOWS SYSTEM32 PROGRAM PROGRAMDATA BUILTIN NT USERS TEMP APPDATA LOCAL ROAMING'.split(' '));
 
 // ---------- More personal data: phone numbers, IBAN, cards, devices, IPv6, paths ----------
@@ -1158,15 +1294,23 @@ function isPrivateIpv6(s) {
 var PHONE_RES = [
   /(?<![\w+.\/-])\+\d{1,3}(?:[ .-]?\(0\))?(?:[ .-]?\d{1,4}){2,5}(?![\w-]|\.\d)/g,   // +33 1 99 00 12 34, +44 7700 900123
   /(?<![\w.+\/-])(?:0[1-9](?:[ .-]\d{2}){4}|0[67]\d{8})(?![\w-]|\.\d)/g,           // 01 99 00 12 34, 0612345678
-  /(?<![\w.+\/-])\(?\d{3}\)?[ .-]\d{3}[ .-]\d{4}(?![\w-]|\.\d)/g,                  // (555) 010-0199
+  /(?<![\w.+\/-])(?:\+1[ .-]?)?\(?\d{3}\)?[ .-]\d{3}[ .-]\d{4}(?![\w-]|\.\d)/g,    // (555) 010-0199, +1 (202) 555-0138
   /(?<![\w.+\/-])(?:01[567]\d[ \/-]?\d{6,8}|\(?0[2-9]\d{1,4}\)?[ \/-]\d{4,9}(?:-\d{1,4})?)(?![\w-]|\.\d)/g   // 0171 1234567, 0151/23456789, (089) 123456, 089 123456-0
 ];
-var IBAN_RE = /(?<![A-Za-z0-9])[A-Z]{2}\d{2}(?: ?[A-Z0-9]{4}){2,7}(?: ?[A-Z0-9]{1,3})?(?![A-Za-z0-9])/g;
+var IBAN_RE = /(?<![A-Za-z0-9])[A-Z]{2}[\dOBIlSZ]\d(?: ?[A-Z0-9]{4}){2,7}(?: ?[A-Z0-9]{1,3})?(?![A-Za-z0-9])|(?<![A-Za-z0-9])[A-Z]{2}\d[\dOBIlSZ](?: ?[A-Z0-9]{4}){2,7}(?: ?[A-Z0-9]{1,3})?(?![A-Za-z0-9])/g;
+// The OCR reads 0 as O, 8 as B, 1 as I or l: an IBAN is also tried with them read back as digits (its checksum decides)
+function ibanOcrOk(s) {
+  if (ibanOk(s)) return true;
+  return ['5', '8'].some(function (sv) { return ibanOk(s.slice(0, 2) + s.slice(2).replace(/[OBIlSZ]/g, function (c) { return { O: '0', B: '8', I: '1', l: '1', S: sv, Z: '2' }[c]; })); });   // S stands for 5 or 8
+}
 var CARD_RE = /(?<![\d-])\d(?:[ -]?\d){12,18}(?![\d-])/g;
 var CARD_IIN = /^(?:4|5[1-5]|2[2-7]|3[47]|35|6011|65)/;
 var MAC_RE = /(?<![\w:-])[0-9A-Fa-f]{2}(?:[:-][0-9A-Fa-f]{2}){5}(?![\w:-])/g;
 var IPV6_RE = /(?<![\w:.])(?:(?:[0-9a-f]{1,4}:){7}[0-9a-f]{1,4}|(?:[0-9a-f]{1,4}(?::[0-9a-f]{1,4}){0,6})?::(?:[0-9a-f]{1,4}(?::[0-9a-f]{1,4}){0,6})?)(?![\w:])/gi;
-var SERIAL_RE = new RegExp('(?<![A-Za-z0-9])(?:' + lang('serial') + ')\\b(?:\\\\?["\'])?[ \\t]*[:=#]?[ \\t]*(?:\\\\?["\'])?([A-Za-z0-9][A-Za-z0-9-]{5,35})', 'gid');
+var SERIAL_RE = new RegExp('(?<![A-Za-z0-9])(?:' + lang('serial') + ')\\b\\.?(?:\\\\?["\'])?[ \\t]*[:=#]?[ \\t]*(?:\\\\?["\'])?([A-Za-z0-9][A-Za-z0-9-]{5,35})', 'gid');
+// A device or computer named by a label: "Das betroffene Gerät heißt BER-LT-JWEISS-07", "Computername: WS-4711".
+// The name holds a digit or a "-" (not a plain word: "Das Gerät ist neu"); a host name with no such label (srv-payment-01) stays visible.
+var DEVICE_NAME_RE = new RegExp('(?<![\\p{L}\\d_-])(?:' + lang('deviceLabel') + ')(?:[ \\t]*[:=][ \\t]*|[ \\t]+(?:' + lang('called') + ')[ \\t]*:?[ \\t]*|[ \\t]+(?=[A-Za-z0-9._-]*\\d)(?=[A-Za-z0-9._-]*[A-Za-z])(?=[A-Za-z0-9._]*-))["\'„“]?([A-Za-z0-9][A-Za-z0-9._-]{2,62})', 'giud');   // a form: "Gerätename NB-MUELLER-0815"
 // Card security code and expiry, birth date and postal address: only when a label names them
 var CVV_RE = new RegExp('(?<![A-Za-z0-9])(?:' + lang('cvv') + ')\\b(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*(?:\\\\?["\'])?(\\d{3,4})(?!\\d)', 'gid');
 var EXPIRY_RE = new RegExp('(?<![A-Za-z0-9])(?:' + lang('expiry') + ')\\b(?:\\\\?["\'])?[ \\t]*[:=][ \\t]*(?:\\\\?["\'])?(\\d{2}[ \\t]*\\/[ \\t]*(?:\\d{2}|\\d{4}))(?!\\d)', 'gid');
@@ -1179,12 +1323,21 @@ var NOT_POSTAL = /(?:ip|mac|e-?mail|mail|remote|client|server|host|bind|listen|u
 var NUMW = 'z[ée]ro|un|une|deux|trois|quatre|cinq|six|sept|huit|neuf|dix|onze|douze|treize|quatorze|quinze|seize|vingts?|trente|quarante|cinquante|soixante|cent';
 var SPOKEN_PHONE_FR = new RegExp('(?<![\\p{L}])z[ée]ro[ -](?:un|deux|trois|quatre|cinq|six|sept|huit|neuf)(?:[ ,]+(?:' + NUMW + ')(?:-(?:' + NUMW + '))*){4,6}(?![\\p{L}])', 'giu');
 var SPOKEN_PHONE_EN = /(?<![A-Za-z])(?:zero|oh|one|two|three|four|five|six|seven|eight|nine)(?:[ ,-]+(?:zero|oh|one|two|three|four|five|six|seven|eight|nine|double|triple)){7,}(?![A-Za-z])/gi;
+// The same in German, digit by digit: "null null eins fünf eins …" (eight words or more; a line break may fall inside the number)
+var SPOKEN_PHONE_DE = /(?<![\p{L}])(?:null|eins|zwei|zwo|drei|vier|f(?:ü|ue|ii|u)nf|sechs|sieben|acht|neun)(?:(?:[ \t,\/.-]|\r?\n[ \t]*)+(?:null|eins|zwei|zwo|drei|vier|f(?:ü|ue|ii|u)nf|sechs|sieben|acht|neun|doppel|dreifach)){7,}(?![\p{L}])/giu;
+// A birth date written out, in a sentence with "geboren": "Ich bin am neunten Oktober neunzehnhundertvierundachtzig geboren", "Ich bin am 9. Oktober 1984 geboren"
+var DAY_WORDS = '(?:ersten|zweiten|dritten|vierten|f(?:ü|ue|u)nften|sechsten|siebten|achten|neunten|zehnten|elften|zw(?:ö|oe|o)lften|(?:drei|vier|f(?:ü|ue|u)nf|sech|sieb|acht|neun)zehnten|(?:ein|zwei|drei|vier|f(?:ü|ue|u)nf|sechs|sieben|acht|neun)und(?:zwanzigsten|drei(?:ß|ss)igsten)|zwanzigsten|drei(?:ß|ss)igsten)';
+var YEAR_WORDS = '(?:(?:neunzehn|zwanzig)hundert|zweitausend)[a-zäöüß]{0,40}';
+// a line break may fall inside the date, or between the date and "geboren": the OCR cuts the lines of a mail where the window ends
+var DATE_SP = '(?:[ \\t]+|[ \\t]*\\r?\\n[ \\t]*)';
+var DATE_ANY = '(?:\\d{1,2}\\.?|' + DAY_WORDS + ')' + DATE_SP + '(?:' + MONTHS + ')' + DATE_SP + '(?:\\d{4}|' + YEAR_WORDS + ')';
+var DOB_WORDS_RE = new RegExp('(?<![\\p{L}\\d])(?:geboren(?:[ \\t]+am)?' + DATE_SP + '(' + DATE_ANY + ')|(?:am[ \\t]+)?(' + DATE_ANY + ')(?=[^.]{0,60}?\\bgeboren\\b))', 'giud');   // (up to 60 characters: a side panel read on the same row may come between)
 // Identity documents, tickets and booking references, when a label names them: "Passeport de test : 00AA00000"
 var ID_RE = new RegExp('(?<![A-Za-z0-9])(?:' + lang('idDoc') + ')(?:[ \\t]+(?:' + lang('idSuffix') + '))*' + LINK + '["\']?[ \\t]*[:=#]?[ \\t]*["\']?([A-Za-z0-9][A-Za-z0-9-]{4,24})(?![A-Za-z0-9-])', 'gid');
 // Numbers written in groups after a label: "Steuer-ID: 12 345 678 901", "Sozialversicherungsnummer: 12 150988 K 123"
 var ID_SPACED_RE = new RegExp('(?<![A-Za-z0-9])(?:' + lang('idSpaced') + ')(?:[ \\t]+(?:' + lang('idSuffix') + '))*' + LINK + '["\']?[ \\t]*[:=#]?[ \\t]*["\']?(\\d[\\dA-Za-z ./-]{7,26}[\\dA-Za-z])(?![A-Za-z0-9])', 'gid');
 // An address whose label stands alone on its line, the street and town on the next ones
-var ADDRESS_NEXT_RE = new RegExp('(?<![A-Za-z0-9])(?:(?:' + lang('addressKind') + ')[ _-]?)?(?:' + lang('address') + ')(?:[ ]+(?:de|du)[ ]+(?:livraison|facturation|secours|domicile))?' + GAP + '[ \\t]*:?[ \\t]*\\r?\\n[ \\t]*(?:[^\\n\\d]{3,40}\\r?\\n[ \\t]*)?((?:\\d{1,4}[^\\n]{4,80}|[A-Za-z\u00c4-\u00ff][A-Za-z\u00c4-\u00ff. -]{2,40}[ ]\\d{1,4}[a-z]?(?:[ ,][^\\n]{0,40})?)(?:\\r?\\n[ \\t]*\\d{4,5}[^\\n]{2,50})?)', 'gid');
+var ADDRESS_NEXT_RE = new RegExp('(?<![A-Za-z0-9])(?:(?:' + lang('addressKind') + ')[ _-]?)?(?:' + lang('address') + ')(?:[ ]+(?:de|du)[ ]+(?:livraison|facturation|secours|domicile))?' + GAP + '[ \\t]*:?[ \\t]*\\r?\\n[ \\t]*((?:[^\\n\\d]{3,40}\\r?\\n[ \\t]*){0,2})((?:\\d{1,4}[^\\n]{4,80}|[A-Za-z\u00c4-\u00ff][A-Za-z\u00c4-\u00ff. -]{2,40}[ ]\\d{1,4}[a-z]?(?:[ ,][^\\n]{0,40})?)(?:\\r?\\n[ \\t]*(?:[A-Za-z\u00c4-\u00ff]{3,12}[ \\t]+)?(\\d{4,5}[^\\n]{2,50}))?)', 'gid');
 // Cloud accounts: tenant_id=<guid>, subscription_id, account_id=123456789012, project_id=my-project-42, org_id=org_…; and the account inside an ARN.
 // client_id stays visible (it is no secret and helps diagnosis).
 var CLOUD_ID_RE = /(?<![A-Za-z0-9])(?:tenant[ _-]?id|subscription[ _-]?id|account[ _-]?id|aws[ _-]?account(?:[ _-]?(?:id|number))?|project[ _-]?id|org(?:anization|anisation)?[ _-]?id|directory[ _-]?id)(?:\\?["'])?[ \t]*[:=][ \t]*(?:\\?["'])?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|\d{12}|(?=[^\s"',;]*\d)[A-Za-z][A-Za-z0-9_-]{5,60})/gid;
@@ -1206,7 +1359,7 @@ function piiPass(text, out, privateIps) {
     }
   });
   IBAN_RE.lastIndex = 0;
-  while ((m = IBAN_RE.exec(text))) if (ibanOk(m[0])) add(m.index, m.index + m[0].length, 'Bank or card number', 'BANK');
+  while ((m = IBAN_RE.exec(text))) if (ibanOcrOk(m[0])) add(m.index, m.index + m[0].length, 'Bank or card number', 'BANK');
   CARD_RE.lastIndex = 0;
   while ((m = CARD_RE.exec(text))) {
     var dg = m[0].replace(/\D/g, '');
@@ -1222,18 +1375,24 @@ function piiPass(text, out, privateIps) {
     var sv = m[1];
     if (/\d/.test(sv) && !IGNORE.test(sv)) add(m.indices[1][0], m.indices[1][1], 'Device or location', 'DEVICE');
   }
+  DEVICE_NAME_RE.lastIndex = 0;
+  while ((m = DEVICE_NAME_RE.exec(text))) {
+    var dn = m[1].replace(/[._-]+$/, '');   // the full stop ending the sentence
+    if (dn.length >= 3 && /[\d-]/.test(dn) && !looksLikeWords(dn) && !IGNORE.test(dn) && !/^\d{1,3}(?:\.\d{1,3}){3}$/.test(dn)) add(m.indices[1][0], m.indices[1][0] + dn.length, 'Device or location', 'DEVICE');
+  }
   var labeled = function (re, type, prefix, ok) {
     re.lastIndex = 0;
     while ((m = re.exec(text))) {
       var ix = m.indices[1] || m.indices[2] || m.indices[3] || m.indices[4];
       if (!ix) continue;
-      var v = text.slice(ix[0], ix[1]).replace(/[ \t,;]+$/, '');
+      var v = text.slice(ix[0], ix[1]).replace(/[ \t\r,;]+$/, '');
       if (v && (!ok || ok(v, m))) add(ix[0], ix[0] + v.length, type, prefix);
     }
   };
   labeled(CVV_RE, 'Bank or card number', 'BANK');
   labeled(EXPIRY_RE, 'Bank or card number', 'BANK', function (v) { return /^(?:0[1-9]|1[0-2])/.test(v); });   // MM/YY
   labeled(DOB_RE, 'Personal detail', 'PERSONAL');
+  labeled(DOB_WORDS_RE, 'Personal detail', 'PERSONAL');
   labeled(ADDRESS_RE, 'Personal detail', 'PERSONAL', function (v, mm) {
     return /\d/.test(v) && /\p{L}/u.test(v) && /\s/.test(v) && !NOT_POSTAL.test(text.slice(Math.max(0, mm.index - 16), mm.index));
   });
@@ -1241,10 +1400,30 @@ function piiPass(text, out, privateIps) {
   labeled(ID_SPACED_RE, 'Personal detail', 'PERSONAL', function (v) { return (v.match(/\d/g) || []).length >= 8; });
   labeled(CLOUD_ID_RE, 'Personal detail', 'PERSONAL');
   labeled(ARN_RE, 'Personal detail', 'PERSONAL');
-  labeled(ADDRESS_NEXT_RE, 'Personal detail', 'PERSONAL', function (v, mm) {
-    return /\d/.test(v) && /\p{L}/u.test(v) && !NOT_POSTAL.test(text.slice(Math.max(0, mm.index - 16), mm.index));
-  });
-  [SPOKEN_PHONE_FR, SPOKEN_PHONE_EN].forEach(function (re) {
+  // The address under a label that stands alone: the street and town (group 2), after the recipient's lines (group 1)
+  ADDRESS_NEXT_RE.lastIndex = 0;
+  while ((m = ADDRESS_NEXT_RE.exec(text))) {
+    var sx = m.indices[2], sv = sx ? text.slice(sx[0], sx[1]).replace(/[ \t\r,;]+$/, '') : '';
+    if (!sv || !/\d/.test(sv) || !/\p{L}/u.test(sv) || NOT_POSTAL.test(text.slice(Math.max(0, m.index - 16), m.index))) continue;
+    // The line of the postcode may start with a word of the panel beside the text ("Gestern 00000 Beispielstadt"): then it is masked apart
+    var px = m.indices[3], pre = px ? text.slice(sx[0], px[0]) : '', nl = pre.lastIndexOf('\n');
+    if (px && nl >= 0 && /\S/.test(pre.slice(nl + 1))) {
+      add(sx[0], sx[0] + pre.slice(0, nl).replace(/[ \t\r,;]+$/, '').length, 'Personal detail', 'PERSONAL');
+      add(px[0], px[0] + text.slice(px[0], px[1]).replace(/[ \t\r,;]+$/, '').length, 'Personal detail', 'PERSONAL');
+    } else add(sx[0], sx[0] + sv.length, 'Personal detail', 'PERSONAL');
+    // The recipient's lines before the street ("Franziska Waldmann", "c/o İlker Yılmaz") belong to the address. A name the engine knows is
+    // masked as a name already; one it does not (a letter the OCR cannot read: "ofa ker Yilmaz") is masked here. A company stays visible.
+    var rx = m.indices[1];
+    if (rx && rx[1] > rx[0]) {
+      var rbase = rx[0];
+      text.slice(rx[0], rx[1]).replace(/[^\n]+/g, function (ln, off) {
+        var body = ln.replace(/[ \t\r]+$/, '').replace(/^[ \t]+/, ''), s0 = rbase + off + (ln.length - ln.replace(/^[ \t]+/, '').length), e0 = s0 + body.length;
+        if (body.length >= 3 && !LEGAL_FORM.test(body) && !out.some(function (d) { return d.prefix === 'PERSON' && d.start >= s0 && d.end <= e0; })) add(s0, e0, 'Person name', 'PERSON');
+        return ln;
+      });
+    }
+  }
+  [SPOKEN_PHONE_FR, SPOKEN_PHONE_EN, SPOKEN_PHONE_DE].forEach(function (re) {
     re.lastIndex = 0;
     while ((m = re.exec(text))) add(m.index, m.index + m[0].length, 'Phone number', 'PHONE');
   });
@@ -1332,6 +1511,61 @@ function keepLongest(raw) {
   return res;
 }
 
+// ---------- A value found once is found again ----------
+// A password typed twice, a code repeated in the body of a mail, a login met again in a field of its own ("benutzer":"foesterreich"),
+// a birth date written another way in a file name: once a value is detected, its other occurrences in the same text are masked too.
+// (Names do the same in learnNames.) Only values that cannot be a plain word: a password has a digit or a symbol, a login a dot or a digit
+// or a place of its own (ATELIER\jdoe, jdoe@WS-0042); a code is four to eight digits and is not cut out of a longer number.
+var REPEAT_MAX = 400;
+function monthNumber(name) {
+  var n = plain(name), T = { jan: 1, feb: 2, fev: 2, mar: 3, apr: 4, avr: 4, mai: 5, may: 5, jun: 6, jui: n.slice(0, 4) === 'juil' ? 7 : 6, jul: 7, aug: 8, aou: 8, sep: 9, okt: 10, oct: 10, nov: 11, dez: 12, dec: 12 };
+  return T[n.slice(0, 3)] || 0;
+}
+// The ways a date is written, from one of them: "4. Mai 1979" -> 1979-05-04, 04.05.1979, 4.5.1979, 04/05/1979, 04-05-1979, 19790504
+function dateForms(v) {
+  var y = 0, mo = 0, d = 0, m;
+  if ((m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v))) { y = +m[1]; mo = +m[2]; d = +m[3]; }
+  else if ((m = /^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/.exec(v))) { d = +m[1]; mo = +m[2]; y = +m[3]; }
+  else if ((m = /^(\d{1,2})(?:st|nd|rd|th|er|\.)?[ \t]+(\p{L}+)[ \t]+(\d{4})$/u.exec(v))) { d = +m[1]; mo = monthNumber(m[2]); y = +m[3]; }
+  else if ((m = /^(\p{L}+)[ \t]+(\d{1,2})(?:st|nd|rd|th)?,?[ \t]+(\d{4})$/u.exec(v))) { mo = monthNumber(m[1]); d = +m[2]; y = +m[3]; }
+  if (!y || !mo || !d || mo > 12 || d > 31 || y < 1900 || y > 2100) return [];
+  var p = function (n) { return (n < 10 ? '0' : '') + n; };
+  return [y + '-' + p(mo) + '-' + p(d), p(d) + '.' + p(mo) + '.' + y, d + '.' + mo + '.' + y, p(d) + '/' + p(mo) + '/' + y, p(d) + '-' + p(mo) + '-' + y, '' + y + p(mo) + p(d)];
+}
+function repeatPass(text, res) {
+  var seen = {}, list = [], extra = [];
+  var want = function (s, kind, d) { if (!seen[s]) { seen[s] = 1; list.push({ s: s, kind: kind, d: d }); } };
+  res.forEach(function (d) {
+    var v = text.slice(d.start, d.end);
+    if (v.length < 4 || v.length > 120 || v.indexOf('\n') >= 0 || IGNORE.test(v)) return;
+    if (d.prefix === 'LOGIN' || d.prefix === 'USERNAME') {
+      var u = v.replace(/^.*\\/, '').replace(/@.*$/, '');   // ATELIER\jdoe -> jdoe, jdoe@WS-0042 -> jdoe
+      // a short plain word (info, mail) is no login to chase through the text: five letters, or a dot, a digit, a "-" or a "_"
+      if (u.length >= 4 && /^[A-Za-z0-9._-]+$/.test(u) && (u.length >= 5 || /[.0-9_-]/.test(u)) && !GENERIC_USERS.has(u.toLowerCase())) want(u, 'login', d);
+    } else if (d.prefix === 'PERSONAL') {
+      dateForms(v).forEach(function (f) { want(f, 'date', d); });
+    } else if (!d.prefix) {
+      if (/^(?:One-time code|PIN code|Access code)$/.test(d.type) ? /^\d{4,8}$/.test(v) : (v.length >= 5 && !looksLikeWords(v))) want(v, /^\d+$/.test(v) ? 'digits' : 'secret', d);
+    }
+  });
+  list.sort(function (a, b) { return b.s.length - a.s.length; });
+  var budget = 4e8;   // characters to scan: keeps a huge file with thousands of secrets fast
+  list.slice(0, REPEAT_MAX).forEach(function (n) {
+    if (budget < 0) return;
+    budget -= text.length;
+    for (var from = 0, i; (i = text.indexOf(n.s, from)) >= 0; ) {
+      from = i + n.s.length;
+      var b = text.charAt(i - 1), a = text.charAt(from), b2 = text.charAt(i - 2), a2 = text.charAt(from + 1);
+      var ok = n.kind === 'date' ? !/\d/.test(b) && !/\d/.test(a)
+        : n.kind === 'login' ? !/[\p{L}\p{N}_.@-]/u.test(b) && !/[\p{L}\p{N}_@-]/u.test(a)
+        : n.kind === 'digits' ? !/[\p{L}\p{N}_]/u.test(b) && !/[\p{L}\p{N}_]/u.test(a) && !(/[.,]/.test(b) && /\d/.test(b2)) && !(/[.,]/.test(a) && /\d/.test(a2))
+        : !/[\p{L}\p{N}_]/u.test(b) && !/[\p{L}\p{N}_]/u.test(a);
+      if (ok) extra.push({ start: i, end: from, type: n.d.type, prefix: n.d.prefix, sens: n.d.sens });
+    }
+  });
+  return extra;
+}
+
 // opts.sensitive: also detect sensitive data (email addresses, public IPs, customer domain)
 // opts.customers: customer domains found in other files, masked here too
 function detectCore(text, filename, opts) {
@@ -1353,6 +1587,7 @@ function detectCore(text, filename, opts) {
     sens = keepLongest(sens.filter(function (s) { return !res.some(function (d) { return d.start < s.end && s.start < d.end; }); }));
     res = res.concat(sens).sort(function (a, b) { return a.start - b.start; });
   }
+  res = keepLongest(res.concat(repeatPass(text, res)));   // a value found once is masked wherever it comes back
   res.forEach(function (d, i) {
     d.id = i; d.value = text.slice(d.start, d.end);
     d.key = d.sens ? normKey(d.value).toLowerCase() : normKey(d.value);
@@ -1549,81 +1784,381 @@ function looksRandom(v) {
   if (/^[a-z0-9][a-z0-9._-]*\/[a-z0-9][a-z0-9._-]*(?::[a-z0-9._-]+)?$/.test(v)) return false;
   if (!/[0-9]/.test(v) || !/[A-Za-z]/.test(v)) return false;
   if ((v.match(/[\/.]/g) || []).length > 3) return false;   // paths, domain names
+  // A file name made of words: Installationsanleitung_v2.pdf
+  if (/^[A-Za-z0-9_+-]+\.(?:pdf|docx?|xlsx?|pptx?|od[tsp]|rtf|txt|csv|log|eml|msg|zip|7z|rar|tgz|tar|gz|png|jpe?g|gif|webp|heic|tiff?)$/i.test(v) && /[A-Za-z]{5,}/.test(v)) return false;
   var u = {}; for (var i = 0; i < v.length; i++) u[v[i]] = 1;
   return Object.keys(u).length >= 12;
 }
 
 // Are two words read by OCR actually a single word?
 // - the gap in the image is much smaller than a space (under a third of a character): the OCR split it;
-// - or the split is on "." or "@" (address, domain) with a gap of at most one and a half spaces,
-//   because OCR sometimes sees a space that is not there ("jane.doe@example. com").
-function ocrGlued(p, w) {
-  var cw = (p.bbox.x1 - p.bbox.x0) / Math.max(1, p.text.length), gap = w.bbox.x0 - p.bbox.x1;
-  if (gap < cw * 0.3) return true;   // a space in a proportional font can be as narrow as half a character
-  var cut = /[.@]$/.test(p.text) && /^[a-z0-9]/.test(w.text) || /[A-Za-z0-9]$/.test(p.text) && /^[.@][A-Za-z0-9]/.test(w.text);
+// - or the split is on "." or "@" (address, domain), or before the "://" of a link ("postgresql" "://svc…"), with a gap
+//   of at most one and a half spaces, because OCR sometimes sees a space that is not there ("jane.doe@example. com").
+// tight === false: the first rule is left out (see regionsFromOcr).
+function ocrGlued(p, w, tight) {
+  var cwOf = function (x) { return (x.bbox.x1 - x.bbox.x0) / Math.max(1, x.text.length); }, gap = w.bbox.x0 - p.bbox.x1;
+  // a word of punctuation alone (":", "//", "!") is narrow: the width of a character comes from its neighbour
+  var punct = function (x) { return !/[A-Za-z0-9\u00c0-\u024f]/.test(x.text); };
+  var cw = punct(p) ? Math.max(cwOf(p), cwOf(w)) : cwOf(p);
+  if (tight !== false && gap < cw * 0.3) return true;   // a space in a proportional font can be as narrow as half a character
+  // a symbol read apart inside a value: "Sommer2024" "!" "Geheim"
+  if ((/^[!#$%&*+?^~]$/.test(w.text) || /^[!|][\p{L}\d]+$/u.test(w.text) || /^[!#$%&*+?^~]$/.test(p.text)) && /[\p{L}\d!#$%&*+?^~]$/u.test(p.text) && gap < cw) return true;   // also "|Geheim" ("!" read as "|"); "+49" starts a number
+  // a word that ends with a symbol, then a word that looks like the rest of a secret (letters with a digit or a symbol), a little closer than
+  // a space: "Demo!" "Föhn73#Grün", "Demo!" "@idc73". The OCR sees a space where the password has none.
+  if (/[!#$%&*+?^~]$/.test(p.text) && /^[\p{L}\d@]/u.test(w.text) && /\p{L}/u.test(w.text) && /[\d!#$%&*+?^~@]/.test(w.text) && p.text.length + w.text.length >= 9 && gap < cw * 0.85) return true;
+  var cut = /[.@]$/.test(p.text) && /^[a-z0-9]/.test(w.text) || /[A-Za-z0-9]$/.test(p.text) && /^[.@][A-Za-z0-9]/.test(w.text) ||
+    /[A-Za-z0-9+.-]$/.test(p.text) && /^:\/\//.test(w.text) || /:$/.test(p.text) && /^(?:\\?\/){2}/.test(w.text) || /\/\/$/.test(p.text) && /^[:A-Za-z0-9]/.test(w.text);   // (the slashes may be escaped, in JSON: "https:" "\/\/host")
   return cut && gap < cw * 1.5;
 }
 
 // lines: [[{ text, bbox: {x0, y0, x1, y1} }]] (one list of words per line)
 // OCR often reads the "_" of "demo_Ref_8x2L9p" as a space: after "token=" or "secret=", a random-looking word that follows is the end of the value
-var SECRET_ASSIGN_TAIL = /(?:token|secret|password|passwd|pwd|api[_-]?key|apikey|credential)[A-Za-z0-9_.-]*=[^\s=]{3,}$/i;
-function ocrSplitSecret(p, w) {
+var SECRET_ASSIGN_TAIL = new RegExp('(?:' + NAME + '|credential|apikey)[A-Za-z0-9_.-]*=[^\\s=]{3,}$', 'i');   // API_SCHLUESSEL=demo4 + f8Q2…
+// The same after a form label, with no "=": "API-Schlüssel" "demo4" "f8Q2kL9xW3mZ7"
+var SECRET_LABEL_WORD = new RegExp('^(?:' + lang('secret') + '|(?:cl|dl?)ient[ _-]?secret|api[ _-]?key|secret[ _-]?key|token):?$', 'i');
+function ocrSplitSecret(p, w, pp) {
   var cw = (p.bbox.x1 - p.bbox.x0) / Math.max(1, p.text.length), gap = w.bbox.x0 - p.bbox.x1;
-  return gap < cw * 1.6 && SECRET_ASSIGN_TAIL.test(p.text) && /^[A-Za-z0-9_+\/-]{6,}$/.test(w.text) && /\d/.test(w.text) && /[A-Za-z]/.test(w.text);
+  if (gap >= cw * 1.6 || !/^[A-Za-z0-9_+\/-]{4,}$/.test(w.text) || !/\d/.test(w.text) || !/[A-Za-z]/.test(w.text)) return false;
+  if (SECRET_ASSIGN_TAIL.test(p.text) && w.text.length >= 6) return true;
+  return !!pp && SECRET_LABEL_WORD.test(pp.text) && /^[A-Za-z0-9_+\/-]{3,}$/.test(p.text);
 }
 // OCR often reads the German sharp s as a B or an R: "WeiB", "GroR", "StraBe". Fixed for the detection only (same length).
 function fixSharpS(t) {
+  t = t.replace(/(^|[\s:="'(])\|(?=\.[a-z]{2})/g, '$1l');   // and "|" read for "l" before a dot: "|.hoffmann"
+  t = t.replace(/(\p{L}{3,})[®©](?=[ \t])/gu, '$1:');   // and a label's colon read as ® or ©: "Sozialversicherungsnummer® 12 …"
+  t = t.replace(/(?<=[A-Za-z0-9]-)@(?=\d)|(?<=%[0-9A-Fa-f])@(?=[A-Za-z%])/g, '0');   // and a zero read as "@" in a machine name or a percent-encoding: "NB-RW-@19", "Demo%4@Bach"
   return t.replace(/[A-Za-z\u00c4\u00d6\u00dc\u00e4\u00f6\u00fc]{3,24}/g, function (w) {
-    if (/^[A-Z][a-z]*[aeiou][BR]$/.test(w) || /[aeiou\u00e4\u00f6\u00fc]B(?:e|en|er|es|t)$/.test(w)) return w.replace(/[BR](?=(?:e|en|er|es|t)?$)/, '\u00df');
+    if (/^[A-Z][a-z]*[aeiou][BR]$/.test(w) || /^[a-z]{2,}[aeiou]B$/.test(w) || /[aeiou\u00e4\u00f6\u00fc]B(?:e|en|er|es|t)$/.test(w)) return w.replace(/[BR](?=(?:e|en|er|es|t)?$)/, '\u00df');   // also "weiB" (OCR read the capital as small)
+    var mid = /^([A-Z\u00c4\u00d6\u00dc][a-z\u00e4\u00f6\u00fc]*[aeiou\u00e4\u00f6\u00fc])[BR](?=[a-z\u00e4\u00f6\u00fc]{3,}$)/.exec(w);   // a capital B or R inside a capitalized word, after a vowel: "GroBmann", "StraBenbahn", "WeiRgarber"
+    if (mid) return mid[1] + '\u00df' + w.slice(mid[1].length + 1);
     return w;
   });
 }
-function regionsFromOcr(lines, opts) {
-  var text = '', spans = [];
+// The box of each character of an OCR word, [x0, x1], when the OCR gave one per character and they make sense
+function ocrSyms(w) {
+  var s = w && w.symbols, out = [];
+  if (!s || !s.length || !w.bbox) return undefined;
+  for (var i = 0; i < s.length; i++) {
+    var t = s[i].text || '', b = s[i].bbox;
+    if (!b || b.x1 < b.x0 || b.x0 < w.bbox.x0 - 2 || b.x1 > w.bbox.x1 + 2 || (out.length && b.x0 < out[out.length - 1][0] - 2)) return undefined;
+    for (var k = 0; k < t.length; k++) out.push([b.x0, b.x1]);
+  }
+  return out.length === w.text.length ? out : undefined;
+}
+// The text of the OCR lines, and where each word sits in it.
+// OCR sometimes splits a word in two ("example. com"): the pieces are glued back together so that the address or token
+// stays recognizable. tight: also glue the words whose boxes almost touch.
+function ocrText(lines, tight) {
+  var text = '', spans = [], band;
   lines.forEach(function (ws, li) {
+    // a word box much taller than the others of its line (the OCR joined it with ink above or below) is kept to the line's band
+    var real = ws.filter(function (w) { return /[A-Za-z0-9\u00c0-\u024f]{3}/.test(w.text); });
+    var hs = real.map(function (w) { return w.bbox.y1 - w.bbox.y0; }).sort(function (a, b) { return a - b; }), hm = hs[(hs.length - 1) >> 1] || 0;
+    var cs = real.map(function (w) { return (w.bbox.y0 + w.bbox.y1) / 2; }).sort(function (a, b) { return a - b; }), cm = cs[(cs.length - 1) >> 1] || 0;
+    band = function (b) { return real.length >= 2 && b.y1 - b.y0 > 1.6 * hm ? { x0: b.x0, x1: b.x1, y0: Math.max(b.y0, cm - 0.8 * hm), y1: Math.min(b.y1, cm + 0.8 * hm) } : b; };
     ws.forEach(function (w, i) {
-      // OCR sometimes splits a word in two ("example. com"): glue the pieces back together
-      // so that the address or token stays recognizable
-      if (i && !ocrGlued(ws[i - 1], w) && !ocrSplitSecret(ws[i - 1], w)) text += ' ';
-      spans.push({ s: text.length, e: text.length + w.text.length, b: w.bbox, line: li });
+      if (i && !ocrGlued(ws[i - 1], w, tight) && !ocrSplitSecret(ws[i - 1], w, ws[i - 2])) text += ' ';
+      var sy = Array.isArray(w.syms) && w.syms.length === w.text.length ? w.syms : null;
+      spans.push({ s: text.length, e: text.length + w.text.length, b: band(w.bbox), sy: sy, line: li });
       text += w.text;
     });
     text += '\n';
   });
-  var dets = detect(fixSharpS(text), 'capture.txt', opts);
-  spans.forEach(function (sp) {
-    var raw = text.slice(sp.s, sp.e), lead = raw.match(/^[^A-Za-z0-9]*/)[0].length;
-    var tok = raw.slice(lead).replace(/[^A-Za-z0-9=]+$/, '');
-    // NAME=value: only the value can be random (APP_MAX_OPEN_FILES=65536 is not)
-    var asg = /^[A-Za-z_][A-Za-z0-9_.-]*=/.exec(tok);
-    if (asg) { lead += asg[0].length; tok = tok.slice(asg[0].length); }
-    if (!looksRandom(tok)) return;
-    // A hash given as such (commit, digest, checksum) is not a secret
-    if (/^[0-9a-f]{40}$|^[0-9a-f]{64}$/.test(tok) && /(commit|sha\d*|digest|revision|rev|hash|checksum)\W{0,3}$/i.test(text.slice(Math.max(0, sp.s - 24), sp.s + lead))) return;
-    var s = sp.s + lead, e = s + tok.length;
-    if (dets.some(function (d) { return d.start < e && d.end > s; })) return;
-    dets.push({ start: s, end: e, type: 'Long random string', value: tok, key: normKey(tok), checked: true });
+  return { text: text, spans: spans };
+}
+// Where characters a to z (text positions) of a word lie in the image. From the OCR's box of each character when it gave
+// them: those boxes are approximate (a few pixels short at times), so the mask reaches up to one character beyond the
+// edge, never past the next character. And from the average width of the word's characters, with one and a half
+// characters of margin (narrow letters such as "i", "/" or "." shift that estimate in a proportional font). The mask
+// covers both, as either can be wrong.
+function spanX(sp, a, z) {
+  var len = sp.e - sp.s, cw = (sp.b.x1 - sp.b.x0) / len, i = a - sp.s, j = z - sp.s, x0, x1;
+  x0 = sp.b.x0 + cw * i - (i ? cw * 1.5 : 0);
+  x1 = sp.b.x0 + cw * j + (j < len ? cw * 1.5 : 0);
+  if (sp.sy) {   // the union of both: the character boxes can be far off in a long word read badly
+    x0 = Math.min(x0, i ? Math.max(sp.sy[i - 1][0], sp.sy[i][0] - cw) : sp.b.x0);
+    x1 = Math.max(x1, j < len ? Math.min(sp.sy[j][1], sp.sy[j - 1][1] + cw) : sp.b.x1);
+  }
+  return [Math.max(sp.b.x0, x0), Math.min(sp.b.x1, x1)];
+}
+// A form's label standing alone: "Kennwort", "API-Schlüssel", "Gerätename" (its value is the next text on the row)
+var FORM_LABEL_RE = new RegExp('^(?:' + ['secret', 'userLabel', 'deviceLabel', 'dob', 'address', 'idDoc', 'idSpaced', 'serial', 'cvv', 'expiry', 'personLabel', 'recovery', 'pin', 'accessCode']
+  .map(lang).join('|') + '|(?:cl|dl?)ient[ _-]?secret|api[ _-]?key|secret[ _-]?key|token|iban|e-?mail|telefon(?:nummer)?|phone|mobil|login)$', 'iu');
+// The OCR may read one row of the image as several lines: a word a second reading found is added as a line of its own,
+// and a form's labels and values may come out as two blocks ("Name:" … "Geburtsdatum:" then "Käthe Weiß" … "07.12.1988").
+// Two lines on the same row are joined (left to right) when they nearly touch, or when the left one is a short label
+// (ending with ":", or a known label such as "Kennwort") and the right one is the next text on that row.
+// Lines of other columns stay apart.
+function joinRows(lines) {
+  // OCR junk (box borders, icons: low confidence, no real word) is never joined to a line
+  // and neither are words strewn far apart (text has about one character between its words)
+  var med = function (a) { a = a.slice().sort(function (p, q) { return p - q; }); return a.length ? a[(a.length - 1) >> 1] : 0; };
+  var real = function (ws) {
+    var c = ws.filter(function (w) { return typeof w.conf === 'number'; });
+    if (ws.length >= 3) {
+      var gaps = [], cws = ws.map(function (w) { return (w.bbox.x1 - w.bbox.x0) / Math.max(1, w.text.length); });
+      for (var i = 1; i < ws.length; i++) gaps.push(ws[i].bbox.x0 - ws[i - 1].bbox.x1);
+      if (med(gaps) > 4 * med(cws)) return false;
+    }
+    return ws.some(function (w) { return /[A-Za-z0-9\u00c0-\u024f]{2}/.test(w.text); }) && (!c.length || c.reduce(function (a, w) { return a + w.conf; }, 0) / c.length >= 40);
+  };
+  var info = lines.map(function (ws) {
+    var x0 = Math.min.apply(null, ws.map(function (w) { return w.bbox.x0; })), x1 = Math.max.apply(null, ws.map(function (w) { return w.bbox.x1; }));
+    var y0 = Math.min.apply(null, ws.map(function (w) { return w.bbox.y0; })), y1 = Math.max.apply(null, ws.map(function (w) { return w.bbox.y1; }));
+    // the width of a character: the median over the words (a line of spread-out junk would give a huge one)
+    var cws = ws.map(function (w) { return (w.bbox.x1 - w.bbox.x0) / Math.max(1, w.text.length); }).sort(function (p, q) { return p - q; });
+    return { x0: x0, x1: x1, y0: y0, y1: y1, cy: (y0 + y1) / 2, h: y1 - y0, cw: cws.length ? cws[cws.length >> 1] : 8, real: ws.length > 0 && real(ws) };
   });
+  // the same row: the two lines overlap over half the height of the lower one (a box read twice too tall keeps its row)
+  var sameRow = function (a, b) { return Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0) >= 0.5 * Math.min(a.h, b.h); };
+  var out = lines.map(function (ws) { var c = ws.slice(); c.col = ws.col; return c; }), gone = new Array(lines.length);
+  for (var i = 0; i < out.length; i++) {
+    if (gone[i] || !out[i].length || !info[i].real) continue;
+    for (var changed = true; changed;) {
+      changed = false;
+      var a = info[i], best = -1;
+      for (var j = 0; j < out.length; j++) {
+        if (j === i || gone[j] || !out[j].length || !info[j].real) continue;
+        var b = info[j];
+        if (!sameRow(a, b) || !(b.x0 >= a.x1 - 2)) continue;   // same row, to the right
+        if (best < 0 || b.x0 < info[best].x0) best = j;
+      }
+      // a line on the same row whose words all sit in the gaps of this one (a second reading found them): put back in place
+      for (var q = 0; q < out.length && best < 0; q++) {
+        if (q === i || gone[q] || !out[q].length || !info[q].real || !sameRow(a, info[q])) continue;
+        if (info[q].x0 > a.x0 && info[q].x1 < a.x1 && out[q].every(function (w) { return out[i].every(function (v) { return w.bbox.x1 <= v.bbox.x0 + 1 || w.bbox.x0 >= v.bbox.x1 - 1; }); })) {
+          var qcol = out[i].col;
+          out[i] = out[i].concat(out[q]).sort(function (u, v) { return u.bbox.x0 - v.bbox.x0; }); out[i].col = qcol;
+          gone[q] = true; changed = true; q = -2; break;
+        }
+      }
+      if (changed) continue;
+      if (best < 0) break;
+      var r = info[best], last = out[i][out[i].length - 1].text, gap = r.x0 - a.x1;
+      var near = gap < 3 * Math.max(a.cw, r.cw), words = out[i].map(function (w) { return w.text; }).join(' ');
+      var bare = !/:$/.test(last) && out[i].length <= 3 && FORM_LABEL_RE.test(words);
+      var label = /:$/.test(last) && out[i].length <= 4 || bare;
+      // across a gutter (a column split by splitColumns), only a form's label joins its value: "Name:" | "Käthe Weiß",
+      // not a sentence of the left column with a title of the right one ("Die Lieferanschrift lautet:" | "Technische Angaben")
+      if (out[i].col !== out[best].col && out[i].col !== undefined && out[best].col !== undefined && !FORM_LABEL_RE.test(words.replace(/[ \t]*:$/, ''))) break;
+      if (!near && !label) break;
+      // a form's label without its colon gets one, as the rules after a label expect ("Anschrift Beispielstraße 12" -> "Anschrift: …")
+      if (bare && !near) { var lw = out[i][out[i].length - 1]; out[i][out[i].length - 1] = { text: lw.text + ':', bbox: lw.bbox, conf: lw.conf }; }
+      var col = out[i].col;
+      out[i] = out[i].concat(out[best]); out[i].col = col;
+      info[i] = { x0: a.x0, x1: r.x1, y0: Math.min(a.y0, r.y0), y1: Math.max(a.y1, r.y1), cy: a.cy, h: Math.max(a.h, r.h), cw: (a.cw + r.cw) / 2, real: true };
+      gone[best] = true; changed = true;
+    }
+  }
+  return out.filter(function (ws, k) { return !gone[k] && ws.length; });
+}
+// ---- Pages with columns ----
+// The OCR may read a row of the left column and the same row of the right one as a single line ("Jörg Weiß  Version 4.12.3"
+// on a ticket beside its side panel): a label no longer sits above its value, and a mask may run across both columns.
+// A gutter is the same wide empty band (wider than 20 characters and than 15% of the page) inside at least three lines:
+// lines are cut there, and the left column is read before the right one. Each part is cut again if it has a gutter too.
+function splitColumns(lines, depth) {
+  var cwOf = function (w) { return (w.bbox.x1 - w.bbox.x0) / Math.max(1, w.text.length); };
+  var x0 = Infinity, x1 = 0, gaps = [];
+  lines.forEach(function (ws) { ws.forEach(function (w) { x0 = Math.min(x0, w.bbox.x0); x1 = Math.max(x1, w.bbox.x1); }); });
+  var real = function (w) { return /[\p{L}\d]{3}/u.test(w.text) && (typeof w.conf !== 'number' || w.conf >= 40); };   // OCR junk proves no gutter
+  var wide = function (p, q) { return q.bbox.x0 - p.bbox.x1 > Math.max(20 * Math.max(cwOf(p), cwOf(q)), 0.15 * (x1 - x0)); };
+  lines.forEach(function (ws) {
+    for (var i = 1; i < ws.length; i++) if (wide(ws[i - 1], ws[i]) && real(ws[i - 1]) && real(ws[i])) gaps.push({ a: ws[i - 1].bbox.x1, b: ws[i].bbox.x0 });
+  });
+  var best = null;
+  gaps.forEach(function (g) {
+    var x = (g.a + g.b) / 2, n = gaps.filter(function (h) { return h.a < x && h.b > x; }).length;
+    if (n < 3) return;
+    // among equally good places, the one that cuts through the fewest words: the middle of one row's gap may fall inside a word of another
+    // row ("Privatanschrift:" ending a little to the right of it), and that row would then keep its side panel
+    var cross = 0;
+    lines.forEach(function (ws) { ws.forEach(function (w) { if (w.bbox.x0 < x && w.bbox.x1 > x) cross++; }); });
+    if (!best || n > best.n || (n === best.n && cross < best.cross)) best = { x: x, n: n, cross: cross };
+  });
+  if (!best) return lines;
+  // a line is cut only where it has a wide gap across the gutter; a line with no such gap stays whole, on the side it starts.
+  // Each line keeps the name of its column (col), so that rows are not joined back across the gutter (see joinRows).
+  var left = [], right = [], tag = function (part, side, from) { part.col = (from.col || '') + side; return part; };
+  lines.forEach(function (ws) {
+    var k = -1;
+    for (var i = 1; i < ws.length; i++) if (ws[i - 1].bbox.x1 < best.x && ws[i].bbox.x0 > best.x && ws[i].bbox.x0 - ws[i - 1].bbox.x1 > 4 * Math.max(cwOf(ws[i - 1]), cwOf(ws[i]))) k = i;
+    if (k > 0) { left.push(tag(ws.slice(0, k), 'L', ws)); right.push(tag(ws.slice(k), 'R', ws)); }
+    else if (ws.length && ws[0].bbox.x0 >= best.x) right.push(tag(ws.slice(), 'R', ws));
+    else left.push(tag(ws.slice(), 'L', ws));
+  });
+  if ((depth || 0) >= 2) return left.concat(right);
+  return splitColumns(left, (depth || 0) + 1).concat(splitColumns(right, (depth || 0) + 1));
+}
+// ---- Tables in screenshots ----
+// A header row of labels ("Name  Benutzername  E-Mail  Geburtsdatum  IBAN") says what the cells below it hold, as a label
+// says what its value is: every cell of a sensitive column is masked, with the kind its header gives. A header has at
+// least two cells that are labels, and none of its cells ends with ":" (that is a form) or holds a digit. The rows below
+// it are read while their words line up with at least two of its columns.
+var TABLE_KINDS = [
+  ['(?:' + ['secret', 'recovery', 'pin', 'accessCode', 'codeWords'].map(lang).join('|') + '|(?:cl|dl?)ient[ _-]?secret|api[ _-]?key|secret[ _-]?key|token|hash)', 'Password / token / key (table)', true],
+  ['(?:' + lang('userLabel') + '|login|benutzer|user|kennung)', 'User login'],
+  ['(?:e-?mail(?:[ -]?(?:adresse|address))?|courriel|mail)', 'Email address'],
+  ['(?:telefon(?:nummer)?|tel\\.?|phone(?:[ ]number)?|mobil(?:e|nummer)?|handy|t[ée]l[ée]phone|portable|fax)', 'Phone number'],
+  ['(?:iban|bic|kontonummer|bankverbindung|karten?(?:nummer)?|card(?:[ ]number)?|' + lang('cvv') + '|' + lang('expiry') + ')', 'Bank or card number'],
+  ['(?:' + lang('serial') + '|' + lang('deviceLabel') + '|mac(?:[ -]?adresse|[ ]address)?)', 'Device or location'],
+  ['(?:' + ['dob', 'address', 'idDoc', 'idSpaced'].map(lang).join('|') + '|ort|wohnort|stadt|plz|city|zip|ville)', 'Personal detail'],
+  ['(?:' + lang('personLabel') + ')', 'Person name']
+].map(function (k) { return { re: new RegExp('^' + k[0] + '$', 'iu'), type: k[1], secret: !!k[2] }; });
+function tableKind(label) {
+  var t = label.replace(/[ \t]*\*$/, '').trim();
+  for (var i = 0; i < TABLE_KINDS.length; i++) if (TABLE_KINDS[i].re.test(t)) return TABLE_KINDS[i];
+  return null;
+}
+function tableRegions(lines, opts) {
+  var cwOf = function (w) { return (w.bbox.x1 - w.bbox.x0) / Math.max(1, w.text.length); };
+  var cyOf = function (ws) { return ws.reduce(function (a, w) { return a + (w.bbox.y0 + w.bbox.y1) / 2; }, 0) / ws.length; };
+  var hOf = function (ws) { return ws.reduce(function (a, w) { return a + w.bbox.y1 - w.bbox.y0; }, 0) / ws.length; };
   var out = [];
-  dets.forEach(function (d) {
-    var byLine = {};
-    spans.forEach(function (sp) {
-      var a = Math.max(d.start, sp.s), z = Math.min(d.end, sp.e);
-      if (a >= z) return;
-      var len = sp.e - sp.s, bw = sp.b.x1 - sp.b.x0, cw = bw / len;
-      // Estimated position inside the word; overflow by half a character so nothing sticks out
-      var x0 = sp.b.x0 + cw * (a - sp.s) - (a > sp.s ? cw * 0.6 : 0);
-      var x1 = sp.b.x0 + cw * (z - sp.s) + (z < sp.e ? cw * 0.6 : 0);
-      var L = byLine[sp.line];
-      if (!L) byLine[sp.line] = { x0: x0, x1: x1, y0: sp.b.y0, y1: sp.b.y1 };
-      else { L.x0 = Math.min(L.x0, x0); L.x1 = Math.max(L.x1, x1); L.y0 = Math.min(L.y0, sp.b.y0); L.y1 = Math.max(L.y1, sp.b.y1); }
+  lines.forEach(function (head) {
+    // the header's cells: words closer than about one and a half characters belong to the same cell ("Letzter Zugriff")
+    var cells = [];
+    head.forEach(function (w) {
+      var c = cells[cells.length - 1];
+      if (c && w.bbox.x0 - c.x1 < 1.6 * Math.max(cwOf(w), c.cw)) { c.x1 = w.bbox.x1; c.text += ' ' + w.text; }
+      else cells.push({ x0: w.bbox.x0, x1: w.bbox.x1, text: w.text, cw: cwOf(w) });
     });
-    Object.keys(byLine).forEach(function (k) {
-      var L = byLine[k], pad = Math.max(2, (L.y1 - L.y0) * 0.15);
-      out.push({ x: L.x0 - pad, y: L.y0 - pad, w: L.x1 - L.x0 + 2 * pad, h: L.y1 - L.y0 + 2 * pad, type: d.type, value: d.value, key: d.key, checked: true });
+    if (cells.length < 2 || cells.some(function (c) { return /\d|:$/.test(c.text); })) return;
+    cells.forEach(function (c) { c.kind = tableKind(c.text); });
+    if (cells.filter(function (c) { return c.kind; }).length < 2) return;
+    // a word belongs to the column whose span holds its middle (columns end half-way between two headers)
+    var colOf = function (w) {
+      var mid = (w.bbox.x0 + w.bbox.x1) / 2;
+      for (var k = 0; k < cells.length; k++) {
+        var lo = k ? (cells[k - 1].x1 + cells[k].x0) / 2 : cells[0].x0 - 3 * cells[0].cw;
+        var hi = k + 1 < cells.length ? (cells[k].x1 + cells[k + 1].x0) / 2 : cells[k].x1 + 40 * cells[k].cw;
+        if (mid >= lo && mid < hi) return k;
+      }
+      return -1;
+    };
+    var hy = cyOf(head), hh = hOf(head), prev = hy;
+    var rows = lines.filter(function (l) { return l !== head && l.length && cyOf(l) > hy + 0.5 * hh; }).sort(function (a, b) { return cyOf(a) - cyOf(b); });
+    for (var r = 0; r < rows.length; r++) {
+      var row = rows[r], cy = cyOf(row);
+      var conf = row.filter(function (w) { return typeof w.conf === 'number'; });
+      if (!row.some(function (w) { return /[\p{L}\d]{2}/u.test(w.text); }) || (conf.length && conf.reduce(function (a, w) { return a + w.conf; }, 0) / conf.length < 50)) continue;   // a border or an icon read as "|" or "~~ 000000"
+      if (cy - prev > 3.5 * Math.max(hh, hOf(row))) break;   // the table has ended
+      // the row's cells (words apart by a wide gap) each fall in one column: a sentence across columns ends the table
+      var rc = [], spans = false;
+      row.forEach(function (w) {
+        var c = rc[rc.length - 1];
+        if (c && w.bbox.x0 - c.x1 < 1.6 * Math.max(cwOf(w), cwOf(c.ws[c.ws.length - 1]))) { c.ws.push(w); c.x1 = w.bbox.x1; } else rc.push({ ws: [w], x1: w.bbox.x1 });
+      });
+      rc.forEach(function (c) { var ks = c.ws.map(colOf).filter(function (k) { return k >= 0; }); if (ks.some(function (k) { return k !== ks[0]; })) spans = true; });
+      if (spans) break;
+      var by = {};
+      row.forEach(function (w) { var k = colOf(w); if (k >= 0) (by[k] = by[k] || []).push(w); });
+      if (Object.keys(by).length < 2) break;
+      prev = cy;
+      Object.keys(by).forEach(function (k) {
+        var kind = cells[k].kind, ws = by[k], text = ws.map(function (w) { return w.text; }).join(' ').trim();
+        if (!kind || (!kind.secret && !(opts && opts.sensitive))) return;
+        if (text.length < 2 || /^[-–—*.·|_]+$/.test(text) || IGNORE.test(text) || /^(?:n\/a|none|keine|leer|null|ja|nein|yes|no|oui|non)$/i.test(text)) return;
+        if (kind.type === 'User login' && GENERIC_USERS.has(text.toLowerCase())) return;
+        var x0 = Math.min.apply(null, ws.map(function (w) { return w.bbox.x0; })), x1 = Math.max.apply(null, ws.map(function (w) { return w.bbox.x1; }));
+        var y0 = Math.min.apply(null, ws.map(function (w) { return w.bbox.y0; })), y1 = Math.max.apply(null, ws.map(function (w) { return w.bbox.y1; }));
+        var pad = Math.max(2, (y1 - y0) * 0.15), px = Math.max(pad, cwOf(ws[0]));
+        out.push({ x: x0 - px, y: y0 - pad, w: x1 - x0 + 2 * px, h: y1 - y0 + 2 * pad, type: kind.type, value: text, key: kind.secret ? normKey(text) : normKey(text).toLowerCase(), checked: true });
+      });
+    }
+  });
+  return out;
+}
+// A variable whose secret name the OCR misread by one letter: DB_PASSHORT=…, SMTP_KENNW0RT=…, API_T0KEN=…
+var NEAR_SECRET_WORDS = ['password', 'passwort', 'kennwort', 'passphrase', 'secret', 'token', 'apikey', 'credential'];
+function nearSecretName(name) {
+  var off1 = function (a, b) {   // at most one letter changed, added or removed
+    if (Math.abs(a.length - b.length) > 1) return false;
+    var i = 0, j = 0, d = 0;
+    while (i < a.length && j < b.length) {
+      if (a[i] === b[j]) { i++; j++; continue; }
+      if (++d > 1) return false;
+      if (a.length > b.length) i++; else if (b.length > a.length) j++; else { i++; j++; }
+    }
+    return d + (a.length - i) + (b.length - j) <= 1;
+  };
+  return name.toLowerCase().split(/[_.-]+/).some(function (p) { return p.length >= 5 && NEAR_SECRET_WORDS.some(function (w) { return off1(p, w); }); });
+}
+function regionsFromOcr(lines, opts) {
+  // OCR junk: a word of low confidence with no letter or digit pair, or one letter repeated ("©", "~", "EEE" read on a border)
+  lines = lines.map(function (ws) { return ws.filter(function (w) { return !(typeof w.conf === 'number' && (w.conf < 30 && !/[\p{L}\d]{2}/u.test(w.text) || w.conf < 40 && /^(.)\1*$/u.test(w.text))); }); })
+    .filter(function (ws) { return ws.length; });
+  // The OCR also reads specks on borders and blank panels as lines of one or two characters ("5 ... 5", "= |"), spread across the
+  // whole image. Beside a real row they join it into one row that spans the panels, and the row is then cut away from its neighbours:
+  // a sentence loses its second line. A line made only of such words, none read with confidence, is dropped.
+  lines = lines.filter(function (ws) {
+    return !(ws.every(function (w) { return typeof w.conf === 'number' && w.conf < 70 && w.text.length <= 2; }) && ws.reduce(function (n, w) { return n + w.text.length; }, 0) <= 4);
+  });
+  var rows = joinRows(lines);   // whole rows: a table is read across its columns
+  lines = joinRows(splitColumns(lines));
+  // Two readings of the same words. The first glues the words whose boxes almost touch, as OCR often cuts a token in two;
+  // the second keeps them apart, as the boxes of two real words can touch too ("Benutzername" "lautet" -> "Benutzernamelautet").
+  // A value found in either reading is masked.
+  var readings = [ocrText(lines, true)], loose = ocrText(lines, false), out = [];
+  if (loose.text !== readings[0].text) readings.push(loose);
+  readings.forEach(function (t, pass) {
+    var text = t.text, spans = t.spans;
+    var dets = detect(fixSharpS(text), 'capture.txt', opts);
+    if (!pass) spans.forEach(function (sp) {   // the same words in both readings: once is enough
+      var raw = text.slice(sp.s, sp.e), lead = raw.match(/^[^A-Za-z0-9]*/)[0].length;
+      var tok = raw.slice(lead).replace(/[^A-Za-z0-9=]+$/, '');
+      // NAME=value: only the value can be random (APP_MAX_OPEN_FILES=65536 is not)
+      var asg = /^[A-Za-z_][A-Za-z0-9_.-]*=/.exec(tok);
+      if (asg) { lead += asg[0].length; tok = tok.slice(asg[0].length); }
+      if (!looksRandom(tok)) return;
+      // A hash given as such (commit, digest, checksum) is not a secret
+      if (/^[0-9a-f]{40}$|^[0-9a-f]{64}$/.test(tok) && /(commit|sha\d*|digest|revision|rev|hash|checksum)\W{0,3}$/i.test(text.slice(Math.max(0, sp.s - 24), sp.s + lead))) return;
+      var s = sp.s + lead, e = s + tok.length;
+      if (dets.some(function (d) { return d.start < e && d.end > s; })) return;
+      dets.push({ start: s, end: e, type: 'Long random string', value: tok, key: normKey(tok), checked: true });
+    });
+    if (!pass) spans.forEach(function (sp) {   // NAME=value where the OCR misread the secret name by one letter
+      var na = /^([A-Za-z][A-Za-z0-9]*(?:[_.-][A-Za-z0-9]+)*)=([^\s"']{6,})/.exec(text.slice(sp.s, sp.e));
+      if (!na || !nearSecretName(na[1]) || !plausible(na[2]) || looksLikeWords(na[2])) return;
+      var s = sp.s + na[1].length + 1, e = sp.s + na[0].length;
+      if (dets.some(function (d) { return d.start < e && d.end > s; })) return;
+      dets.push({ start: s, end: e, type: 'Password / token / key', value: na[2], key: normKey(na[2]), checked: true });
+    });
+    var first = out.length;
+    dets.forEach(function (d) {
+      var byLine = {};
+      spans.forEach(function (sp) {
+        var a = Math.max(d.start, sp.s), z = Math.min(d.end, sp.e);
+        if (a >= z) return;
+        var x = spanX(sp, a, z), L = byLine[sp.line], cw = (sp.b.x1 - sp.b.x0) / Math.max(1, sp.e - sp.s);
+        if (!L) byLine[sp.line] = { x0: x[0], x1: x[1], y0: sp.b.y0, y1: sp.b.y1, cw: cw };
+        else { L.x0 = Math.min(L.x0, x[0]); L.x1 = Math.max(L.x1, x[1]); L.y0 = Math.min(L.y0, sp.b.y0); L.y1 = Math.max(L.y1, sp.b.y1); }
+      });
+      Object.keys(byLine).forEach(function (k) {
+        var L = byLine[k], pad = Math.max(2, (L.y1 - L.y0) * 0.15), px = Math.max(pad, L.cw);   // the OCR's box can miss part of a first or last letter (a whole "V" at times)
+        var r = { x: L.x0 - px, y: L.y0 - pad, w: L.x1 - L.x0 + 2 * px, h: L.y1 - L.y0 + 2 * pad, type: d.type, value: d.value, key: d.key, checked: true, line: +k };
+        // the second reading adds only what the first did not already cover
+        if (pass && out.slice(0, first).some(function (q) { return q.x <= r.x + 1 && q.x + q.w >= r.x + r.w - 1 && q.y <= r.y + 1 && q.y + q.h >= r.y + r.h - 1; })) return;
+        out.push(r);
+      });
     });
   });
-  out.forEach(function (r, i) { r.id = i; });
+  // Cells of a table under a sensitive header (only what the readings did not already cover)
+  var covered = function (r) { return out.some(function (q) { return q.x <= r.x + 1 && q.x + q.w >= r.x + r.w - 1 && q.y <= r.y + 1 && q.y + q.h >= r.y + r.h - 1; }); };
+  tableRegions(rows, opts).forEach(function (r) { if (!covered(r)) { r.line = -1; out.push(r); } });
+  // Two masks on a line with nothing read between them: the OCR's box of a word can stop short of its letters
+  // ("Personalbogen_Jörg_" boxed 40 px too short, the rest of the name left between two masks). The gap is masked too,
+  // when it is shorter than a few characters.
+  var words = readings[0].spans;
+  out.slice().sort(function (p, q) { return p.line - q.line || p.x - q.x; }).forEach(function (r, i, arr) {
+    var n = arr[i + 1];
+    if (!n || n.line !== r.line || n.x <= r.x + r.w) return;
+    var gap0 = r.x + r.w, gap1 = n.x, h = Math.min(r.h, n.h);
+    if (gap1 - gap0 > 3 * h) return;
+    if (words.some(function (sp) { return sp.line === r.line && sp.b.x1 > gap0 + 1 && sp.b.x0 < gap1 - 1; })) return;
+    r.w = gap1 - r.x;
+  });
+  out.forEach(function (r, i) { r.id = i; delete r.line; });
   return out;
 }
 
@@ -1961,7 +2496,9 @@ function makeSampleHar() {
     }
     pool.slice(0, n).forEach(function (slot) {
       if (slot.busy || !queue.length) return;
+      // The file on screen first, then the ones that go in the ZIP; the files left out are read last
       var i = queue.indexOf(F);
+      if (i < 0) i = queue.findIndex(function (g) { return !g.excluded; });
       var f = queue.splice(i < 0 ? 0 : i, 1)[0];
       slot.busy = true;
       readImage(slot.w, f).then(function () {
@@ -2128,7 +2665,7 @@ function makeSampleHar() {
       var toLines = function (r) {
         var out = [];
         if (r) (r.data.blocks || []).forEach(function (b) { b.paragraphs.forEach(function (p) { p.lines.forEach(function (l) {
-          out.push(l.words.map(function (w) { return { text: w.text, bbox: w.bbox, conf: w.confidence }; }));
+          out.push(l.words.map(function (w) { return { text: w.text, bbox: w.bbox, conf: w.confidence, syms: ocrSyms(w) }; }));
         }); }); });
         return out;
       };
@@ -2182,9 +2719,7 @@ function makeSampleHar() {
     F.seen = true;
     $('fname').textContent = '— ' + F.path;
     renderFiles(); render();
-      // The file on screen first, then the ones that go in the ZIP; the files left out are read last
     if (first) $('work').scrollIntoView({ block: 'start' });
-      if (i < 0) i = queue.findIndex(function (g) { return !g.excluded; });
     if (F.row) F.row.scrollIntoView({ block: 'nearest' });
   }
   function step(d) { if (files.length > 1) select((cur + d + files.length) % files.length); }
@@ -2229,6 +2764,16 @@ function makeSampleHar() {
     select(files.indexOf(next));
   });
 
+  // ---------- Choosing what goes in the ZIP ----------
+  // Every file is in the ZIP unless it is unchecked in the list (f.excluded). Pasted text is copied, never zipped.
+  function zipFiles() { return files.filter(function (f) { return !f.pasted; }); }
+  function inZip() { return zipFiles().filter(function (f) { return !f.excluded; }); }
+  // "Include all" / "Exclude all" act on the files that match the search while one is active
+  function zipTargets() { return (query ? matches() : files).filter(function (f) { return !f.pasted; }); }
+  function setIncluded(list, on) { list.forEach(function (f) { f.excluded = !on; }); renderFiles(); }
+  $('zinc').onclick = function () { setIncluded(zipTargets(), true); };
+  $('zexc').onclick = function () { setIncluded(zipTargets(), false); };
+
   // One row per file, updated in place so that the list keeps its scroll position
   function renderFiles() {
     var many = files.length > 1, list = $('flist'), hits = 0, seen = 0;
@@ -2252,6 +2797,7 @@ function makeSampleHar() {
         f.row.onclick = function () { select(files.indexOf(f)); };
         list.appendChild(f.row);
       }
+      f.cb.checked = !f.excluded;
       var its = f.kind === 'image' ? f.regions : f.dets, keys = {};
       its.forEach(function (d) { if (d.checked) keys[d.key] = 1; });
       var n = Object.keys(keys).length;
@@ -2263,6 +2809,11 @@ function makeSampleHar() {
       f.st.textContent = st;
       f.st.className = 'st' + (n ? ' hit' : '');
     });
+    var nIn = inZip().length;
+    $('zcount').textContent = nIn === zippable.length ? 'All ' + nIn + ' files are in the ZIP' : nIn + ' of ' + zippable.length + ' files are in the ZIP';
+    $('zinc').textContent = query ? 'Include matches' : 'Include all';
+    $('zexc').textContent = query ? 'Exclude matches' : 'Exclude all';
+    $('zinc').disabled = $('zexc').disabled = !zipTargets().length;
     var waiting = files.some(function (f) { return f.kind === 'image' && (f.status === 'loading' || f.status === 'reading'); });
     $('ocrbar').style.display = waiting ? '' : 'none';
     $('pause').textContent = paused ? 'Resume' : 'Pause';
@@ -2461,16 +3012,6 @@ function makeSampleHar() {
       }
       drawCanvas();
     }
-  // ---------- Choosing what goes in the ZIP ----------
-  // Every file is in the ZIP unless it is unchecked in the list (f.excluded). Pasted text is copied, never zipped.
-  function zipFiles() { return files.filter(function (f) { return !f.pasted; }); }
-  function inZip() { return zipFiles().filter(function (f) { return !f.excluded; }); }
-  // "Include all" / "Exclude all" act on the files that match the search while one is active
-  function zipTargets() { return (query ? matches() : files).filter(function (f) { return !f.pasted; }); }
-  function setIncluded(list, on) { list.forEach(function (f) { f.excluded = !on; }); renderFiles(); }
-  $('zinc').onclick = function () { setIncluded(zipTargets(), true); };
-  $('zexc').onclick = function () { setIncluded(zipTargets(), false); };
-
   });
 
   // ---------- Detection list ----------
@@ -2486,7 +3027,6 @@ function makeSampleHar() {
     // Domains come first (the customer domain, then other domains): they are the quick decisions
     var rank = function (d) { return d.type === 'Customer domain' ? 0 : d.type === 'Other domain' ? 1 : 2; };
     var ordered = its.slice().sort(function (a, b) { return rank(a) - rank(b); });
-      f.cb.checked = !f.excluded;
     ordered.forEach(function (d) {
       if (seen[d.key]) return; seen[d.key] = true;
       var n = its.filter(function (x) { return x.key === d.key; }).length;
@@ -2498,11 +3038,6 @@ function makeSampleHar() {
       t.textContent = d.type + (n > 1 ? (isImg ? '  (' + n + ' areas)' : '  (×' + n + ')') : '');
       var v = document.createElement('div'); v.className = 'val';
       v.textContent = d.value ? (d.value.length > 70 ? d.value.slice(0, 70) + '…' : d.value) : Math.round(d.w) + ' × ' + Math.round(d.h) + ' px';
-    var nIn = inZip().length;
-    $('zcount').textContent = nIn === zippable.length ? 'All ' + nIn + ' files are in the ZIP' : nIn + ' of ' + zippable.length + ' files are in the ZIP';
-    $('zinc').textContent = query ? 'Include matches' : 'Include all';
-    $('zexc').textContent = query ? 'Exclude matches' : 'Exclude all';
-    $('zinc').disabled = $('zexc').disabled = !zipTargets().length;
       lab.appendChild(t); lab.appendChild(v);
       if (d.type === 'Customer domain') {
         var hint = document.createElement('div'); hint.className = 'small';
@@ -2669,6 +3204,8 @@ function makeSampleHar() {
     return Promise.all(ps).then(function () { return res; });
   }
   $('dlzip').onclick = function () {
+    var inc = inZip();   // the files unchecked in the list stay out
+    if (!inc.length) return;
     var shared = batchState();
     var left = inc.filter(unprotected);
     if (left.length && !confirm(left.length + ' image' + (left.length > 1 ? 's' : '') + ' could not be read and ' + (left.length > 1 ? 'have' : 'has') + ' no masked area:\n\n' +
@@ -2795,5 +3332,3 @@ function makeSampleHar() {
 </script>
 </body>
 </html>
-    var inc = inZip();   // the files unchecked in the list stay out
-    if (!inc.length) return;

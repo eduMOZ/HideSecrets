@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="de" data-theme="dark"><head><meta charset="utf-8"><title>Terminal (de)</title>
+<link rel="stylesheet" href="base.css"><script src="template.js"></script>
+<style>
+  #shot { width: 1180px; font-family: var(--mono); white-space: pre; --bg: #0c0c0c; --fg: #cccccc; --u: #16c60c; --p: #3b78ff; --i: #61d6d6; --w: #f9f1a5; --bar: #1f1f1f; }
+  [data-theme=light] #shot { --bg: #ffffff; --fg: #1e1e1e; --u: #0a7a0a; --p: #1a4fd0; --i: #0b6e7a; --w: #8a6d00; --bar: #e8e8e8; }
+  #shot { background: var(--bg); color: var(--fg); }
+  .bar { background: var(--bar); text-align: center; padding: 4px 0; font-family: var(--sans); }
+  .body { padding: 8px 14px 14px; }
+  .u { color: var(--u); } .p { color: var(--p); } .i { color: var(--i); } .w { color: var(--w); }
+</style></head><body>
+<div id="shot"><div class="bar"><span data-s="login">m.mueller@bereitstellung-01</span>: ~/infrastruktur</div><div class="body"># TESTUMGEBUNG — ausschließlich fiktive Identitäten und Geheimnisse
+<span class="u" data-s="login">m.mueller@bereitstellung-01</span><span class="p">:~/infrastruktur</span>$ ./bereitstellen.sh --kunde beispielwerk
+<span class="i">[INFO]</span> Bereitstellung gestartet. <span data-k>Version=2.14.3 Port=8443</span>
+<span class="i">[INFO]</span> Verantwortlich: <span data-s="name">Marlene Müller</span> &lt;<span data-s="email">marlene.mueller@example.org</span>&gt;
+<span class="i">[INFO]</span> Arbeitsverzeichnis: /home/<span data-s="path">marlene.mueller</span>/kunden/beispielwerk
+<span class="i">[INFO]</span> Zielsystem: root@<span data-s="ip">203.0.113.91</span>:2222
+<span class="w">[WARN]</span> Kennwort für Dienstkonto svc_bereitstellung: <span data-s="password">Demo!Wald72#Blau</span>
+[DEBUG] HTTPS_PROXY=http://svc_proxy:<span data-s="url-password">Demo%40Zugang%2184</span>@proxy.example.net:3128
+<span class="u" data-s="login">m.mueller@bereitstellung-01</span><span class="p">:~/infrastruktur</span>$ cat kundenwerte.yaml
+kunde:
+  firmenname: Beispielwerk Süd
+  ansprechpartner: "<span data-s="name">Sören Groß</span>"
+  kontaktadresse: <span data-s="email">soeren.gross@example.com</span>
+  telefonnummer: "<span data-s="phone">+49 30 00000000</span>"
+  kundennummer: "<span data-s="id">KUNDE-DEMO-00819</span>"
+anmeldung:
+  aussteller: https://anmeldung.beispielwerk.example.org/realms/mitarbeiter
+  <span data-k>client_id: kundenportal</span>
+  client_secret: "<span data-s="token">demo_Geheimnis8qR4m7</span>"
+  notfallcodes: ["<span data-s="code">5831-9264</span>", "<span data-s="code">7042-1683</span>"]
+datenbank:
+  verbindung: "postgresql://svc_portal:<span data-s="url-password">Demo%23Datenbank72</span>@db.example.net:5432/portal"
+<span class="u" data-s="login">m.mueller@bereitstellung-01</span><span class="p">:~/infrastruktur</span>$ kubectl get secret portal-zugang -o yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: portal-zugang
+  <span data-k>namespace: kunde-beispielwerk</span>
+type: Opaque
+data:
+  benutzername: <span data-s="token">ZGVtbw==</span>
+  kennwort: <span data-s="token">RGVtb09ubHkhNDI=</span>
+<span class="u" data-s="login">m.mueller@bereitstellung-01</span><span class="p">:~/infrastruktur</span>$ kubectl logs deploy/kundenportal --tail=8
+<span class="i">[INFO]</span> Verbindung zum Identitätsanbieter hergestellt
+[DEBUG] Benutzerkennung: <span data-s="login">BEISPIELWERK\sgross</span>
+[TRACE] Benutzerattribute: {"name":"<span data-s="name">Sören Groß</span>", "email":"<span data-s="email">soeren.gross@example.com</span>"}
+[TRACE] Weiterleitung: /callback?code=<span data-s="token">demo_Anmeldung7xM2</span>&amp;state=<span data-s="token">demo_Status8rQ4</span>
+[TRACE] Sitzungscookie: portal_sitzung=<span data-s="token">demo_Sitzung9pK3</span>; Secure; HttpOnly
+<span class="w">[WARN]</span> Anmeldung fehlgeschlagen für <span data-s="name">Sören Groß</span> von [<span data-s="ip">2001:db8:91::7</span>]:51842
+[DEBUG] Wiederherstellungslink: https://konto.example.org/reset?token=<span data-s="token">demo_Rettung4nW8</span>
+<span class="i">[INFO]</span> Wiederholungsversuch erfolgreich. <span data-k>Status=200 Dauer=5831ms</span>
+<span class="u" data-s="login">m.mueller@bereitstellung-01</span><span class="p">:~/infrastruktur</span>$ cat /tmp/supportnotiz.txt
+Rückruf bitte bei Frau <span data-s="name">Käthe Weiß</span>, <span data-s="email">kaethe.weiss@example.net</span>.
+Geburtsdatum zur Testzuordnung: <span data-s="birth-date">07.12.1988</span>
+Lieferanschrift: <span data-s="address">Musterstraße 27, 00000 Beispielstadt</span>
+Vorläufiges Passwort: <span data-s="password">Regen!63Bäume#91</span>
+Antwort auf die Sicherheitsfrage: <span data-s="answer">Gänseblümchen</span>
+Geräteseriennummer: <span data-s="serial">DEMO-SN-DE-8Q31-7M42</span>
+Datei: /home/<span data-s="path">kaethe.weiss</span>/Dokumente/Kundenexport.csv
+
+<span class="i">[INFO]</span> Prüfung abgeschlossen: <span data-k>3 Replikate, 0 Fehler, Laufzeit 42 Sekunden.</span>
+<span class="u" data-s="login">m.mueller@bereitstellung-01</span><span class="p">:~/infrastruktur</span>$ █</div></div>
+</body></html>

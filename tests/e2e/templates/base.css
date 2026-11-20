@@ -1,0 +1,14 @@
+/* Shared by the screenshot templates. Fonts come from tests/e2e/node_modules (npm ci), so the
+   screenshots look the same on every machine. Every person, value and company here is invented. */
+@import url('../node_modules/@fontsource/noto-sans/400.css');
+@import url('../node_modules/@fontsource/noto-sans/700.css');
+@import url('../node_modules/@fontsource/noto-sans-mono/400.css');
+@import url('../node_modules/@fontsource/noto-serif/400.css');
+@import url('../node_modules/@fontsource/noto-serif/700.css');
+:root { --size: 15px; --sans: 'Noto Sans', sans-serif; --mono: 'Noto Sans Mono', monospace; --serif: 'Noto Serif', serif; }
+html, body { margin: 0; background: #fff; }
+body { padding: 16px; font-family: var(--sans); font-size: var(--size); line-height: 1.45; }
+#shot { display: inline-block; vertical-align: top; }
+/* The second rendering: secrets without their letters, same layout and same underline. The difference between the
+   two screenshots is exactly the ink of the secrets (a third one does the same for the texts to keep). */
+body.hide-secrets [data-s], body.hide-keeps [data-k] { -webkit-text-fill-color: transparent; }

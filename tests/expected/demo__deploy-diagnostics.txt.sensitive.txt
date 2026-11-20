@@ -32,7 +32,7 @@ TF_VAR_db_password='[SECRET_3]'
 TF_VAR_webhook_secret="[SECRET_4]"
 TF_VAR_allowed_origin=https://console.customer-orion.example.com
 TF_VAR_support_contact="[PERSON_2]"
-TF_VAR_support_phone="+1 [PHONE_1]"
+TF_VAR_support_phone="[PHONE_1]"
 
 HTTPS_PROXY=http://svc_ci:[SECRET_5]@egress.example.net:8080
 NO_PROXY=localhost,127.0.0.1,.svc,.cluster.local
@@ -127,7 +127,7 @@ Content-Type: application/json
 
 --- Temporary download link ---
 
-https://artifacts.example.net/backups/orion.sql.gz?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=[SECRET_17]&X-Amz-Expires=900&X-Amz-Signature=[SECRET_18]
+https://artifacts.example.net/backups/[PERSON_5].gz?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=[SECRET_17]&X-Amz-Expires=900&X-Amz-Signature=[SECRET_18]
 
 --- Local credential helper ---
 

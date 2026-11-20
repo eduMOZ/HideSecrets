@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><title>Personalbogen (de)</title>
+<link rel="stylesheet" href="base.css"><script src="template.js"></script>
+<style>
+  #shot { width: 900px; --bg: #f4f1ea; --fg: #222; --line: #8c8579; }
+  [data-theme=dark] #shot { --bg: #f4f1ea; --fg: #222; }  /* a scan has no dark theme */
+  #shot { background: var(--bg) repeating-linear-gradient(0deg, rgba(0,0,0,.015) 0 2px, transparent 2px 5px); color: var(--fg); font-family: var(--serif); padding: 24px 34px; filter: blur(0.3px); }
+  h1 { font-size: 1.5em; text-align: center; margin: 0 0 14px; letter-spacing: .05em; }
+  .row { border-bottom: 1px dotted var(--line); padding: 5px 0; } .l { display: inline-block; width: 260px; }
+</style></head><body>
+<div id="shot">
+  <h1>PERSONALBOGEN</h1>
+  <div class="row"><span class="l">Name:</span><span data-s="name">Käthe Weiß</span></div>
+  <div class="row"><span class="l">Geburtsdatum:</span><span data-s="birth-date">07.12.1988</span></div>
+  <div class="row"><span class="l">Anschrift:</span><span data-s="address">Beispielstraße 12, 80331 Musterstadt</span></div>
+  <div class="row"><span class="l">Telefon:</span><span data-s="phone">0171 1234567</span></div>
+  <div class="row"><span class="l">Steuer-ID:</span><span data-s="id">12 345 678 901</span></div>
+  <div class="row"><span class="l">Sozialversicherungsnummer:</span><span data-s="id">12 150988 K 123</span></div>
+  <div class="row"><span class="l">IBAN:</span><span data-s="bank">DE89 3704 0044 0532 0130 00</span></div>
+  <div class="row"><span class="l">Personalnummer:</span><span data-s="id">MIT-DEMO-00842</span></div>
+  <div class="row"><span class="l">Eintritt:</span><span data-k>01.04.2021</span></div>
+  <div class="row"><span class="l">Abteilung:</span><span data-k>Kundendienst</span></div>
+</div>
+</body></html>
