@@ -19,8 +19,8 @@
 //   node run.mjs --record             also write the OCR replays of tests/replay/ (base variants, Chromium)
 //   node run.mjs --dump               write every image's OCR replay to out/replay/, to study a miss
 //
-// Results: out/report.html, out/results.json. Accepted misses: known-misses.json (the run fails on a new miss, and on a
-// listed miss that no longer happens).
+// Results: out/report.html, out/results.json. Accepted misses: known-misses.json on macOS, known-misses.linux.json on Linux (the run
+// fails on a new miss, and on macOS also on a listed miss that no longer happens).
 import { chromium, firefox } from 'playwright';
 import http from 'node:http';
 import fs from 'node:fs';
@@ -39,7 +39,10 @@ const argv = process.argv.slice(2), has = (f) => argv.includes(f);
 const opt = (n, d) => { const a = argv.find((x) => x.startsWith('--' + n + '=')); return a ? a.slice(n.length + 3) : d; };
 const FULL = has('--full'), RECORD = has('--record'), DUMP = has('--dump'), ONLY = opt('only', ''), BROWSERS = opt('browsers', 'chromium').split(',');
 const OUT = path.join(here, 'out'), REPLAY = path.join(root, 'tests', 'replay');
-const KNOWN = JSON.parse(fs.readFileSync(path.join(here, 'known-misses.json'), 'utf8'));
+// The OCR reads a page drawn by Chromium on macOS and on Linux with other misreadings, so the accepted misses are kept per system:
+// known-misses.json (macOS, where the page is developed) and known-misses.linux.json (the GitHub runners, whose results repeat run after run).
+const LINUX = process.platform === 'linux', KNOWN_FILE = LINUX ? 'known-misses.linux.json' : 'known-misses.json';
+const KNOWN = JSON.parse(fs.readFileSync(path.join(here, KNOWN_FILE), 'utf8'));
 fs.rmSync(OUT, { recursive: true, force: true });
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -267,7 +270,11 @@ try {
 const ran = new Set(results.map((r) => r.id));
 Object.keys(KNOWN).filter((k) => !k.startsWith('_')).forEach((k) => {
   const [id] = k.split('|');
-  if (ran.has(id) && !knownHit.has(k)) { failed++; console.log('FIXED     ' + k + ' no longer happens: remove it from known-misses.json'); }
+  if (ran.has(id) && !knownHit.has(k)) {
+    // On Linux a change to the page may fix a miss that no run on a Linux machine has seen yet: the list is only a note to shrink then
+    if (LINUX) console.log('fixed     ' + k + ' no longer happens: remove it from ' + KNOWN_FILE);
+    else { failed++; console.log('FIXED     ' + k + ' no longer happens: remove it from ' + KNOWN_FILE); }
+  }
 });
 
 // ---------- Report ----------
