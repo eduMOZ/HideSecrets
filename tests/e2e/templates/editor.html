@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><title>Editor (de)</title>
+<link rel="stylesheet" href="base.css"><script src="template.js"></script>
+<style>
+  #shot { width: 980px; --bg: #ffffff; --fg: #1f1f1f; --num: #8a8a8a; --key: #0451a5; --str: #a31515; --cmt: #008000; --tab: #f3f3f3; --line: #e5e5e5; }
+  [data-theme=dark] #shot { --bg: #1e1e1e; --fg: #d4d4d4; --num: #858585; --key: #9cdcfe; --str: #ce9178; --cmt: #6a9955; --tab: #2d2d2d; --line: #333; }
+  #shot { background: var(--bg); color: var(--fg); font-family: var(--mono); white-space: pre; }
+  .tab { background: var(--tab); border-bottom: 1px solid var(--line); padding: 4px 12px; font-family: var(--sans); white-space: normal; }
+  .code { padding: 6px 0; } .n { color: var(--num); display: inline-block; width: 3em; text-align: right; margin-right: 1.2em; }
+  .k { color: var(--key); } .s { color: var(--str); } .c { color: var(--cmt); }
+</style></head><body>
+<div id="shot"><div class="tab">.env — kundenportal</div><div class="code"><span class="n">1</span><span class="c"># Testumgebung, erfundene Werte</span>
+<span class="n">2</span><span class="k">APP_PORT</span>=<span data-k>8080</span>
+<span class="n">3</span><span class="k">LOG_LEVEL</span>=<span data-k>debug</span>
+<span class="n">4</span><span class="k">DB_PASSWORT</span>=<span class="s" data-s="password">Sommer2024!Geheim</span>
+<span class="n">5</span><span class="k">DATABASE_URL</span>=<span class="s">mysql://app:<span data-s="url-password">Geheim2024x</span>@db.example.net:3306/app</span>
+<span class="n">6</span><span class="k">SMTP_KENNWORT</span>=<span class="s" data-s="password">Wolke!73Fluss#28</span>
+<span class="n">7</span><span class="k">API_SCHLUESSEL</span>=<span class="s" data-s="token">demo4f8Q2kL9xW3mZ7</span>
+<span class="n">8</span><span class="k">REDIS_URL</span>=<span class="s">redis://:<span data-s="url-password">Demo%23Datenbank72</span>@cache.example.net:6379/0</span>
+<span class="n">9</span><span class="k">SESSION_SECRET</span>=<span class="s" data-s="token">demo_Sitzungsgeheimnis7Kq2</span>
+<span class="n">10</span><span class="k">ADMIN_USER</span>=<span data-k>admin</span></div></div>
+</body></html>

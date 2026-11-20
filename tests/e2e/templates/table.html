@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><title>Tabelle (de)</title>
+<link rel="stylesheet" href="base.css"><script src="template.js"></script>
+<style>
+  #shot { width: 1180px; --bg: #ffffff; --fg: #202020; --line: #c8c8c8; --head: #e7eef7; --zebra: #f7f9fc; }
+  [data-theme=dark] #shot { --bg: #1e1e1e; --fg: #e0e0e0; --line: #444; --head: #263241; --zebra: #242424; }
+  #shot { background: var(--bg); color: var(--fg); padding: 12px; }
+  .title { font-weight: 700; margin-bottom: 8px; } table { border-collapse: collapse; width: 100%; }
+  th, td { border: 1px solid var(--line); padding: 4px 10px; text-align: left; } th { background: var(--head); } tr:nth-child(even) td { background: var(--zebra); }
+</style></head><body>
+<div id="shot">
+  <div class="title">Benutzerexport_2026-11.xlsx — Tabelle1</div>
+  <table>
+    <tr><th>Name</th><th>Benutzername</th><th>E-Mail</th><th>Geburtsdatum</th><th>IBAN</th></tr>
+    <tr><td data-s="name">Jörg Weiß</td><td data-s="login">j.weiss</td><td data-s="email">joerg.weiss@example.org</td><td data-s="birth-date">23.03.1986</td><td data-s="bank">DE89 3704 0044 0532 0130 00</td></tr>
+    <tr><td data-s="name">Franziska Groß</td><td data-s="login">f.gross</td><td data-s="email">franziska.gross@example.org</td><td data-s="birth-date">07.12.1988</td><td data-s="bank">DE02 1203 0000 0000 2020 51</td></tr>
+    <tr><td data-s="name">Tobias Becker</td><td data-s="login">t.becker2</td><td data-s="email">t.becker@example.net</td><td data-s="birth-date">03.04.1975</td><td data-s="bank">DE02 5001 0517 0137 0750 30</td></tr>
+  </table>
+  <div style="margin-top:8px"><span data-k>3 Zeilen · Summe 0,00 €</span></div>
+</div>
+</body></html>

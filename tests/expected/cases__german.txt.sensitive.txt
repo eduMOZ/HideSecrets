@@ -50,6 +50,10 @@ Rücksetzlink: https://konto.example.org/reset?token=[SECRET_15]&user=[LOGIN_1]
 
 [TRACE] Sitzungscookie: portal_sitzung=[SECRET_16]; Secure; HttpOnly
   verbindung: "postgresql://svc_portal:[SECRET_17]@db.example.net:5432/portal"
+Das betroffene Gerät heißt [DEVICE_2].
+Anhang: [PERSON_8].pdf
+Kontoinhaber: [PERSON_9]
+Rückrufkontakt: [PERSON_10]
 
 # Dies bleibt sichtbar (stays visible):
 Das Passwort muss mindestens acht Zeichen lang sein.
@@ -59,3 +63,6 @@ Bestellung vom 12.03.2024 wurde versendet.
 Benutzername: erforderlich
 Benutzername: svc_deploy
 anmelden mit ?user=admin
+Das Gerät ist neu.
+Hostname: srv-payment-01
+Anhang: Rechnung_2024-05.pdf

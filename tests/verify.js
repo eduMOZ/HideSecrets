@@ -6,26 +6,23 @@
 //
 //   node tests/verify.js            compare each example, at both levels, with its expected result
 //   node tests/verify.js --update   regenerate the expected results (review them before committing)
+//   node tests/verify.js --report   also print how the leak corpus survives each OCR reading error
+//
+// Also checked: the leak corpora of tests/corpus/ (as text and as synthetic screenshots) and the OCR replays of
+// tests/replay/ (what the OCR read on real screenshots, recorded by tests/e2e).
 //
 // The engine is read straight from index.html, so the tests run exactly the code of the page.
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const vm = require('vm');
+const { loadEngine, root } = require('./lib/engine');
+const { runCorpus } = require('./lib/corpus-check');
 
-const root = path.join(__dirname, '..');
-const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-const engine = html.match(/<script id="engine">([\s\S]*?)<\/script>/);
-if (!engine) { console.error('Engine not found in index.html'); process.exit(2); }
-const ctx = {};
-vm.createContext(ctx);
-// The tests use the example product settings (an invented product), as config.local.js would in the page
-vm.runInContext(fs.readFileSync(path.join(root, 'config.example.js'), 'utf8'), ctx);
-// The archive reader needs a few browser APIs, which Node provides as globals
-Object.assign(ctx, { Blob, DecompressionStream, TextDecoder, atob });
-vm.runInContext(engine[1] + ';this.detect = detect; this.sanitize = sanitize; this.batchNumbering = batchNumbering; this.readArchive = readArchive;', ctx);
+let ctx;
+try { ctx = loadEngine(); } catch (e) { console.error(e.message); process.exit(2); }
 
 const update = process.argv.includes('--update');
+const report = process.argv.includes('--report');
 const examplesDir = path.join(root, 'examples');
 const expectedDir = path.join(__dirname, 'expected');
 // "private" = the sensitive level with the Private IP option on; it is only checked on the examples that need it
@@ -201,6 +198,70 @@ async function archiveTests() {
   {
     const t = 'repo https://charts.bitnami.com/x, valkey.io, keycloak.org, pool.ntp.org, acme-corp.fr';
     eq('public domains stay visible', ctx.sanitize(t, ctx.detect(t, 'a.txt', { sensitive: true })), 'repo https://charts.bitnami.com/x, valkey.io, keycloak.org, pool.ntp.org, [DOMAIN_1]');
+  }
+
+  // ---------- Screenshot layouts: a table under its header, two columns the OCR ran together ----------
+  {
+    // OCR words by hand: [text, x0] on a row; 9 px per character, rows 30 px apart
+    const row = (y, words) => words.map(([t, x]) => ({ text: t, bbox: { x0: x, x1: x + 9 * t.length, y0: y, y1: y + 14 }, conf: 90 }));
+    const R = require('./lib/replay');
+    const covered = (regions, y, x0, text) => R.uncovered({ x0, y0: y, x1: x0 + 9 * text.length, y1: y + 14 }, regions.map((r) => ctx.pixelRect(r, 4000, 4000))) === 0;
+    const table = [
+      row(10, [['Name', 20], ['Benutzername', 200], ['Geburtsdatum', 400], ['Status', 600]]),
+      row(40, [['Anna', 20], ['Beispiel', 65], ['abeispiel', 200], ['03.04.1975', 400], ['aktiv', 600]]),
+      row(55, [['|', 140]]),   // a border read as "|"
+      row(70, [['Ben', 20], ['Muster', 56], ['bmuster', 200], ['12.11.1990', 400], ['gesperrt', 600]]),
+      row(110, [['2', 20], ['Zeilen', 38], ['angezeigt', 100], ['Stand', 190], ['17.11.2026', 245]])   // a footer: a sentence across columns
+    ];
+    const tr = ctx.regionsFromOcr(table, { sensitive: true });
+    eq('table: cells under a sensitive header', ['abeispiel', '03.04.1975', 'bmuster', '12.11.1990'].map((t, i) => covered(tr, i < 2 ? 40 : 70, i % 2 ? 400 : 200, t)), [true, true, true, true]);
+    eq('table: other columns and the footer stay visible', [covered(tr, 40, 600, 'aktiv'), covered(tr, 110, 245, '17.11.2026')], [false, false]);
+    eq('table: secrets only, logins stay visible', ctx.regionsFromOcr(table, {}).length, 0);
+    // a ticket and its side panel read as one: the address under its label is masked, the panel's version is not
+    const cols = [
+      row(10, [['Die', 20], ['Lieferanschrift', 56], ['lautet:', 200], ['Technische', 900], ['Angaben', 1000]]),
+      row(40, [['18', 20], ['Beispielgasse,', 47], ['Wohnung', 182], ['4', 254], ['Version', 900], ['4.12.3', 972]]),
+      row(70, [['00000', 20], ['Musterstadt', 74], ['HTTP-Status', 900], ['200', 1008]]),
+      row(100, [['Deutschland', 20], ['Bearbeitungszeit', 900], ['427', 1053], ['ms', 1089]])
+    ];
+    const cr = ctx.regionsFromOcr(cols, { sensitive: true });
+    eq('columns: the address is masked, the side panel is not', [covered(cr, 40, 20, '18 Beispielgasse, Wohnung 4'), covered(cr, 40, 972, '4.12.3'), covered(cr, 70, 900, 'HTTP-Status 200')], [true, false, false]);
+  }
+
+  // ---------- Leak corpora: every value masked, as text and as a synthetic screenshot ----------
+  // tests/corpus/<lang>.js lists invented values in realistic phrasings, and look-alikes that must stay visible.
+  // tests/corpus/<lang>.known.json lists the misses accepted for now, each with its reason; the list may only shrink.
+  for (const file of fs.readdirSync(path.join(__dirname, 'corpus')).filter((n) => /^[a-z]{2}\.js$/.test(n)).sort()) {
+    const lang = file.slice(0, 2), knownFile = path.join(__dirname, 'corpus', lang + '.known.json');
+    const known = fs.existsSync(knownFile) ? JSON.parse(fs.readFileSync(knownFile, 'utf8')) : {};
+    const t0 = Date.now(), res = runCorpus(ctx, lang, require('./corpus/' + file).cases(), known, report);
+    res.failures.forEach((f) => { mismatches++; console.log('MISMATCH  ' + f); });
+    console.log((res.failures.length ? 'MISMATCH  ' : 'ok        ') + ('corpus ' + lang + ': ' + res.cases + ' cases, ' + res.checks + ' checks, ' +
+      res.knownCount + ' known misses, ' + res.failures.length + ' failure(s), ' + (Date.now() - t0) + ' ms'));
+    res.reportLines.forEach((l) => console.log(l));
+  }
+
+  // ---------- OCR replays: what the OCR read on real screenshots (recorded by tests/e2e), masked again here ----------
+  // Each secret's ink must be under a mask, and the texts to keep must stay visible. Accepted misses: tests/e2e/known-misses.json.
+  {
+    const R = require('./lib/replay');
+    const dir = path.join(__dirname, 'replay'), knownFile = path.join(__dirname, 'e2e', 'known-misses.json');
+    const known = fs.existsSync(knownFile) ? JSON.parse(fs.readFileSync(knownFile, 'utf8')) : {};
+    const files = fs.existsSync(dir) ? fs.readdirSync(dir).filter((n) => n.endsWith('.json')).sort() : [];
+    const hash = files.length ? R.ocrHash(root) : '';
+    for (const f of files) {
+      const rec = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+      const label = ('replay ' + rec.name).padEnd(42);
+      const { problems } = R.judge(ctx, rec);
+      const fresh = problems.filter((p) => !known[rec.name + '|' + p.id]);
+      const fixed = Object.keys(known).filter((k) => k.startsWith(rec.name + '|') && !problems.some((p) => rec.name + '|' + p.id === k));
+      const stale = rec.ocr !== hash ? '  (recorded with another OCR build: run npm run record in tests/e2e)' : '';
+      if (!fresh.length && !fixed.length) { console.log('ok        ' + label + ' ' + (problems.length ? problems.length + ' known miss(es)' : '') + stale); continue; }
+      mismatches += fresh.length + fixed.length;
+      console.log('MISMATCH  ' + label + stale);
+      fresh.forEach((p) => console.log('   ' + p.id + ': ' + p.what + (p.px ? ' (' + p.px + ' px)' : '') + (p.share ? ' (' + p.share + '%)' : '')));
+      fixed.forEach((k) => console.log('   known miss no longer happens, remove it from tests/e2e/known-misses.json: ' + k));
+    }
   }
 }
 

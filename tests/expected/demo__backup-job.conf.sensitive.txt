@@ -11,7 +11,7 @@
 2026-11-17 08:22:16 DEBUG RESTIC_REPOSITORY=s3:https://objects.example.org/aster-backups
 2026-11-17 08:22:16 DEBUG RESTIC_PASSWORD=[SECRET_5]
 2026-11-17 08:22:17 TRACE rsync_destination=rsync://svc_sync:[SECRET_6]@replica.example.net/exports
-2026-11-17 08:22:18 INFO backup_file=/srv/exports/dossier_Malo_LeGoff_1987-09-21.tar.gz
+2026-11-17 08:22:18 INFO backup_file=/srv/exports/[PERSON_2].tar.gz
 2026-11-17 08:22:19 INFO notification_to="[PERSON_1] <[EMAIL_1]>"
 2026-11-17 08:22:19 INFO escalation_phone="[PHONE_1]"
 2026-11-17 08:22:20 INFO backup_complete files=7391 bytes=10485760 compression=zstd

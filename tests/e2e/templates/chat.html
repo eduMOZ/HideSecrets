@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><title>Chat (de)</title>
+<link rel="stylesheet" href="base.css"><script src="template.js"></script>
+<style>
+  #shot { width: 1040px; --bg: #f5f5f7; --fg: #1d1d1f; --muted: #6e6e73; --me: #dbeafe; --them: #ffffff; --code: #f0f0f2; --line: #d2d2d7; }
+  [data-theme=dark] #shot { --bg: #1b1d22; --fg: #e8e8ea; --muted: #a1a1a6; --me: #22344d; --them: #262a31; --code: #14161a; --line: #3a3d44; }
+  #shot { background: var(--bg); color: var(--fg); padding: 14px 18px; }
+  .m { background: var(--them); border: 1px solid var(--line); border-radius: 10px; padding: 6px 14px; margin: 8px 0; max-width: 900px; }
+  .m.me { background: var(--me); margin-left: 80px; } .h { font-weight: 700; } .t { color: var(--muted); font-weight: 400; }
+  code { font-family: var(--mono); background: var(--code); padding: 1px 6px; border-radius: 4px; }
+</style></head><body>
+<div id="shot">
+  <div class="m"><div class="h"><span data-s="name">Lena Hoffmann</span> <span class="t">09:41</span></div>
+    Kannst du mir die Verbindung zur Staging-Datenbank schicken? Mein Benutzername ist <span data-s="login">l.hoffmann</span>.</div>
+  <div class="m me"><div class="h"><span data-s="name">Tobias Becker</span> <span class="t">09:43</span></div>
+    Klar: <code>postgresql://app:<span data-s="url-password">Wald!72Blau</span>@db.example.net:5432/app</code><br>
+    Das WLAN-Passwort im Büro lautet <span data-s="password">Gast#2024x</span>, der Türcode ist <span data-s="code">2580*</span>.</div>
+  <div class="m"><div class="h"><span data-s="name">Lena Hoffmann</span> <span class="t">09:45</span></div>
+    Danke! Mein Laptop heißt <span data-s="device-name">LT-LHOFFMANN-03</span>, falls du ihn im Inventar suchst.<br>
+    Die SMS mit der TAN ist angekommen: <span data-s="code">482913</span></div>
+  <div class="m me"><div class="h"><span data-s="name">Tobias Becker</span> <span class="t">09:46</span></div>
+    <span data-k>Bitte geben Sie Ihr Passwort ein.</span> steht noch auf der Seite? Dann <span data-k>Seite 2 von 5</span> neu laden.</div>
+</div>
+</body></html>

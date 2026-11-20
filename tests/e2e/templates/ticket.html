@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><title>Ticket (de)</title>
+<link rel="stylesheet" href="base.css"><script src="template.js"></script>
+<style>
+  #shot { width: 1320px; --bg: #eef2f7; --card: #ffffff; --fg: #1b1f24; --muted: #5a6470; --accent: #10316b; --bubble: #e9f0fb; --bubble2: #eef0f3; --note: #fff7d6; --line: #c9d3e0; --link: #1a56db; }
+  [data-theme=dark] #shot { --bg: #15181d; --card: #1e232a; --fg: #e6e9ee; --muted: #9aa4b1; --accent: #8fb3ff; --bubble: #1f2b3d; --bubble2: #252a31; --note: #3a3320; --line: #39424e; --link: #7aa7ff; }
+  #shot { background: var(--bg); color: var(--fg); }
+  .top { background: #1d4f91; color: #fff; display: flex; justify-content: space-between; align-items: center; padding: 6px 18px; }
+  .top b { font-size: 1.6em; } .badge { background: #fff; color: #10316b; border-radius: 6px; padding: 2px 10px; font-weight: 700; }
+  .cols { display: grid; grid-template-columns: 1fr 400px; gap: 12px; padding: 12px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; }
+  h1 { font-size: 1.6em; margin: 0 0 8px; } h2 { font-size: 1.5em; margin: 0 0 8px; color: var(--accent); }
+  .msg { background: var(--bubble); border-radius: 8px; padding: 6px 14px; margin: 8px 0; } .msg.it { background: var(--bubble2); }
+  .who { color: var(--accent); font-weight: 700; } .meta { color: var(--muted); }
+  .att { border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; margin: 8px 0; } .att b { display: block; }
+  .note { background: var(--note); border: 1px solid #e5c84a; border-radius: 8px; padding: 6px 14px; }
+  a { color: var(--link); }
+  .box { border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; margin-bottom: 12px; } .box h3 { margin: -8px -14px 8px; padding: 6px 14px; background: var(--bubble); color: var(--accent); font-size: 1.2em; }
+  .big { font-size: 1.6em; font-weight: 700; }
+</style></head><body>
+<div id="shot">
+  <div class="top"><b>ServiceWerk / Kundendienst</b><span class="badge">TESTDATEN — alle Personen und Zugangsdaten sind frei erfunden</span></div>
+  <div class="cols">
+    <div class="card">
+      <h1><span data-k>#4827</span> · Anmeldung nach Gerätewechsel nicht möglich</h1>
+      <div class="msg"><span class="who" data-s="name">Jörg Weiß</span> <span class="meta">· Heute, 09:14</span><br>
+        Guten Morgen, seit dem Gerätewechsel kann ich mich nicht mehr anmelden.<br>
+        Mein Benutzername lautet <span data-s="login">j.weiss</span>, die geschäftliche Adresse ist<br>
+        <span data-s="email">joerg.weiss+hilfe@example.org</span>.<br>
+        Sie erreichen mich unter <span data-s="phone">+49 30 00000000</span>, Durchwahl 427.<br>
+        Mein Geburtsdatum ist der <span data-s="birth-date">23. März 1986</span>.<br>
+        Die Personalnummer lautet <span data-s="id">MIT-DEMO-00842</span>.</div>
+      <div class="msg it"><span class="who" data-s="name">Franziska Groß</span> <span class="meta">· IT-Support · 09:19</span><br>
+        Bitte den Zugang mit dem vorläufigen Kennwort versuchen:<br>
+        <span data-s="password">Wolke!73Fluss#28</span><br>
+        Der Wiederherstellungscode lautet <span data-s="code">4826-1937</span>.<br>
+        Anmeldeportal: <a href="#"><span data-k>https://zugang.kunde-beispiel.example.com</span></a><br>
+        Das betroffene Gerät heißt <span data-s="device-name">BER-LT-JWEISS-07</span>.</div>
+      <div class="msg"><span class="who" data-s="name">Jörg Weiß</span> <span class="meta">· 09:23</span><br>
+        Die Sicherheitsfrage lautet: Wie hieß Ihr erstes Haustier?<br>
+        Meine Antwort ist <span data-s="answer">Schneeflöckchen</span>.<br>
+        Die Lieferanschrift für das Ersatzgerät:<br>
+        <span data-s="name">Jörg Weiß</span><br>
+        <span data-s="address">18 Beispielgasse, Wohnung 4</span><br>
+        <span data-s="address">00000 Musterstadt</span><br>
+        Deutschland</div>
+      <div class="att"><b>Personalbogen_<span data-s="file-name">Jörg_Weiß_1986-03-23</span>.pdf</b><span class="meta" data-k>PDF · 184 KB</span></div>
+      <div class="note"><b>Interne Notiz</b> · nicht an Kunden senden<br>
+        Rückrufkontakt: <span data-s="name">Özlem Şahin</span><br>
+        E-Mail: <span data-s="email">oezlem.sahin@example.net</span><br>
+        Rücksetzlink: <a href="#">https://konto.example.org/reset?token=<span data-s="token">demo_DE8qR4m2</span>&amp;user=<span data-s="login">j.weiss</span></a></div>
+    </div>
+    <div class="card">
+      <h2>Kundenprofil</h2>
+      <div class="box"><div class="big" data-s="name">Jörg Weiß</div>Beispielbetrieb Nord<br>Kundennummer: <span data-s="id">KD-DEMO-7391</span></div>
+      <div class="box"><h3>Bankverbindung</h3>Kontoinhaber: <span data-s="name">Jörg Weiß</span><br>IBAN: <span data-s="bank">DE89 3704 0044 0532 0130 00</span><br>Testkarte: <span data-s="bank">4242 4242 4242 4242</span></div>
+      <div class="box"><h3>Gerät</h3>Seriennummer: <span data-s="serial">DEMO-DE-7M42-9Q18</span><br>MAC-Adresse: <span data-s="mac">02:11:22:33:44:55</span><br>Letzter Zugriff: <span data-s="ip">198.51.100.82</span></div>
+      <div class="box"><h3>Technische Angaben</h3><span data-k>Version 4.12.3</span><br><span data-k>HTTP-Status 200</span><br><span data-k>Bearbeitungszeit 427 ms</span></div>
+    </div>
+  </div>
+</div>
+</body></html>

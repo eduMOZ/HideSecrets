@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><title>Einstellungen (de)</title>
+<link rel="stylesheet" href="base.css"><script src="template.js"></script>
+<style>
+  #shot { width: 1000px; --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --line: #d1d9e0; --field: #f6f8fa; }
+  [data-theme=dark] #shot { --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #3d444d; --field: #151b23; }
+  #shot { background: var(--bg); color: var(--fg); padding: 16px 22px; border: 1px solid var(--line); }
+  h1 { font-size: 1.4em; margin: 0 0 12px; } h2 { font-size: 1.1em; margin: 16px 0 8px; color: var(--muted); }
+  .row { display: grid; grid-template-columns: 240px 1fr; align-items: center; margin: 6px 0; }
+  .f { background: var(--field); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; font-family: var(--mono); }
+</style></head><body>
+<div id="shot">
+  <h1>Einstellungen · Benachrichtigungen</h1>
+  <h2>E-Mail-Versand</h2>
+  <div class="row"><span>SMTP-Server</span><span class="f" data-k>smtp.example.net</span></div>
+  <div class="row"><span>Port</span><span class="f" data-k>587</span></div>
+  <div class="row"><span>Benutzername</span><span class="f">svc_mailer</span></div>
+  <div class="row"><span>Kennwort</span><span class="f" data-s="password">Sommer2024!Geheim</span></div>
+  <h2>Schnittstellen</h2>
+  <div class="row"><span>API-Schlüssel</span><span class="f" data-s="token">demo4f8Q2kL9xW3mZ7</span></div>
+  <div class="row"><span>Webhook</span><span class="f">https://hooks.example.net/notify?token=<span data-s="token">demoX7kP2mQ9rL4vB8</span></span></div>
+  <div class="row"><span>Client-ID</span><span class="f" data-k>kundenportal-web</span></div>
+  <div class="row"><span>client_secret</span><span class="f" data-s="token">demo_Geheimnis2wQ9z</span></div>
+  <h2>Gerät</h2>
+  <div class="row"><span>Gerätename</span><span class="f" data-s="device-name">NB-MUELLER-0815</span></div>
+  <div class="row"><span>Hostname</span><span class="f" data-k>srv-payment-01</span></div>
+  <div class="row"><span>Version</span><span class="f" data-k>4.12.3</span></div>
+</div>
+</body></html>
