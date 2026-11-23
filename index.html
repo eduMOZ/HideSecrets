@@ -157,6 +157,10 @@
   #cats .catwarn { margin-top:10px; }
   #cats .cterms { margin-top:14px; }
   #cats .cterms label { display:block; padding:0; cursor:default; font-size:13px; }
+  /* Shown when the row is pointed at or has the focus; opacity, not visibility, so that the keyboard can still reach it */
+  .row .keepbtn { align-self:center; white-space:nowrap; font-size:12px; opacity:0; transition:opacity .12s; }
+  .row:hover .keepbtn, .row:focus-within .keepbtn, .row.hl .keepbtn { opacity:1; }
+  @media (hover: none) { .row .keepbtn { opacity:1; } }
   #cats .cterms textarea { display:block; width:100%; margin-top:6px; font:13px/1.45 ui-monospace, Menlo, monospace; padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink); resize:vertical; }
   .catwarn { color:var(--hit-line); font-size:13px; font-weight:600; }
   .catwarn:empty { display:none; }
@@ -198,6 +202,10 @@
     <div class="cterms">
       <label for="terms"><b>Words to always mask</b> <span class="small">a project, customer or site name that shows in comments and free text; one per line or separated by commas, any case</span></label>
       <textarea id="terms" rows="2" placeholder="Orion, project-aurora" spellcheck="false" autocomplete="off"></textarea>
+    </div>
+    <div class="cterms">
+      <label for="keep"><b>Words to never mask</b> <span class="small">a public domain or a name that identifies nobody; one per line or separated by commas, any case. The whole value only (a domain also covers its subdomains). Never applies to secrets, and a word also listed above stays masked</span></label>
+      <textarea id="keep" rows="2" placeholder="docs.example.org, Max Mustermann" spellcheck="false" autocomplete="off"></textarea>
     </div>
     <div class="catwarn" id="catwarn"></div>
   </div>
@@ -1749,6 +1757,31 @@ function detect(text, filename, opts) {
   return res;
 }
 
+// ---------- Words to never mask ----------
+// The mirror of the words to always mask: a public domain or a name that identifies nobody, left readable in every file.
+// It applies to sensitive data only (a detection with `sens`: a secret is always masked, whatever the list says) and to the whole
+// value, in any case; a domain also covers its subdomains. A word that is also listed to always mask stays masked.
+function keepEntries(list) {
+  var seen = {}, res = [];
+  (list || []).forEach(function (w) {
+    var e = String(w).replace(/\s+/g, ' ').trim().toLowerCase().replace(/^\*?\./, '');   // ".example.org" and "*.example.org" mean example.org
+    if (e.length >= 2 && !seen[e]) { seen[e] = 1; res.push(e); }
+  });
+  return res.slice(0, 200);
+}
+// The entry that keeps a detection readable, or '' (entries and always: lists made by keepEntries)
+function keepMatch(d, entries, always) {
+  if (!d.sens || !entries.length) return '';
+  var k = String(d.key).replace(/\s+/g, ' ').toLowerCase(), domain = d.type === 'Other domain' || d.type === 'Customer domain';
+  if (always && always.indexOf(k) >= 0) return '';
+  for (var i = 0; i < entries.length; i++) {
+    var e = entries[i];
+    if (always && always.indexOf(e) >= 0) continue;
+    if (k === e || (domain && k.slice(-e.length - 1) === '.' + e)) return e;
+  }
+  return '';
+}
+
 // A given value always gets the same placeholder; different values stay distinguishable.
 // "shared" (from batchNumbering) makes that true across the files of a batch: the same value has the same
 // placeholder in every file, so a reader (or an AI assistant) can follow it from one file to the next.
@@ -2070,7 +2103,7 @@ function tableRegions(lines, opts) {
         var x0 = Math.min.apply(null, ws.map(function (w) { return w.bbox.x0; })), x1 = Math.max.apply(null, ws.map(function (w) { return w.bbox.x1; }));
         var y0 = Math.min.apply(null, ws.map(function (w) { return w.bbox.y0; })), y1 = Math.max.apply(null, ws.map(function (w) { return w.bbox.y1; }));
         var pad = Math.max(2, (y1 - y0) * 0.15), px = Math.max(pad, cwOf(ws[0]));
-        out.push({ x: x0 - px, y: y0 - pad, w: x1 - x0 + 2 * px, h: y1 - y0 + 2 * pad, type: kind.type, value: text, key: kind.secret ? normKey(text) : normKey(text).toLowerCase(), checked: true });
+        out.push({ x: x0 - px, y: y0 - pad, w: x1 - x0 + 2 * px, h: y1 - y0 + 2 * pad, type: kind.type, value: text, key: kind.secret ? normKey(text) : normKey(text).toLowerCase(), checked: true, sens: !kind.secret });
       });
     }
   });
@@ -2143,7 +2176,7 @@ function regionsFromOcr(lines, opts) {
       });
       Object.keys(byLine).forEach(function (k) {
         var L = byLine[k], pad = Math.max(2, (L.y1 - L.y0) * 0.15), px = Math.max(pad, L.cw);   // the OCR's box can miss part of a first or last letter (a whole "V" at times)
-        var r = { x: L.x0 - px, y: L.y0 - pad, w: L.x1 - L.x0 + 2 * px, h: L.y1 - L.y0 + 2 * pad, type: d.type, value: d.value, key: d.key, checked: true, line: +k };
+        var r = { x: L.x0 - px, y: L.y0 - pad, w: L.x1 - L.x0 + 2 * px, h: L.y1 - L.y0 + 2 * pad, type: d.type, value: d.value, key: d.key, checked: true, sens: d.sens, line: +k };
         // the second reading adds only what the first did not already cover
         if (pass && out.slice(0, first).some(function (q) { return q.x <= r.x + 1 && q.x + q.w >= r.x + r.w - 1 && q.y <= r.y + 1 && q.y + q.h >= r.y + r.h - 1; })) return;
         out.push(r);
@@ -2293,12 +2326,13 @@ function makeSampleHar() {
     (f.kind === 'image' ? f.regions : f.dets).forEach(function (d) {
       if (d.manual) return;
       var k = d.type + '|' + d.key;
-      d.checked = k in ovr ? ovr[k] : !catOff.has(d.type);
+      d.checked = k in ovr ? ovr[k] : !(catOff.has(d.type) || keptBy(d));   // a category turned off, or a word listed to never mask
     });
   }
   function catWarning() {
     if (LEVEL !== 'sensitive') return '';
     var names = CATS.filter(function (c) { return catOff.has(c.type) && !c.optIn; }).map(function (c) { return c.label; });   // an option left off is no oversight
+    if (keepState.entries.length) names.push('words you listed to never mask (' + keepState.entries.length + ')');
     return names.length ? '⚠ Not masked: ' + names.join(', ') : '';
   }
   // Turning a category on or off replaces the earlier clicks on its values, in every file
@@ -2330,10 +2364,46 @@ function makeSampleHar() {
     clearTimeout(termsTimer);
     termsTimer = setTimeout(function () {
       userTerms = parseTerms($('terms').value);
+      refreshKeep();   // a word listed to always mask wins over the same word listed to never mask
       try { localStorage.setItem(TERMS_KEY, $('terms').value); } catch (e) { /* storage unavailable */ }
       applyLevel();
     }, 350);
   };
+  // Words to never mask: typed here or added from a row of the list, remembered in this browser (the rule is keepMatch, in the engine)
+  var KEEP_KEY = 'hidesecrets.keep', keepTimer = null, keepState = { entries: [], always: [] };
+  function refreshKeep() { keepState = { entries: keepEntries(parseTerms($('keep').value)), always: keepEntries(cfgList('terms').concat(userTerms)) }; }
+  function keptBy(d) { return keepMatch(d, keepState.entries, keepState.always); }
+  try { $('keep').value = localStorage.getItem(KEEP_KEY) || ''; } catch (e) { /* storage unavailable */ }
+  refreshKeep();
+  function keepChanged() {
+    clearTimeout(keepTimer);
+    var before = keepState.entries;
+    refreshKeep();
+    try { localStorage.setItem(KEEP_KEY, $('keep').value); } catch (e) { /* storage unavailable */ }
+    // What the user decided on a value that the list covers now, or covered before, gives way to the list (as for a category)
+    files.forEach(function (f) {
+      (f.kind === 'image' ? f.regions : f.dets).forEach(function (d) {
+        if (d.manual || !f.ovr) return;
+        if (keepMatch(d, before, keepState.always) || keptBy(d)) delete f.ovr[d.type + '|' + d.key];
+      });
+      applyChoices(f);
+    });
+    catsChanged(false);
+  }
+  $('keep').oninput = function () { clearTimeout(keepTimer); keepTimer = setTimeout(keepChanged, 350); };
+  function keepParts() { return String($('keep').value || '').split(/[\n,;]+/).map(function (x) { return x.trim(); }).filter(Boolean); }
+  function addKeep(value) {
+    var v = String(value).replace(/\s+/g, ' ').trim(), e = keepEntries([v])[0];
+    if (!e) return;
+    var parts = keepParts();
+    if (keepEntries(parts).indexOf(e) < 0) parts.push(v);
+    $('keep').value = parts.join('\n');
+    keepChanged();
+  }
+  function removeKeep(entry) {
+    $('keep').value = keepParts().filter(function (p) { return keepEntries([p])[0] !== entry; }).join('\n');
+    keepChanged();
+  }
   function renderCats() {
     var bar = $('cats'), grid = $('cgrid');
     bar.style.display = LEVEL === 'sensitive' ? '' : 'none';
@@ -2935,6 +3005,62 @@ function makeSampleHar() {
     else if (e.key === '1') setZoom(actualZoom());
   });
 
+  // Peeking: the masks of the value under the pointer (or of the row the pointer is on, in the list) fade out, so that what is behind
+  // shows without unchecking anything. The screen only: the exported image never uses this. "muted" is the value just clicked: its
+  // mask stays put, so that turning a mask on is seen at once.
+  var REVEAL_MS = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 160;
+  var fade = Object.create(null), fadeRaf = 0, fadeTimer = 0, fadeT = 0, mutedKey = null;   // fade: value key -> how far its masks are faded out (0..1)
+  function wantReveal(k) { return k === hover && k !== mutedKey; }
+  // The next frame of the fade: the browser's animation frame, or a timer when the browser holds its frames back (a page that is
+  // not in front, an embedded view), so that the fade always ends
+  function nextFrame() {
+    if (fadeRaf || fadeTimer) return;
+    fadeRaf = requestAnimationFrame(stepFade);
+    fadeTimer = setTimeout(stepFade, 50);
+  }
+  function stepFade(ts) {
+    cancelAnimationFrame(fadeRaf); clearTimeout(fadeTimer); fadeRaf = fadeTimer = 0;
+    if (typeof ts !== 'number') ts = performance.now();   // the timer passes no time stamp
+    var dt = fadeT ? Math.min(64, ts - fadeT) : 16, moving = false;
+    fadeT = ts;
+    Object.keys(fade).forEach(function (k) {
+      var to = wantReveal(k) ? 1 : 0, a = fade[k], s = REVEAL_MS ? dt / REVEAL_MS : 1;
+      a = to > a ? Math.min(to, a + s) : Math.max(to, a - s);
+      if (a === 0 && to === 0) delete fade[k]; else fade[k] = a;
+      if (a !== to) moving = true;
+    });
+    if (F && F.kind === 'image') drawCanvas();
+    if (moving) nextFrame(); else fadeT = 0;
+  }
+  function startFade() {
+    if (hover !== null && fade[hover] === undefined) fade[hover] = 0;
+    nextFrame();
+  }
+  // The value under the pointer, on the image or in the list. From the image, its row is also brought into view in the list.
+  function setHover(key, fromImage) {
+    if (key === hover) return;
+    hover = key;
+    if (key !== mutedKey) mutedKey = null;
+    var lst = $('list');
+    lst.querySelectorAll('.row').forEach(function (r) {
+      var on = key !== null && r.dataset.key === key;
+      r.classList.toggle('hl', on);
+      if (on && fromImage) {
+        var a = r.getBoundingClientRect(), b = lst.getBoundingClientRect();
+        if (a.top < b.top) lst.scrollTop -= b.top - a.top; else if (a.bottom > b.bottom) lst.scrollTop += a.bottom - b.bottom;
+      }
+    });
+    startFade();
+  }
+  function resetHover() { hover = null; mutedKey = null; fade = Object.create(null); }  // The area under a point of the image; the last one drawn wins, as for a click
+  function regionAt(p) {
+    for (var i = F.regions.length - 1; i >= 0; i--) {
+      var r = F.regions[i];
+      if (p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h) return r;
+    }
+    return null;
+  }
+
   function drawCanvas() {
     $('imgstatus').textContent = statusText(F);
     applyZoom();   // after the status line: its height counts in "Fit"
@@ -3006,63 +3132,14 @@ function makeSampleHar() {
     var b = cv.getBoundingClientRect(), scale = cv.width / b.width, d = normRect(drag);
     if (d.w > 4 * scale || d.h > 4 * scale) { if (!drag.moved) setHover(null); drag.moved = true; }   // drawing: no peeking
     drawCanvas();
-  // Peeking: the masks of the value under the pointer (or of the row the pointer is on, in the list) fade out, so that what is behind
-  // shows without unchecking anything. The screen only: the exported image never uses this. "muted" is the value just clicked: its
-  // mask stays put, so that turning a mask on is seen at once.
-  var REVEAL_MS = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 160;
-  var fade = Object.create(null), fadeRaf = 0, fadeTimer = 0, fadeT = 0, mutedKey = null;   // fade: value key -> how far its masks are faded out (0..1)
-  function wantReveal(k) { return k === hover && k !== mutedKey; }
-  // The next frame of the fade: the browser's animation frame, or a timer when the browser holds its frames back (a page that is
-  // not in front, an embedded view), so that the fade always ends
-  function nextFrame() {
-    if (fadeRaf || fadeTimer) return;
-    fadeRaf = requestAnimationFrame(stepFade);
-    fadeTimer = setTimeout(stepFade, 50);
-  }
-  function stepFade(ts) {
-    cancelAnimationFrame(fadeRaf); clearTimeout(fadeTimer); fadeRaf = fadeTimer = 0;
-    if (typeof ts !== 'number') ts = performance.now();   // the timer passes no time stamp
-    var dt = fadeT ? Math.min(64, ts - fadeT) : 16, moving = false;
-    fadeT = ts;
-    Object.keys(fade).forEach(function (k) {
-      var to = wantReveal(k) ? 1 : 0, a = fade[k], s = REVEAL_MS ? dt / REVEAL_MS : 1;
-      a = to > a ? Math.min(to, a + s) : Math.max(to, a - s);
-      if (a === 0 && to === 0) delete fade[k]; else fade[k] = a;
-      if (a !== to) moving = true;
-    });
-    if (F && F.kind === 'image') drawCanvas();
-    if (moving) nextFrame(); else fadeT = 0;
-  }
-  function startFade() {
-    if (hover !== null && fade[hover] === undefined) fade[hover] = 0;
-    nextFrame();
-  }
-  // The value under the pointer, on the image or in the list. From the image, its row is also brought into view in the list.
-  function setHover(key, fromImage) {
-    if (key === hover) return;
-    hover = key;
-    if (key !== mutedKey) mutedKey = null;
-    var lst = $('list');
-    lst.querySelectorAll('.row').forEach(function (r) {
-      var on = key !== null && r.dataset.key === key;
-      r.classList.toggle('hl', on);
-      if (on && fromImage) {
-        var a = r.getBoundingClientRect(), b = lst.getBoundingClientRect();
-        if (a.top < b.top) lst.scrollTop -= b.top - a.top; else if (a.bottom > b.bottom) lst.scrollTop += a.bottom - b.bottom;
-      }
-    });
-    startFade();
-  }
-  function resetHover() { hover = null; mutedKey = null; fade = Object.create(null); }  // The area under a point of the image; the last one drawn wins, as for a click
-  function regionAt(p) {
-    for (var i = F.regions.length - 1; i >= 0; i--) {
-      var r = F.regions[i];
-      if (p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h) return r;
-    }
-    return null;
-  }
-
   });
+  // Peeking from the image (a mouse or a pen: a finger has no hover)
+  cv.addEventListener('pointermove', function (e) {
+    if (!F || F.kind !== 'image' || !F.img || drag || pan || spaceDown || e.pointerType === 'touch') return;
+    var r = regionAt(pt(e));
+    setHover(r ? r.key : null, true);
+  });
+  cv.addEventListener('pointerleave', function () { if (!drag) setHover(null); });
   window.addEventListener('pointerup', function () {
     if (!drag) return;
     var d = drag; drag = null;
@@ -3111,12 +3188,28 @@ function makeSampleHar() {
         hint2.textContent = 'Not a known public service: masked by default. Uncheck it if it identifies nobody.';
         lab.appendChild(hint2);
       }
+      // Sensitive data (never a secret) can be kept readable by the list of words to never mask
+      var kept = d.sens && !d.manual ? keptBy(d) : '';
+      if (kept) {
+        var hint3 = document.createElement('div'); hint3.className = 'small';
+        hint3.textContent = 'Kept readable: “' + kept + '” is in your words to never mask.';
+        lab.appendChild(hint3);
+      }
       row.appendChild(cb); row.appendChild(lab);
+      if (d.sens && !d.manual && d.value) {
+        var kb = document.createElement('button'); kb.type = 'button'; kb.className = 'del keepbtn';
+        kb.textContent = kept ? 'Remove from list' : 'Never mask';
+        kb.title = kept ? 'Take “' + kept + '” out of the words to never mask' : 'Add this value to the words to never mask: it stays readable in every file';
+        kb.onclick = function () { if (kept) removeKeep(kept); else addKeep(d.value); };
+        row.appendChild(kb);
+      }
       if (d.manual) {
         var del = document.createElement('button'); del.className = 'del'; del.textContent = '×'; del.title = 'Remove this area';
         del.onclick = function () { F.regions = F.regions.filter(function (r) { return r.key !== d.key; }); renumber(F); hover = null; render(); };
         row.appendChild(del);
       }
+      row.dataset.key = d.key;
+      if (isImg && hover === d.key) row.classList.add('hl');
       row.onmouseenter = function () {
         if (isImg) { setHover(d.key); return; }
         var m = $('m' + d.id); if (m) { m.classList.add('flash'); m.scrollIntoView({ block: 'nearest' }); }
@@ -3131,13 +3224,6 @@ function makeSampleHar() {
 
   function updateCount() {
     var keys = {}, on = {};
-  // Peeking from the image (a mouse or a pen: a finger has no hover)
-  cv.addEventListener('pointermove', function (e) {
-    if (!F || F.kind !== 'image' || !F.img || drag || pan || spaceDown || e.pointerType === 'touch') return;
-    var r = regionAt(pt(e));
-    setHover(r ? r.key : null, true);
-  });
-  cv.addEventListener('pointerleave', function () { if (!drag) setHover(null); });
     items().forEach(function (d) { keys[d.key] = 1; if (d.checked) on[d.key] = 1; });
     var n = Object.keys(keys).length, c = Object.keys(on).length;
     var word = F && F.kind === 'image' ? 'area' : 'item';
@@ -3208,8 +3294,6 @@ function makeSampleHar() {
       return Promise.resolve({ blob: blob, single: cleanName(f.name), zip: (f.fromArchive || f.fromFolder) && cut > 0 ? f.path.slice(0, cut) + '-clean' + f.path.slice(cut) : cleanName(f.path) });
     }
     if (!f.img) return Promise.resolve(null);
-      row.dataset.key = d.key;
-      if (isImg && hover === d.key) row.classList.add('hl');
     return maskedImage(f).then(function (b) {
       var p = withExt(f.path, b.type), cut = p.indexOf('/');
       // From a folder: same names in "<folder>-clean/", so each image can replace its original by hand
