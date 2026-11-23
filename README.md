@@ -76,6 +76,17 @@ Nothing in a log says that `Orion` is a customer or `project-aurora` a code name
 - It is remembered in this browser only (local storage), never sent anywhere. To share a list with a team or a customer, put it in `terms` of [`config.local.js`](#product-settings-optional) instead.
 - It is the way to hide company and customer names in any language: they carry no label, so nothing else finds them.
 
+### Words to never mask
+
+The mirror of the box above: a public domain or a name that identifies nobody, which you want to keep readable in every file without unchecking it each time. Type it in the box **Words to never mask** (same format as the other box), or click **Never mask** on a row of the list (the button shows when you point at the row).
+
+- **The whole value must match**, in any case: `docs.example.org` keeps `docs.example.org` readable, not `jane@docs.example.org` and not `example.org`. A domain also covers its subdomains: `example.org` keeps `docs.example.org` and `files.example.org` readable. `*.example.org` and `.example.org` mean `example.org`.
+- **It never applies to secrets.** A password, a token or a key stays masked even if you list it. It only applies to sensitive data (names, e-mail addresses, logins, IPs, domains, devices…), so it needs the level **Secrets and sensitive data**.
+- **A word that is also in Words to always mask** (or in the `terms` of the [product settings](#product-settings-optional)) stays masked.
+- **Nothing disappears from the list.** A value kept readable stays listed on the right, unchecked, with a note that names the entry that keeps it and a **Remove from list** button to mask it again. While the list is not empty, a red "Not masked: words you listed to never mask" reminder stays on screen, like for a category you turned off.
+- Adding or removing a word replaces what you decided by hand on its values in the files already open.
+- It is remembered in this browser only (local storage). To share a list of public domains with a team, put it in `publicDomains` of the product settings.
+
 ### Reviewing many files
 
 - **File list**: on the left, with the number of items found in each file and a ✓ once you have viewed it.
@@ -193,11 +204,12 @@ HideSecrets works without any settings. To make it recognize the product you ins
 - Identifiers that are not secret: `client_id`, service account names, UUIDs (`crontab_id=…`), Kubernetes pod names, container image names (`owner/image`), commit hashes
 - Paths to key files (`private_key: /app/secrets/hub-private-key`): the path is not the key
 - Values that look like code or an ordinary word (`theme=dark`, `${VARIABLE}`, `true`)
+- What you list in [Words to never mask](#words-to-never-mask) (sensitive data only, never a secret)
 
 ## Privacy
 
 - A browser security rule (Content-Security-Policy) forbids the page from contacting any other site. Only its own address is allowed, to load the OCR engine from the `ocr/` folder.
-- No file is sent and no data is stored. Only the masking level and the categories are remembered, in your browser.
+- No file is sent and no data is stored. Only the masking level, the categories and the two lists of words (to always mask, to never mask) are remembered, in your browser.
 - Exported images are re-encoded, which strips their metadata (EXIF).
 
 You can check this yourself: open the browser's developer tools, go to the Network tab, and see that no request leaves for the outside.
@@ -255,6 +267,8 @@ cd tests/e2e && npm ci && npx playwright install chromium firefox && npm test
 
 The tool helps you review; it does not guarantee that nothing is left. Always check the result before sharing it.
 
+- **Phones and tablets**: not designed for touch yet. The page expects a mouse and a keyboard: on an image, a drag draws a rectangle (it takes over the finger's scroll), moving a zoomed image needs the space key, and pointing at a mask to see what it hides has no touch equivalent. Use a computer.
+
 - **Screenshots**: detection depends on how well the OCR reads the image (small text, low contrast). Each image is read twice, the second time to catch light text on colored panels, which takes one to two seconds per image; a picture that mixes light text on dark and dark text on light (a line selected in a terminal) is read a third time on a copy where those bands are inverted. A page with columns (a ticket and its side panel, a chat and its profile card) confuses the usual reading, which runs the columns together and garbles some lines: when it leaves several words of low confidence, the image is read once more in a mode that looks for text wherever it is, and, if the page has a clear gutter, the columns are then read one under the other, so that a label stays above its value. Several images are read at the same time (see [Reading speed](#reading-speed)), and the one on screen is read first. Text smaller than about 14 pixels is read badly (a lost `@`, `_`, `.` or `&`, whole words missing): the tests show it at 13 pixels. Take the capture larger, or zoom in before capturing. Draw a rectangle over anything that was missed.
 - **Public values** (a certificate fingerprint, an ACME challenge, a PKCE `code_challenge`) stay visible on purpose. A name glued inside a file name (`dossier_Jane_Doe_1987-09-21.tar.gz`) is recognized only when the same name appears elsewhere in the file, or when it starts with a known first name.
 - **OCR reading errors**: the engine tolerates the common ones, which the tests reproduce:
@@ -267,15 +281,13 @@ The tool helps you review; it does not guarantee that nothing is left. Always ch
   - a word's box that stops short of its letters, or one read twice too tall;
   - `ü` read as `ii` (`Schliissel`), a label's colon read as `®`, a `!` read as `|`, a `_` lost between two names (`JôrgWeiß`);
   - OCR noise (`|`, `~`, `EEE` read on a border) next to a value, and specks read as lines of one or two characters across the image (`5 … 5`), which would join a sentence's rows to other panels;
-- **Phones and tablets**: not designed for touch yet. The page expects a mouse and a keyboard: on an image, a drag draws a rectangle (it takes over the finger's scroll), moving a zoomed image needs the space key, and pointing at a mask to see what it hides has no touch equivalent. Use a computer.
-
   - the line of a postcode read on the same row as a word of the panel beside it (`Gestern 00000 Beispielstadt`).
 
   Others are not caught. Two panels side by side with a narrow gutter (a mail list beside a message) are read as one text, row by row: a value that spans two rows (a date written out in words) can be cut by the other panel's words between them. A dot lost in `l.hoffmann` makes it look like a word. Letters read wrong inside a label hide what it names (`SMTP_KENNWORT=` read as `SMTP_KENNWORIE`). A label or a value the OCR did not read at all leaves nothing to find. The OCR's German data has no `İ` or `ı`: a name with them is read wrong (`İlker Yılmaz` comes out as `ofa ker Yilmaz`); in an address block the recipient's lines are masked anyway, unless they name a company. The tests list such cases in [`tests/e2e/known-misses.json`](tests/e2e/known-misses.json).
 - **Tables in screenshots**: only a table whose header row the OCR reads as labels is read by column; without a header, or with its header misread, its cells are read as text, and only what text rules find is masked (names, e-mail addresses, IBANs).
 - **Person names**: found from a list of common first names, from words in capitals followed by an identifier, or after a label such as `Author:`. A name with an unusual first name and no such clue is missed. A street named after a person (`Victor Hugo Avenue`) is masked too.
 - **Other domains**: a public service missing from the built-in list is masked by default; uncheck it. A domain without a usual ending (`.com`, `.fr`, `.de`…) is not detected: list its ending in `extraTlds` of your product settings. Domains written as a suffix (`.example.com`, `*.example.com`, as in proxy auto-config files) are detected like the others.
-- **Decisions on single values** count for one file and are lost when the page is reloaded.
+- **Decisions on single values** count for one file and are lost when the page is reloaded. To keep a value readable everywhere, and for good, list it in [Words to never mask](#words-to-never-mask).
 - **Authentication parameters in URLs** (`state=`, `code=` in an SSO callback): masked only when the value is long and mixes letters and digits, so that `code=200` or `state=ready` stay readable.
 - **Chat headers**: a name alone on a line with a time is taken for a person (`Scheduled Backup 02:00` too): uncheck it, or turn the category off.
 - **A four-part version number** (`1.84.2.0`) can be mistaken for a public IP: uncheck it.

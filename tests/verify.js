@@ -200,6 +200,43 @@ async function archiveTests() {
     eq('public domains stay visible', ctx.sanitize(t, ctx.detect(t, 'a.txt', { sensitive: true })), 'repo https://charts.bitnami.com/x, valkey.io, keycloak.org, pool.ntp.org, [DOMAIN_1]');
   }
 
+  // ---------- Words to never mask: sensitive data only, whole value, "always mask" wins ----------
+  {
+    // the values of the detections that the list keeps readable, as the page decides it (keepMatch on each detection)
+    const kept = (text, name, keep, terms) => {
+      const entries = ctx.keepEntries(keep), always = ctx.keepEntries(ctx.cfgList('terms').concat(terms || []));
+      return ctx.detect(text, name, { sensitive: true, terms: terms || [] }).filter((d) => ctx.keepMatch(d, entries, always)).map((d) => d.value);
+    };
+    const t = 'docs at https://docs.acme-corp.fr/x and https://files.other-corp.fr/y\n';
+    eq('keep: a domain and its subdomains', kept(t, 'a.txt', ['acme-corp.fr']), ['docs.acme-corp.fr']);
+    eq('keep: any case, a leading dot or a wildcard', [kept(t, 'a.txt', ['ACME-Corp.FR']), kept(t, 'a.txt', ['.acme-corp.fr']), kept(t, 'a.txt', ['*.acme-corp.fr'])], [['docs.acme-corp.fr'], ['docs.acme-corp.fr'], ['docs.acme-corp.fr']]);
+    eq('keep: another domain with the same ending is not kept', kept(t, 'a.txt', ['corp.fr']), []);
+    eq('keep: the whole value only (an address is not its domain)', kept('mail jane.doe@acme-corp.fr\n', 'a.txt', ['acme-corp.fr', 'jane.doe']), []);
+    eq('keep: a person name, any case and spacing', kept('Author: Jane Doe\n', 'a.txt', ['jane   DOE']), ['Jane Doe']);
+    // A secret is always masked, whatever the list says
+    {
+      const s = 'password=Wolke73Fluss!x\n';
+      eq('keep: the secret of the next checks is detected, and is no sensitive data', ctx.detect(s, 'a.env', { sensitive: true }).map((d) => [d.value, !!d.sens]), [['Wolke73Fluss!x', false]]);
+      eq('keep: never a secret', kept(s, 'a.env', ['Wolke73Fluss!x', 'password']), []);
+      const lines = [[{ text: 'password:', bbox: { x0: 20, x1: 101, y0: 10, y1: 24 }, conf: 90 }, { text: 'Wolke!73Fluss#28', bbox: { x0: 110, x1: 254, y0: 10, y1: 24 }, conf: 90 }]];
+      const secretRegions = ctx.regionsFromOcr(lines, { sensitive: true });
+      eq('keep: never a secret read from an image', [secretRegions.length > 0 && secretRegions.every((r) => !r.sens), secretRegions.map((r) => ctx.keepMatch(r, ctx.keepEntries(['Wolke!73Fluss#28']), []))], [true, secretRegions.map(() => '')]);
+    }
+    // A word that is also listed to always mask stays masked, in a list or in the product settings, and so does a longer name under it
+    eq('keep: "always mask" wins over "never mask"', kept('Project Orion started\n', 'a.txt', ['orion'], ['Orion']), []);
+    eq('keep: "always mask" of a host wins over a parent domain', kept('host team.acme-corp.fr\n', 'a.txt', ['acme-corp.fr'], ['team.acme-corp.fr']), []);
+    eq('keep: the product settings\' listed words win too', kept('see project-aurora\n', 'a.txt', ['project-aurora']), []);
+    // Screenshots: what is read in a table under a sensitive header is sensitive data, so it can be kept
+    {
+      const row = (y, words) => words.map(([w, x]) => ({ text: w, bbox: { x0: x, x1: x + 9 * w.length, y0: y, y1: y + 14 }, conf: 90 }));
+      const rs = ctx.regionsFromOcr([row(10, [['Name', 20], ['Benutzername', 200], ['Status', 400]]), row(40, [['Anna', 20], ['abeispiel', 200], ['aktiv', 400]])], { sensitive: true });
+      eq('keep: a table cell of sensitive data can be kept', [rs.length > 0, rs.every((r) => r.sens === true), rs.filter((r) => ctx.keepMatch(r, ctx.keepEntries(['abeispiel']), [])).map((r) => r.value)], [true, true, ['abeispiel']]);
+    }
+    // The list itself: normalized, de-duplicated, at least two characters, at most 200
+    eq('keep: entries', ctx.keepEntries(['  A  ', 'Docs.Example.ORG', '.docs.example.org', '*.docs.example.org', 'x', 'jane   doe', '']), ['docs.example.org', 'jane doe']);
+    eq('keep: at most 200 entries', ctx.keepEntries(Array.from({ length: 300 }, (_, i) => 'word' + i)).length, 200);
+  }
+
   // ---------- Screenshot layouts: a table under its header, two columns the OCR ran together ----------
   {
     // OCR words by hand: [text, x0] on a row; 9 px per character, rows 30 px apart
