@@ -2,6 +2,8 @@
 
 Mask the secrets and sensitive data in a log, a HAR file, text copied from a console, or a batch of screenshots **before** you share them with colleagues or hand them to an AI assistant. Everything happens in your browser: the page cannot send anything over the Internet.
 
+**Try it now, nothing to install: <https://edumoz.github.io/HideSecrets/>** (the page is served by GitHub Pages, screenshots included). GitHub serves the page; the files you drop and the text you paste stay in your browser. That online copy has no [product settings](#product-settings-optional), and it is made for a computer with a mouse (see [Known limitations](#known-limitations)). To recognize your own product, or to be sure of the exact code that runs, use a local copy: see [Getting started](#getting-started).
+
 ## Why
 
 When an installation goes wrong, people send logs, console output, HAR files and screenshots so that someone can see what is blocking. These often contain passwords, tokens, keys, email addresses or names, and nobody notices.
@@ -32,6 +34,7 @@ All the screenshots use invented data.
 
 No installation, no dependencies.
 
+- **Online**: open <https://edumoz.github.io/HideSecrets/>. Text, files and screenshots all work there (the OCR is served with the page). It always runs the latest version of the `main` branch.
 - **For text and files** (logs, HAR, configuration, archives): open `index.html` in a recent browser (Firefox, Chrome, Edge, Safari).
 - **For screenshots**, reading the text in the image (OCR) needs the page to be served from a local web address:
 
@@ -47,7 +50,7 @@ The "a fake .log", "a fake .har" and "a fake screenshot" buttons let you try it 
 
 1. **Choose what to mask**: "Secrets only", or "Secrets and sensitive data" (see below).
 2. **Give it some content**: paste text into the text box, **paste a screenshot** (⌘V / Ctrl+V anywhere on the page), drop one or more files or archives (see [Accepted files](#accepted-files)), or choose or drop a folder.
-3. **Review.** Each detected value is highlighted in the text or blacked out on the image, and listed on the right. Uncheck what should stay readable; a decision applies to every occurrence of the same value in that file. On an image, draw a rectangle to mask an area by hand, or click an area to turn it on or off.
+3. **Review.** Each detected value is highlighted in the text or blacked out on the image, and listed on the right. Uncheck what should stay readable; a decision applies to every occurrence of the same value in that file. On an image, draw a rectangle to mask an area by hand, or click an area to turn it on or off. **Point at a mask** (or at its row in the list) to see what it hides: the mask fades out while the pointer is on it, the matching row is highlighted, and nothing is unchecked. This is only on screen: the downloaded image always has its masks.
 4. **Get the result**: "Copy clean text" for pasted text, "Download clean version" for a file, or "Download all (ZIP)" when there are several. The originals are never changed. In a batch, the text files share one numbering: `[SECRET_2]` is the same value in every file, so a reader can follow it from one file to the next.
 
 ### Choosing what to mask
@@ -264,6 +267,8 @@ The tool helps you review; it does not guarantee that nothing is left. Always ch
   - a word's box that stops short of its letters, or one read twice too tall;
   - `ü` read as `ii` (`Schliissel`), a label's colon read as `®`, a `!` read as `|`, a `_` lost between two names (`JôrgWeiß`);
   - OCR noise (`|`, `~`, `EEE` read on a border) next to a value, and specks read as lines of one or two characters across the image (`5 … 5`), which would join a sentence's rows to other panels;
+- **Phones and tablets**: not designed for touch yet. The page expects a mouse and a keyboard: on an image, a drag draws a rectangle (it takes over the finger's scroll), moving a zoomed image needs the space key, and pointing at a mask to see what it hides has no touch equivalent. Use a computer.
+
   - the line of a postcode read on the same row as a word of the panel beside it (`Gestern 00000 Beispielstadt`).
 
   Others are not caught. Two panels side by side with a narrow gutter (a mail list beside a message) are read as one text, row by row: a value that spans two rows (a date written out in words) can be cut by the other panel's words between them. A dot lost in `l.hoffmann` makes it look like a word. Letters read wrong inside a label hide what it names (`SMTP_KENNWORT=` read as `SMTP_KENNWORIE`). A label or a value the OCR did not read at all leaves nothing to find. The OCR's German data has no `İ` or `ı`: a name with them is read wrong (`İlker Yılmaz` comes out as `ofa ker Yilmaz`); in an address block the recipient's lines are masked anyway, unless they name a company. The tests list such cases in [`tests/e2e/known-misses.json`](tests/e2e/known-misses.json).
