@@ -29,7 +29,8 @@ jobs:
         run: node run.mjs --browsers=chromium,firefox
       - name: Full run (every variant)
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-        # Report only: known-misses.linux.json lists the smoke variants, not yet every variant. See the uploaded report.
+        # Report only: known-misses.linux.json lists the smoke variants, not yet every variant, so the job stays green even with
+        # new misses. They are on the run's summary page (written by run.mjs) and in the uploaded report.
         continue-on-error: true
         run: node run.mjs --full --browsers=chromium,firefox
       - uses: actions/upload-artifact@v4

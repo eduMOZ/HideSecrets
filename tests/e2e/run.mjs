@@ -268,9 +268,11 @@ try {
 
 // A listed miss that no longer happens must leave the list (only when its template ran in every browser of the list)
 const ran = new Set(results.map((r) => r.id));
+const stale = [];
 Object.keys(KNOWN).filter((k) => !k.startsWith('_')).forEach((k) => {
   const [id] = k.split('|');
   if (ran.has(id) && !knownHit.has(k)) {
+    stale.push(k);
     // On Linux a change to the page may fix a miss that no run on a Linux machine has seen yet: the list is only a note to shrink then
     if (LINUX) console.log('fixed     ' + k + ' no longer happens: remove it from ' + KNOWN_FILE);
     else { failed++; console.log('FIXED     ' + k + ' no longer happens: remove it from ' + KNOWN_FILE); }
@@ -292,4 +294,22 @@ fs.writeFileSync(path.join(OUT, 'report.html'), '<!doctype html><meta charset="u
   results.length + ' images, ' + failed + ' new problem(s).</p>' + rows);
 fs.writeFileSync(path.join(OUT, 'results.json'), JSON.stringify(results, null, 1));
 console.log('\n' + results.length + ' image(s), ' + failed + ' new problem(s). Report: ' + path.relative(process.cwd(), path.join(OUT, 'report.html')));
+
+// On GitHub, put the outcome on the run's summary page. The nightly full run is report-only (its job stays green even with new
+// misses), so without this the misses are only in the log and in the uploaded report.
+if (process.env.GITHUB_STEP_SUMMARY) {
+  const cell = (s) => String(s).replace(/\|/g, '\\|').replace(/\s+/g, ' ');
+  const withNew = results.filter((r) => r.error || r.fresh);
+  const newRows = [];
+  results.forEach((r) => {
+    if (r.error) newRows.push('| ' + [r.browser, r.id, 'error', r.error.split('\n')[0]].map(cell).join(' | ') + ' |');
+    else r.problems.filter((p) => !KNOWN[r.id + '|' + p.id]).forEach((p) => newRows.push('| ' + [r.browser, r.id, '`' + p.id + '`', p.what + (p.read ? ' (read: ' + JSON.stringify(p.read) + ')' : '')].map(cell).join(' | ') + ' |'));
+  });
+  const md = ['## Screenshot leak tests: ' + (FULL ? 'every variant' : 'smoke') + ' (' + BROWSERS.join(', ') + ')', '',
+    results.length + ' image(s) read, ' + withNew.length + ' with new problems (' + failed + ' in all), ' + stale.length + ' listed miss(es) that no longer happen.', ''];
+  if (newRows.length) md.push('### New problems', '', '| Browser | Image / variant | Secret | What |', '|---|---|---|---|', ...newRows, '');
+  if (stale.length) md.push('### Listed misses that no longer happen (remove them from ' + KNOWN_FILE + ')', '', ...stale.map((k) => '- `' + k + '`'), '');
+  fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, md.join('\n') + '\n');
+  if (failed) console.log('::warning title=Screenshot leak tests::' + failed + ' new problem(s) in ' + withNew.length + ' image(s): see the run summary');
+}
 process.exit(failed ? 1 : 0);
